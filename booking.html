@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>預約日曆｜水松千樹之森 露營區</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="nav-inner">
+    <a href="index.html" class="brand"><img src="images/logo.jpg" alt="水松千樹之森 Logo"><span class="brand-text">水松千樹<span>之森</span></span></a>
+    <nav class="main-nav">
+      <ul>
+        <li><a href="index.html">首頁</a></li>
+        <li><a href="about.html">場地介紹</a></li>
+        <li><a href="booking.html" class="active">預約日曆</a></li>
+        <li><a href="faq.html">常見問題</a></li>
+        <li><a href="contact.html">聯絡我們</a></li>
+      </ul>
+    </nav>
+    <button class="nav-toggle" aria-label="選單">☰</button>
+  </div>
+</header>
+
+<section class="hero page-hero" style="background-image:url('images/hero.jpg');">
+  <div class="hero-content">
+    <h1>預約日曆</h1>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <p class="section-label">選擇日期</p>
+    <h2 class="section-title">2026 年 8 月 空位查詢</h2>
+    <p class="lead">點選日期查看空位，並在右側計算帳篷費用。送出申請後，我們將盡快與您聯繫確認。</p>
+
+    <div class="booking-wrap">
+      <div class="calendar-card">
+        <div class="cal-header">
+          <strong>2026年8月</strong>
+          <span style="font-size:13px;color:var(--gray);">總容量 60 帳／晚</span>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="legend">
+          <span><span class="dot low"></span>尚有空位</span>
+          <span><span class="dot mid"></span>快滿</span>
+          <span><span class="dot full"></span>已滿</span>
+        </div>
+        <p id="selectedDateLabel" style="margin-top:16px;font-weight:700;">請點選上方日期</p>
+      </div>
+
+      <div class="calc-card">
+        <h3 style="margin-bottom:6px;">帳篷計價</h3>
+        <p style="font-size:13px;color:var(--gray);">一帳（2人）NT$1,200，超過 2 人每加 1 人 +NT$300</p>
+
+        <label for="tents">帳篷數量</label>
+        <input type="number" id="tents" value="1" min="1" max="60">
+
+        <label for="people">每帳人數</label>
+        <input type="number" id="people" value="2" min="1" max="6">
+
+        <div class="calc-row">
+          <span>每帳費用</span>
+          <span id="perTentOut">NT$1,200</span>
+        </div>
+        <div class="calc-total">
+          <span>預估總金額</span>
+          <span class="amount" id="totalOut">NT$1,200</span>
+        </div>
+
+        <form id="bookingForm" style="margin-top:24px;">
+          <label for="name">姓名</label>
+          <input type="text" id="name" required>
+          <label for="phone" style="margin-top:10px;">聯絡電話</label>
+          <input type="tel" id="phone" required>
+          <label for="email" style="margin-top:10px;">Email（選填，線上刷卡會用到收據通知）</label>
+          <input type="email" id="email">
+
+          <label style="margin-top:14px;display:block;">付款方式</label>
+          <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px;">
+            <input type="radio" name="paymentMethod" value="bank_transfer" checked> 銀行匯款
+          </label>
+          <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <input type="radio" name="paymentMethod" value="ecpay"> 線上刷卡（綠界，測試中）
+          </label>
+
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:18px;">送出預約申請</button>
+        </form>
+
+        <p id="bookingResult" style="margin-top:14px;font-weight:600;"></p>
+
+        <div class="notice" id="bankTransferNotice">
+          送出後我們會透過電話或簡訊與您確認訂位。確認後請匯款至以下帳戶完成付款：<br>
+          華南銀行（008）中和分行<br>
+          帳號：165-10-007264-1<br>
+          戶名：水松千樹生態開發有限公司<br>
+          匯款完成後請告知末五碼，以利核對訂位。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>水松千樹之森 露營區</h4>
+        <p>水松千樹生態開發有限公司</p>
+      </div>
+      <div>
+        <h4>快速連結</h4>
+        <ul>
+          <li><a href="about.html">場地介紹</a></li>
+          <li><a href="booking.html">預約日曆</a></li>
+          <li><a href="faq.html">常見問題</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>聯絡方式</h4>
+        <ul>
+          <li><a href="contact.html">聯絡我們</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 水松千樹之森 露營區．網站製作：老巫許願池</div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/booking.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "qianshuzhisen-camping",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "水松千樹之森 露營區官網 + 預約/金流後端（Vercel Serverless Functions + Supabase）",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>聯絡我們｜水松千樹之森 露營區</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="nav-inner">
+    <a href="index.html" class="brand"><img src="images/logo.jpg" alt="水松千樹之森 Logo"><span class="brand-text">水松千樹<span>之森</span></span></a>
+    <nav class="main-nav">
+      <ul>
+        <li><a href="index.html">首頁</a></li>
+        <li><a href="about.html">場地介紹</a></li>
+        <li><a href="booking.html">預約日曆</a></li>
+        <li><a href="faq.html">常見問題</a></li>
+        <li><a href="contact.html" class="active">聯絡我們</a></li>
+      </ul>
+    </nav>
+    <button class="nav-toggle" aria-label="選單">☰</button>
+  </div>
+</header>
+
+<section class="hero page-hero" style="background-image:url('images/fence.jpg');">
+  <div class="hero-content">
+    <h1>聯絡我們</h1>
+  </div>
+</section>
+
+<section>
+  <div class="container grid-2">
+    <div>
+      <p class="section-label">留言洽詢</p>
+      <h2 class="section-title">有任何問題都歡迎與我們聯繫</h2>
+      <form class="contact-form" onsubmit="alert('留言已送出（示範版本，尚未連接後端）');return false;">
+        <div>
+          <label for="cname">姓名</label>
+          <input type="text" id="cname" required>
+        </div>
+        <div>
+          <label for="cphone">聯絡電話</label>
+          <input type="tel" id="cphone" required>
+        </div>
+        <div>
+          <label for="cmsg">訊息內容</label>
+          <textarea id="cmsg" rows="5"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">送出留言</button>
+      </form>
+    </div>
+    <div>
+      <p class="section-label">營區資訊</p>
+      <h2 class="section-title">水松千樹之森 露營區</h2>
+      <p class="lead">水松千樹生態開發有限公司<br>地址：詳細交通資訊將由營主提供後更新於此。</p>
+      <p class="lead">營業時間、電話與 Email 將於確認後補充。</p>
+      <p class="lead">
+        匯款帳戶（訂位確認後使用）：<br>
+        華南銀行（008）中和分行<br>
+        帳號：165-10-007264-1<br>
+        戶名：水松千樹生態開發有限公司
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>水松千樹之森 露營區</h4>
+        <p>水松千樹生態開發有限公司</p>
+      </div>
+      <div>
+        <h4>快速連結</h4>
+        <ul>
+          <li><a href="about.html">場地介紹</a></li>
+          <li><a href="booking.html">預約日曆</a></li>
+          <li><a href="faq.html">常見問題</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>聯絡方式</h4>
+        <ul>
+          <li><a href="contact.html">聯絡我們</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 水松千樹之森 露營區．網站製作：老巫許願池</div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
