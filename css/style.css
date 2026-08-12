@@ -126,6 +126,26 @@ nav.main-nav a.active {
 
 .lang-toggle:hover { background: var(--bg-card); }
 
+.music-toggle {
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--gold-strong);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.music-toggle:hover { background: var(--bg-card); }
+.music-toggle.playing { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); }
+
 /* Hero */
 .hero {
   position: relative;
@@ -154,12 +174,22 @@ nav.main-nav a.active {
   width: 100%;
 }
 
+.hero-content::before {
+  content: "";
+  position: absolute;
+  inset: -60px -24px -24px -24px;
+  background: linear-gradient(180deg, rgba(10,20,14,0) 0%, rgba(10,20,14,0.55) 35%, rgba(10,20,14,0.88) 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
 .hero-content .eyebrow {
   font-size: 13px;
   letter-spacing: 3px;
   color: var(--gold-strong);
   margin-bottom: 12px;
   text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.85), 0 1px 3px rgba(0,0,0,0.8);
 }
 
 .hero-content h1 {
@@ -167,13 +197,15 @@ nav.main-nav a.active {
   font-weight: 700;
   margin-bottom: 16px;
   color: var(--ink);
+  text-shadow: 0 2px 14px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.8);
 }
 
 .hero-content p {
   font-size: 16px;
   max-width: 520px;
-  color: var(--ink-soft);
+  color: var(--ink);
   margin-bottom: 26px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.95), 0 1px 3px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6);
 }
 
 .page-hero {

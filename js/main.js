@@ -36,4 +36,45 @@ document.addEventListener("DOMContentLoaded", function () {
       applyLang(current === "en" ? "zh" : "en");
     });
   });
+
+  // 背景音樂：預設關閉，訪客自己按開，記住偏好，循環播放
+  var music = document.getElementById("bgMusic");
+  var musicBtn = document.querySelector(".music-toggle");
+  if (music && musicBtn) {
+    function setMusicBtnState(playing) {
+      musicBtn.classList.toggle("playing", playing);
+      musicBtn.setAttribute("aria-label", playing ? "關閉背景音樂 / Pause music" : "播放背景音樂 / Play music");
+      musicBtn.textContent = playing ? "♪" : "♪";
+    }
+
+    var wantsMusic = false;
+    try {
+      wantsMusic = localStorage.getItem("siteMusic") === "on";
+    } catch (e) {}
+
+    if (wantsMusic) {
+      var playPromise = music.play();
+      if (playPromise && playPromise.catch) {
+        playPromise.then(function () {
+          setMusicBtnState(true);
+        }).catch(function () {
+          // 瀏覽器擋自動播放，維持關閉狀態，等使用者手動點擊
+          setMusicBtnState(false);
+        });
+      }
+    }
+
+    musicBtn.addEventListener("click", function () {
+      if (music.paused) {
+        music.play().then(function () {
+          setMusicBtnState(true);
+          try { localStorage.setItem("siteMusic", "on"); } catch (e) {}
+        }).catch(function () {});
+      } else {
+        music.pause();
+        setMusicBtnState(false);
+        try { localStorage.setItem("siteMusic", "off"); } catch (e) {}
+      }
+    });
+  }
 });
