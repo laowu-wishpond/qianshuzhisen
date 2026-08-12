@@ -141,7 +141,7 @@ nav.main-nav a.active {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(10,20,14,0.15) 0%, rgba(10,20,14,0.92) 100%);
+  background: linear-gradient(180deg, rgba(10,20,14,0.02) 0%, rgba(10,20,14,0.1) 35%, rgba(10,20,14,0.4) 65%, rgba(10,20,14,0.9) 100%);
 }
 
 .hero-content {
