@@ -493,6 +493,26 @@ form.contact-form input, form.contact-form textarea {
 
 .card.no-image .card-body { padding-top: 24px; }
 
+.card img.logo-img { object-fit: contain; background: #0a140e; padding: 20px; }
+
+.card-map-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--gold-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.card-map-link:hover { color: var(--gold); }
+
+.map-embed {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-embed iframe { display: block; }
+
 .quote-block {
   border-left: 2px solid var(--gold);
   padding-left: 20px;
