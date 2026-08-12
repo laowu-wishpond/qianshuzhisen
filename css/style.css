@@ -479,6 +479,20 @@ form.contact-form input, form.contact-form textarea {
   font-weight: 500;
 }
 
+.card-tag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--gold-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  padding: 2px 8px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.card.no-image .card-body { padding-top: 24px; }
+
 .quote-block {
   border-left: 2px solid var(--gold);
   padding-left: 20px;
