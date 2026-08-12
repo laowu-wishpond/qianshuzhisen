@@ -38,11 +38,12 @@ header.site-header {
 .nav-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 14px 24px;
   max-width: 1080px;
   margin: 0 auto;
 }
+
+.nav-inner .brand { margin-right: auto; }
 
 .brand {
   font-size: 20px;
@@ -86,7 +87,22 @@ nav.main-nav a.active {
   color: var(--green-mid);
 }
 
-.nav-toggle { display: none; background: none; border: none; font-size: 26px; cursor: pointer; color: var(--green-dark); }
+.nav-toggle { display: none; background: none; border: none; font-size: 26px; cursor: pointer; color: var(--green-dark); margin-left: 12px; }
+
+.lang-toggle {
+  border: 1px solid var(--green-dark);
+  background: transparent;
+  color: var(--green-dark);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 16px;
+  flex-shrink: 0;
+}
+
+.lang-toggle:hover { background: var(--green-light); }
 
 /* Hero */
 .hero {
@@ -381,6 +397,43 @@ form.contact-form input, form.contact-form textarea {
 .faq-item h3 { font-size: 16px; margin-bottom: 8px; }
 .faq-item p { font-size: 14px; color: var(--gray); }
 
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.gallery-grid figure { margin: 0; }
+
+.gallery-grid img {
+  border-radius: 8px;
+  height: 220px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.gallery-grid figcaption {
+  font-size: 13px;
+  color: var(--gray);
+  margin-top: 8px;
+}
+
+.gallery-grid figcaption strong {
+  display: block;
+  color: var(--green-dark);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.quote-block {
+  border-left: 3px solid var(--green-mid);
+  padding-left: 20px;
+  font-size: 19px;
+  color: var(--green-dark);
+  font-style: italic;
+  margin: 32px 0;
+}
+
 .notice {
   background: var(--green-light);
   border: 1px solid #cfe0c8;
@@ -396,6 +449,7 @@ form.contact-form input, form.contact-form textarea {
   .nav-toggle { display: block; }
   .grid-3 { grid-template-columns: 1fr; }
   .grid-2 { grid-template-columns: 1fr; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
   .booking-wrap { grid-template-columns: 1fr; }
   footer .footer-grid { grid-template-columns: 1fr; }
   .hero-content h1 { font-size: 30px; }

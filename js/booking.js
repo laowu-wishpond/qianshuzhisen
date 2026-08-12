@@ -8,6 +8,10 @@
 */
 
 document.addEventListener("DOMContentLoaded", function () {
+  function isEnglish() {
+    return document.documentElement.lang === "en";
+  }
+
   var calGrid = document.getElementById("calGrid");
   var selectedLabel = document.getElementById("selectedDateLabel");
   if (!calGrid) return;
@@ -17,7 +21,10 @@ document.addEventListener("DOMContentLoaded", function () {
   var daysInMonth = 31;
   var firstDayOfWeek = 6; // 2026/8/1 是星期六
 
-  var dows = ["日", "一", "二", "三", "四", "五", "六"];
+  var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var dows = isEnglish()
+    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    : ["日", "一", "二", "三", "四", "五", "六"];
   dows.forEach(function (d) {
     var el = document.createElement("div");
     el.className = "cal-dow";
@@ -48,7 +55,9 @@ document.addEventListener("DOMContentLoaded", function () {
       selectedCell = this;
       var d = this.querySelector("span").textContent;
       selectedDateISO = year + "-" + String(month).padStart(2, "0") + "-" + String(d).padStart(2, "0");
-      selectedLabel.textContent = "已選擇：" + year + " 年 " + month + " 月 " + d + " 日";
+      selectedLabel.textContent = isEnglish()
+        ? "Selected: " + monthNames[month - 1] + " " + d + ", " + year
+        : "已選擇：" + year + " 年 " + month + " 月 " + d + " 日";
     });
 
     calGrid.appendChild(cell);
@@ -82,14 +91,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (!selectedDateISO) {
         resultEl.style.color = "#b00020";
-        resultEl.textContent = "請先在上方日曆點選日期";
+        resultEl.textContent = isEnglish()
+          ? "Please select a date from the calendar above first."
+          : "請先在上方日曆點選日期";
         return;
       }
 
       var paymentMethod = form.querySelector('input[name="paymentMethod"]:checked').value;
       var submitBtn = form.querySelector('button[type="submit"]');
+      var submitBtnOriginalHTML = submitBtn.innerHTML;
       submitBtn.disabled = true;
-      submitBtn.textContent = "送出中…";
+      submitBtn.textContent = isEnglish() ? "Submitting…" : "送出中…";
       resultEl.style.color = "";
       resultEl.textContent = "";
 
@@ -108,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
       })
         .then(function (res) {
           return res.json().then(function (data) {
-            if (!res.ok) throw new Error(data.error || "送出失敗");
+            if (!res.ok) throw new Error(data.error || (isEnglish() ? "Submission failed" : "送出失敗"));
             return data;
           });
         })
@@ -116,7 +128,9 @@ document.addEventListener("DOMContentLoaded", function () {
           if (data.paymentMethod === "ecpay") {
             bankNoticeEl.style.display = "none";
             resultEl.style.color = "";
-            resultEl.textContent = "訂單已建立，正在導向綠界收銀台…";
+            resultEl.textContent = isEnglish()
+              ? "Order created — redirecting to ECPay checkout…"
+              : "訂單已建立，正在導向綠界收銀台…";
             // 動態組一個 form，POST 到綠界 AioCheckOut，瀏覽器會自動跳轉過去付款
             var ecpayForm = document.createElement("form");
             ecpayForm.method = "POST";
@@ -132,18 +146,21 @@ document.addEventListener("DOMContentLoaded", function () {
             ecpayForm.submit();
           } else {
             resultEl.style.color = "#1a7d3f";
-            resultEl.textContent =
-              "預約申請已送出！訂單編號：" + data.bookingId.slice(0, 8) + "，請依下方匯款須知完成付款。";
+            resultEl.textContent = isEnglish()
+              ? "Booking request submitted! Order ID: " + data.bookingId.slice(0, 8) + ". Please complete payment per the transfer details below."
+              : "預約申請已送出！訂單編號：" + data.bookingId.slice(0, 8) + "，請依下方匯款須知完成付款。";
             form.reset();
           }
         })
         .catch(function (err) {
           resultEl.style.color = "#b00020";
-          resultEl.textContent = "送出失敗：" + err.message + "（也可以直接電話聯絡我們）";
+          resultEl.textContent = isEnglish()
+            ? "Submission failed: " + err.message + " (you can also reach us by phone)"
+            : "送出失敗：" + err.message + "（也可以直接電話聯絡我們）";
         })
         .finally(function () {
           submitBtn.disabled = false;
-          submitBtn.textContent = "送出預約申請";
+          submitBtn.innerHTML = submitBtnOriginalHTML;
         });
     });
   }

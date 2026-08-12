@@ -13,90 +13,115 @@
     <a href="index.html" class="brand"><img src="images/logo.jpg" alt="水松千樹之森 Logo"><span class="brand-text">水松千樹<span>之森</span></span></a>
     <nav class="main-nav">
       <ul>
-        <li><a href="index.html">首頁</a></li>
-        <li><a href="about.html">場地介紹</a></li>
-        <li><a href="booking.html" class="active">預約日曆</a></li>
-        <li><a href="faq.html">常見問題</a></li>
-        <li><a href="contact.html">聯絡我們</a></li>
+        <li><a href="index.html"><span class="lang-zh">首頁</span><span class="lang-en" hidden>Home</span></a></li>
+        <li><a href="about.html"><span class="lang-zh">場地介紹</span><span class="lang-en" hidden>About</span></a></li>
+        <li><a href="booking.html" class="active"><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking</span></a></li>
+        <li><a href="faq.html"><span class="lang-zh">常見問題</span><span class="lang-en" hidden>FAQ</span></a></li>
+        <li><a href="contact.html"><span class="lang-zh">聯絡我們</span><span class="lang-en" hidden>Contact</span></a></li>
       </ul>
     </nav>
+    <button class="lang-toggle" aria-label="切換語言 / Switch language">EN</button>
     <button class="nav-toggle" aria-label="選單">☰</button>
   </div>
 </header>
 
 <section class="hero page-hero" style="background-image:url('images/hero.jpg');">
   <div class="hero-content">
-    <h1>預約日曆</h1>
+    <h1><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking calendar</span></h1>
   </div>
 </section>
 
 <section>
   <div class="container">
-    <p class="section-label">選擇日期</p>
-    <h2 class="section-title">2026 年 8 月 空位查詢</h2>
-    <p class="lead">點選日期查看空位，並在右側計算帳篷費用。送出申請後，我們將盡快與您聯繫確認。</p>
+    <p class="section-label"><span class="lang-zh">選擇日期</span><span class="lang-en" hidden>Choose a date</span></p>
+    <h2 class="section-title"><span class="lang-zh">2026 年 8 月 空位查詢</span><span class="lang-en" hidden>Availability for August 2026</span></h2>
+    <p class="lead">
+      <span class="lang-zh">點選日期查看空位，並在右側計算帳篷費用。送出申請後，我們將盡快與您聯繫確認。</span>
+      <span class="lang-en" hidden>Click a date to check availability and see the price on the right. We'll contact you to confirm once you submit a request.</span>
+    </p>
 
     <div class="booking-wrap">
       <div class="calendar-card">
         <div class="cal-header">
-          <strong>2026年8月</strong>
-          <span style="font-size:13px;color:var(--gray);">總容量 60 帳／晚</span>
+          <strong><span class="lang-zh">2026年8月</span><span class="lang-en" hidden>August 2026</span></strong>
+          <span style="font-size:13px;color:var(--gray);"><span class="lang-zh">總容量 60 帳／晚</span><span class="lang-en" hidden>60 sites / night capacity</span></span>
         </div>
         <div class="cal-grid" id="calGrid"></div>
         <div class="legend">
-          <span><span class="dot low"></span>尚有空位</span>
-          <span><span class="dot mid"></span>快滿</span>
-          <span><span class="dot full"></span>已滿</span>
+          <span><span class="dot low"></span><span class="lang-zh">尚有空位</span><span class="lang-en" hidden>Available</span></span>
+          <span><span class="dot mid"></span><span class="lang-zh">快滿</span><span class="lang-en" hidden>Almost full</span></span>
+          <span><span class="dot full"></span><span class="lang-zh">已滿</span><span class="lang-en" hidden>Full</span></span>
         </div>
-        <p id="selectedDateLabel" style="margin-top:16px;font-weight:700;">請點選上方日期</p>
+        <p id="selectedDateLabel" style="margin-top:16px;font-weight:700;">
+          <span class="lang-zh">請點選上方日期</span><span class="lang-en" hidden>Select a date above</span>
+        </p>
       </div>
 
       <div class="calc-card">
-        <h3 style="margin-bottom:6px;">帳篷計價</h3>
-        <p style="font-size:13px;color:var(--gray);">一帳（2人）NT$1,200，超過 2 人每加 1 人 +NT$300</p>
+        <h3 style="margin-bottom:6px;"><span class="lang-zh">帳篷計價</span><span class="lang-en" hidden>Tent pricing</span></h3>
+        <p style="font-size:13px;color:var(--gray);">
+          <span class="lang-zh">一帳（2人）NT$1,200，超過 2 人每加 1 人 +NT$300</span>
+          <span class="lang-en" hidden>NT$1,200 per tent (2 people), +NT$300 per extra person</span>
+        </p>
 
-        <label for="tents">帳篷數量</label>
+        <label for="tents"><span class="lang-zh">帳篷數量</span><span class="lang-en" hidden>Number of tents</span></label>
         <input type="number" id="tents" value="1" min="1" max="60">
 
-        <label for="people">每帳人數</label>
+        <label for="people"><span class="lang-zh">每帳人數</span><span class="lang-en" hidden>People per tent</span></label>
         <input type="number" id="people" value="2" min="1" max="6">
 
         <div class="calc-row">
-          <span>每帳費用</span>
+          <span><span class="lang-zh">每帳費用</span><span class="lang-en" hidden>Per tent</span></span>
           <span id="perTentOut">NT$1,200</span>
         </div>
         <div class="calc-total">
-          <span>預估總金額</span>
+          <span><span class="lang-zh">預估總金額</span><span class="lang-en" hidden>Estimated total</span></span>
           <span class="amount" id="totalOut">NT$1,200</span>
         </div>
 
         <form id="bookingForm" style="margin-top:24px;">
-          <label for="name">姓名</label>
+          <label for="name"><span class="lang-zh">姓名</span><span class="lang-en" hidden>Name</span></label>
           <input type="text" id="name" required>
-          <label for="phone" style="margin-top:10px;">聯絡電話</label>
+          <label for="phone" style="margin-top:10px;"><span class="lang-zh">聯絡電話</span><span class="lang-en" hidden>Phone</span></label>
           <input type="tel" id="phone" required>
-          <label for="email" style="margin-top:10px;">Email（選填，線上刷卡會用到收據通知）</label>
+          <label for="email" style="margin-top:10px;">
+            <span class="lang-zh">Email（選填，線上刷卡會用到收據通知）</span>
+            <span class="lang-en" hidden>Email (optional — used for card payment receipts)</span>
+          </label>
           <input type="email" id="email">
 
-          <label style="margin-top:14px;display:block;">付款方式</label>
+          <label style="margin-top:14px;display:block;"><span class="lang-zh">付款方式</span><span class="lang-en" hidden>Payment method</span></label>
           <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px;">
-            <input type="radio" name="paymentMethod" value="bank_transfer" checked> 銀行匯款
+            <input type="radio" name="paymentMethod" value="bank_transfer" checked>
+            <span class="lang-zh">銀行匯款</span><span class="lang-en" hidden>Bank transfer</span>
           </label>
           <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:4px;">
-            <input type="radio" name="paymentMethod" value="ecpay"> 線上刷卡（綠界，測試中）
+            <input type="radio" name="paymentMethod" value="ecpay">
+            <span class="lang-zh">線上刷卡（綠界，測試中）</span><span class="lang-en" hidden>Card payment (ECPay, test mode)</span>
           </label>
 
-          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:18px;">送出預約申請</button>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:18px;">
+            <span class="lang-zh">送出預約申請</span><span class="lang-en" hidden>Submit booking request</span>
+          </button>
         </form>
 
         <p id="bookingResult" style="margin-top:14px;font-weight:600;"></p>
 
         <div class="notice" id="bankTransferNotice">
-          送出後我們會透過電話或簡訊與您確認訂位。確認後請匯款至以下帳戶完成付款：<br>
-          華南銀行（008）中和分行<br>
-          帳號：165-10-007264-1<br>
-          戶名：水松千樹生態開發有限公司<br>
-          匯款完成後請告知末五碼，以利核對訂位。
+          <span class="lang-zh">
+            送出後我們會透過電話或簡訊與您確認訂位。確認後請匯款至以下帳戶完成付款：<br>
+            華南銀行（008）中和分行<br>
+            帳號：165-10-007264-1<br>
+            戶名：水松千樹生態開發有限公司<br>
+            匯款完成後請告知末五碼，以利核對訂位。
+          </span>
+          <span class="lang-en" hidden>
+            We'll confirm your booking by phone or text after you submit. Once confirmed, please transfer payment to:<br>
+            Hua Nan Bank (008), Zhonghe Branch<br>
+            Account: 165-10-007264-1<br>
+            Name: Shuisong Qianshu Ecological Development Co., Ltd.<br>
+            Please share the last 5 digits of the transfer reference so we can match it to your booking.
+          </span>
         </div>
       </div>
     </div>
@@ -107,25 +132,25 @@
   <div class="container">
     <div class="footer-grid">
       <div>
-        <h4>水松千樹之森 露營區</h4>
-        <p>水松千樹生態開發有限公司</p>
+        <h4><span class="lang-zh">水松千樹之森 露營區</span><span class="lang-en" hidden>Shuisong Thousand-Tree Forest Campground</span></h4>
+        <p><span class="lang-zh">水松千樹生態開發有限公司</span><span class="lang-en" hidden>Shuisong Qianshu Ecological Development Co., Ltd.</span></p>
       </div>
       <div>
-        <h4>快速連結</h4>
+        <h4><span class="lang-zh">快速連結</span><span class="lang-en" hidden>Quick links</span></h4>
         <ul>
-          <li><a href="about.html">場地介紹</a></li>
-          <li><a href="booking.html">預約日曆</a></li>
-          <li><a href="faq.html">常見問題</a></li>
+          <li><a href="about.html"><span class="lang-zh">場地介紹</span><span class="lang-en" hidden>About</span></a></li>
+          <li><a href="booking.html"><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking</span></a></li>
+          <li><a href="faq.html"><span class="lang-zh">常見問題</span><span class="lang-en" hidden>FAQ</span></a></li>
         </ul>
       </div>
       <div>
-        <h4>聯絡方式</h4>
+        <h4><span class="lang-zh">聯絡方式</span><span class="lang-en" hidden>Contact</span></h4>
         <ul>
-          <li><a href="contact.html">聯絡我們</a></li>
+          <li><a href="contact.html"><span class="lang-zh">聯絡我們</span><span class="lang-en" hidden>Contact us</span></a></li>
         </ul>
       </div>
     </div>
-    <div class="footer-bottom">© 2026 水松千樹之森 露營區．網站製作：老巫許願池</div>
+    <div class="footer-bottom">© 2026 <span class="lang-zh">水松千樹之森 露營區．網站製作：老巫許願池</span><span class="lang-en" hidden>Shuisong Thousand-Tree Forest Campground. Site by Laowu Wishpond</span></div>
   </div>
 </footer>
 

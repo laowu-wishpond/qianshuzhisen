@@ -13,54 +13,69 @@
     <a href="index.html" class="brand"><img src="images/logo.jpg" alt="水松千樹之森 Logo"><span class="brand-text">水松千樹<span>之森</span></span></a>
     <nav class="main-nav">
       <ul>
-        <li><a href="index.html">首頁</a></li>
-        <li><a href="about.html">場地介紹</a></li>
-        <li><a href="booking.html">預約日曆</a></li>
-        <li><a href="faq.html">常見問題</a></li>
-        <li><a href="contact.html" class="active">聯絡我們</a></li>
+        <li><a href="index.html"><span class="lang-zh">首頁</span><span class="lang-en" hidden>Home</span></a></li>
+        <li><a href="about.html"><span class="lang-zh">場地介紹</span><span class="lang-en" hidden>About</span></a></li>
+        <li><a href="booking.html"><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking</span></a></li>
+        <li><a href="faq.html"><span class="lang-zh">常見問題</span><span class="lang-en" hidden>FAQ</span></a></li>
+        <li><a href="contact.html" class="active"><span class="lang-zh">聯絡我們</span><span class="lang-en" hidden>Contact</span></a></li>
       </ul>
     </nav>
+    <button class="lang-toggle" aria-label="切換語言 / Switch language">EN</button>
     <button class="nav-toggle" aria-label="選單">☰</button>
   </div>
 </header>
 
 <section class="hero page-hero" style="background-image:url('images/fence.jpg');">
   <div class="hero-content">
-    <h1>聯絡我們</h1>
+    <h1><span class="lang-zh">聯絡我們</span><span class="lang-en" hidden>Contact us</span></h1>
   </div>
 </section>
 
 <section>
   <div class="container grid-2">
     <div>
-      <p class="section-label">留言洽詢</p>
-      <h2 class="section-title">有任何問題都歡迎與我們聯繫</h2>
+      <p class="section-label"><span class="lang-zh">留言洽詢</span><span class="lang-en" hidden>Send a message</span></p>
+      <h2 class="section-title"><span class="lang-zh">有任何問題都歡迎與我們聯繫</span><span class="lang-en" hidden>Questions? We're happy to help.</span></h2>
       <form class="contact-form" onsubmit="alert('留言已送出（示範版本，尚未連接後端）');return false;">
         <div>
-          <label for="cname">姓名</label>
+          <label for="cname"><span class="lang-zh">姓名</span><span class="lang-en" hidden>Name</span></label>
           <input type="text" id="cname" required>
         </div>
         <div>
-          <label for="cphone">聯絡電話</label>
+          <label for="cphone"><span class="lang-zh">聯絡電話</span><span class="lang-en" hidden>Phone</span></label>
           <input type="tel" id="cphone" required>
         </div>
         <div>
-          <label for="cmsg">訊息內容</label>
+          <label for="cmsg"><span class="lang-zh">訊息內容</span><span class="lang-en" hidden>Message</span></label>
           <textarea id="cmsg" rows="5"></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">送出留言</button>
+        <button type="submit" class="btn btn-primary"><span class="lang-zh">送出留言</span><span class="lang-en" hidden>Send message</span></button>
       </form>
     </div>
     <div>
-      <p class="section-label">營區資訊</p>
-      <h2 class="section-title">水松千樹之森 露營區</h2>
-      <p class="lead">水松千樹生態開發有限公司<br>地址：詳細交通資訊將由營主提供後更新於此。</p>
-      <p class="lead">營業時間、電話與 Email 將於確認後補充。</p>
+      <p class="section-label"><span class="lang-zh">營區資訊</span><span class="lang-en" hidden>Campground info</span></p>
+      <h2 class="section-title"><span class="lang-zh">水松千樹之森 露營區</span><span class="lang-en" hidden>Shuisong Thousand-Tree Forest Campground</span></h2>
       <p class="lead">
-        匯款帳戶（訂位確認後使用）：<br>
-        華南銀行（008）中和分行<br>
-        帳號：165-10-007264-1<br>
-        戶名：水松千樹生態開發有限公司
+        <span class="lang-zh">水松千樹生態開發有限公司<br>地址：詳細交通資訊將由營主提供後更新於此。</span>
+        <span class="lang-en" hidden>Shuisong Qianshu Ecological Development Co., Ltd.<br>Address: directions will be added here once provided.</span>
+      </p>
+      <p class="lead">
+        <span class="lang-zh">營業時間、電話與 Email 將於確認後補充。</span>
+        <span class="lang-en" hidden>Hours, phone, and email will be added once confirmed.</span>
+      </p>
+      <p class="lead">
+        <span class="lang-zh">
+          匯款帳戶（訂位確認後使用）：<br>
+          華南銀行（008）中和分行<br>
+          帳號：165-10-007264-1<br>
+          戶名：水松千樹生態開發有限公司
+        </span>
+        <span class="lang-en" hidden>
+          Bank transfer account (used after booking is confirmed):<br>
+          Hua Nan Bank (008), Zhonghe Branch<br>
+          Account: 165-10-007264-1<br>
+          Name: Shuisong Qianshu Ecological Development Co., Ltd.
+        </span>
       </p>
     </div>
   </div>
@@ -70,25 +85,25 @@
   <div class="container">
     <div class="footer-grid">
       <div>
-        <h4>水松千樹之森 露營區</h4>
-        <p>水松千樹生態開發有限公司</p>
+        <h4><span class="lang-zh">水松千樹之森 露營區</span><span class="lang-en" hidden>Shuisong Thousand-Tree Forest Campground</span></h4>
+        <p><span class="lang-zh">水松千樹生態開發有限公司</span><span class="lang-en" hidden>Shuisong Qianshu Ecological Development Co., Ltd.</span></p>
       </div>
       <div>
-        <h4>快速連結</h4>
+        <h4><span class="lang-zh">快速連結</span><span class="lang-en" hidden>Quick links</span></h4>
         <ul>
-          <li><a href="about.html">場地介紹</a></li>
-          <li><a href="booking.html">預約日曆</a></li>
-          <li><a href="faq.html">常見問題</a></li>
+          <li><a href="about.html"><span class="lang-zh">場地介紹</span><span class="lang-en" hidden>About</span></a></li>
+          <li><a href="booking.html"><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking</span></a></li>
+          <li><a href="faq.html"><span class="lang-zh">常見問題</span><span class="lang-en" hidden>FAQ</span></a></li>
         </ul>
       </div>
       <div>
-        <h4>聯絡方式</h4>
+        <h4><span class="lang-zh">聯絡方式</span><span class="lang-en" hidden>Contact</span></h4>
         <ul>
-          <li><a href="contact.html">聯絡我們</a></li>
+          <li><a href="contact.html"><span class="lang-zh">聯絡我們</span><span class="lang-en" hidden>Contact us</span></a></li>
         </ul>
       </div>
     </div>
-    <div class="footer-bottom">© 2026 水松千樹之森 露營區．網站製作：老巫許願池</div>
+    <div class="footer-bottom">© 2026 <span class="lang-zh">水松千樹之森 露營區．網站製作：老巫許願池</span><span class="lang-en" hidden>Shuisong Thousand-Tree Forest Campground. Site by Laowu Wishpond</span></div>
   </div>
 </footer>
 
