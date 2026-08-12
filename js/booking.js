@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function () {
       e.preventDefault();
 
       if (!selectedDateISO) {
-        resultEl.style.color = "#b00020";
+        resultEl.style.color = "#f29a9a";
         resultEl.textContent = isEnglish()
           ? "Please select a date from the calendar above first."
           : "請先在上方日曆點選日期";
@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.appendChild(ecpayForm);
             ecpayForm.submit();
           } else {
-            resultEl.style.color = "#1a7d3f";
+            resultEl.style.color = "#8fd68f";
             resultEl.textContent = isEnglish()
               ? "Booking request submitted! Order ID: " + data.bookingId.slice(0, 8) + ". Please complete payment per the transfer details below."
               : "預約申請已送出！訂單編號：" + data.bookingId.slice(0, 8) + "，請依下方匯款須知完成付款。";
@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         })
         .catch(function (err) {
-          resultEl.style.color = "#b00020";
+          resultEl.style.color = "#f29a9a";
           resultEl.textContent = isEnglish()
             ? "Submission failed: " + err.message + " (you can also reach us by phone)"
             : "送出失敗：" + err.message + "（也可以直接電話聯絡我們）";
