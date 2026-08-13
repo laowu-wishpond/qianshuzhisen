@@ -420,6 +420,8 @@ footer li a:hover { color: var(--gold-strong); }
 }
 
 .cal-day:hover { border-color: var(--gold); }
+.cal-day.disabled { cursor: not-allowed; opacity: 0.55; }
+.cal-day.disabled:hover { border-color: var(--border); }
 .cal-day.selected { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); }
 .cal-day .occ { font-size: 10px; border-radius: 6px; padding: 0 4px; }
 .cal-day.low .occ { color: #8fd68f; background: rgba(59, 109, 17, 0.35); }

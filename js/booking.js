@@ -18,8 +18,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var year = 2026;
   var month = 8; // 8月
-  var daysInMonth = 31;
-  var firstDayOfWeek = 6; // 2026/8/1 是星期六
 
   var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var dows = isEnglish()
@@ -32,35 +30,77 @@ document.addEventListener("DOMContentLoaded", function () {
     calGrid.appendChild(el);
   });
 
-  for (var i = 0; i < firstDayOfWeek; i++) {
-    calGrid.appendChild(document.createElement("div"));
-  }
-
   var selectedCell = null;
   var selectedDateISO = null; // YYYY-MM-DD，送去後端用
 
-  for (var day = 1; day <= daysInMonth; day++) {
-    var occupied = (day * 13) % 61;
-    var ratio = occupied / 60;
-    var level = ratio < 0.5 ? "low" : ratio < 0.85 ? "mid" : "full";
+  // 空位資料改成向後端拿真實訂位狀況（/api/get-availability），不再是前端算的假數字。
+  // 拿資料前先顯示 loading 字樣，避免使用者以為日曆是空的。
+  var loadingEl = document.createElement("div");
+  loadingEl.style.cssText = "grid-column:1/-1;font-size:13px;color:var(--gray);padding:8px 0;";
+  loadingEl.textContent = isEnglish() ? "Loading availability…" : "空位資料載入中…";
+  calGrid.appendChild(loadingEl);
 
-    var cell = document.createElement("div");
-    cell.className = "cal-day " + level;
-    cell.innerHTML =
-      '<span>' + day + '</span><span class="occ">' + occupied + "/60</span>";
-
-    cell.addEventListener("click", function () {
-      if (selectedCell) selectedCell.classList.remove("selected");
-      this.classList.add("selected");
-      selectedCell = this;
-      var d = this.querySelector("span").textContent;
-      selectedDateISO = year + "-" + String(month).padStart(2, "0") + "-" + String(d).padStart(2, "0");
-      selectedLabel.textContent = isEnglish()
-        ? "Selected: " + monthNames[month - 1] + " " + d + ", " + year
-        : "已選擇：" + year + " 年 " + month + " 月 " + d + " 日";
+  fetch("/api/get-availability?year=" + year + "&month=" + month)
+    .then(function (res) {
+      return res.json().then(function (data) {
+        if (!res.ok) throw new Error(data.error || "load failed");
+        return data;
+      });
+    })
+    .then(function (data) {
+      renderCalendar(data.capacity || 60, data.daysInMonth, data.occupied || {});
+    })
+    .catch(function () {
+      // 後端查詢失敗時，仍然把日曆畫出來（全部當作尚有空位），並提示改用電話確認，
+      // 避免因為 API 出錯讓整個預約頁面掛掉。
+      var daysInMonth = new Date(year, month, 0).getDate();
+      renderCalendar(60, daysInMonth, {});
+      var warnEl = document.createElement("p");
+      warnEl.style.cssText = "font-size:12px;color:#f2c766;margin-top:8px;";
+      warnEl.textContent = isEnglish()
+        ? "Couldn't load live availability — please confirm by phone."
+        : "空位資料暫時無法即時載入，請以電話確認為準。";
+      calGrid.parentNode.insertBefore(warnEl, calGrid.nextSibling);
     });
 
-    calGrid.appendChild(cell);
+  function renderCalendar(capacity, daysInMonth, occupiedByDate) {
+    loadingEl.remove();
+
+    var firstDayOfWeek = new Date(year, month - 1, 1).getDay(); // 0=Sun...6=Sat
+
+    for (var i = 0; i < firstDayOfWeek; i++) {
+      calGrid.appendChild(document.createElement("div"));
+    }
+
+    for (var day = 1; day <= daysInMonth; day++) {
+      var dateISO = year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+      var occupied = occupiedByDate[dateISO] || 0;
+      var ratio = occupied / capacity;
+      var isFull = occupied >= capacity;
+      var level = isFull ? "full" : ratio < 0.5 ? "low" : "mid";
+
+      var cell = document.createElement("div");
+      cell.className = "cal-day " + level + (isFull ? " disabled" : "");
+      cell.innerHTML =
+        '<span>' + day + '</span><span class="occ">' + occupied + "/" + capacity + "</span>";
+
+      if (isFull) {
+        cell.setAttribute("aria-disabled", "true");
+      } else {
+        cell.addEventListener("click", function () {
+          if (selectedCell) selectedCell.classList.remove("selected");
+          this.classList.add("selected");
+          selectedCell = this;
+          var d = this.querySelector("span").textContent;
+          selectedDateISO = year + "-" + String(month).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+          selectedLabel.textContent = isEnglish()
+            ? "Selected: " + monthNames[month - 1] + " " + d + ", " + year
+            : "已選擇：" + year + " 年 " + month + " 月 " + d + " 日";
+        });
+      }
+
+      calGrid.appendChild(cell);
+    }
   }
 
   var tentsInput = document.getElementById("tents");
