@@ -1,5 +1,9 @@
 .admin-body { background: var(--bg); min-height: 100vh; }
 
+/* .btn 本身設了 display:inline-block，會蓋掉瀏覽器對 [hidden] 屬性的預設隱藏行為，
+   這裡強制補回來，避免登出按鈕在未登入狀態下還是顯示出來。 */
+.admin-body [hidden] { display: none !important; }
+
 .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; }
 
 .admin-header {
