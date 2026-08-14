@@ -1,0 +1,125 @@
+.admin-body { background: var(--bg); min-height: 100vh; }
+
+.admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; }
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-header h1 {
+  color: var(--ink);
+  font-family: "Noto Serif TC", serif;
+  font-size: 22px;
+}
+
+.admin-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.admin-card h2 { color: var(--ink); margin-bottom: 16px; font-size: 17px; }
+
+#loginForm { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
+#loginForm label { font-size: 13px; color: var(--ink-soft); }
+#loginForm input {
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-alt);
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.admin-error { color: #f29a9a; font-size: 13px; margin-top: 8px; min-height: 18px; }
+
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.admin-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.admin-filters input,
+.admin-filters select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-alt);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.admin-table-wrap { overflow-x: auto; }
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-table th {
+  color: var(--gold-strong);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-pending { background: rgba(224, 161, 0, 0.2); color: #f2c766; }
+.status-paid { background: rgba(59, 109, 17, 0.3); color: #8fd68f; }
+.status-failed { background: rgba(192, 57, 43, 0.2); color: #f29a9a; }
+.status-cancelled { background: rgba(138, 150, 134, 0.25); color: var(--ink-muted); }
+
+.admin-actions { display: flex; gap: 8px; }
+
+.admin-mini-btn {
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--gold-strong);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-mini-btn:hover { background: var(--bg-alt); }
+
+@media (max-width: 640px) {
+  .admin-table { font-size: 12px; }
+  .admin-table th, .admin-table td { padding: 8px; }
+}

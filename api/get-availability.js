@@ -1,7 +1,8 @@
 // GET /api/get-availability?year=2026&month=8
 // 給預約日曆用：回傳該月每一天「目前已預約帳篷數」，是從 bookings 表即時算出來的真實資料，
-// 不是前端寫死的假數字。付款狀態 failed（刷卡失敗）不算佔用，pending／paid 都算佔用
-// （pending 代表銀行匯款訂單還在等營主確認，期間應視為已佔用該營位，避免被重複預約）。
+// 不是前端寫死的假數字。付款狀態 failed（刷卡失敗）／cancelled（已取消）不算佔用，
+// pending／paid 都算佔用（pending 代表銀行匯款訂單還在等營主確認，期間應視為已佔用該營位，
+// 避免被重複預約；後台可以把訂單標記為 cancelled 來釋出營位）。
 
 import { getSupabaseAdmin } from "../lib/supabase.js";
 
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
     .select("booking_date, tents_count, payment_status")
     .gte("booking_date", startDate)
     .lte("booking_date", endDate)
-    .neq("payment_status", "failed");
+    .not("payment_status", "in", "(failed,cancelled)");
 
   if (error) {
     console.error("get-availability error:", error);
