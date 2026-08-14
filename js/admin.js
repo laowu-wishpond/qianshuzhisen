@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   var loginSection = document.getElementById("loginSection");
   var dashboardSection = document.getElementById("dashboardSection");
+  var messagesSection = document.getElementById("messagesSection");
   var loginForm = document.getElementById("loginForm");
   var loginError = document.getElementById("loginError");
   var logoutBtn = document.getElementById("logoutBtn");
@@ -10,6 +11,8 @@ document.addEventListener("DOMContentLoaded", function () {
   var filterFrom = document.getElementById("filterFrom");
   var filterTo = document.getElementById("filterTo");
   var filterStatus = document.getElementById("filterStatus");
+  var messagesBody = document.getElementById("messagesBody");
+  var messagesError = document.getElementById("messagesError");
 
   var statusLabels = {
     pending: "待確認",
@@ -21,12 +24,14 @@ document.addEventListener("DOMContentLoaded", function () {
   function showDashboard() {
     loginSection.hidden = true;
     dashboardSection.hidden = false;
+    messagesSection.hidden = false;
     logoutBtn.hidden = false;
   }
 
   function showLogin() {
     loginSection.hidden = false;
     dashboardSection.hidden = true;
+    messagesSection.hidden = true;
     logoutBtn.hidden = true;
   }
 
@@ -135,6 +140,68 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
+  function renderMessages(messages) {
+    messagesBody.innerHTML = "";
+    if (!messages.length) {
+      messagesBody.innerHTML = '<tr><td colspan="6">目前沒有留言</td></tr>';
+      return;
+    }
+    messages.forEach(function (m) {
+      var tr = document.createElement("tr");
+      var time = m.created_at ? new Date(m.created_at).toLocaleString("zh-TW") : "";
+      tr.innerHTML =
+        "<td>" + escapeHtml(time) + "</td>" +
+        "<td>" + escapeHtml(m.name) + "</td>" +
+        "<td>" + escapeHtml(m.phone) + "</td>" +
+        "<td>" + escapeHtml(m.message || "") + "</td>" +
+        '<td><span class="status-badge status-' + (m.status === "read" ? "paid" : "pending") + '">' +
+        (m.status === "read" ? "已讀" : "新留言") +
+        "</span></td>";
+
+      var actionsTd = document.createElement("td");
+      if (m.status !== "read") {
+        actionsTd.appendChild(
+          makeActionBtn("標記已讀", function () {
+            fetch("/api/admin-messages", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: m.id, status: "read" }),
+            })
+              .then(function (res) {
+                if (!res.ok) throw new Error("更新失敗");
+                return loadMessages();
+              })
+              .catch(function () {
+                alert("更新失敗，請重新整理再試一次");
+              });
+          })
+        );
+      }
+      tr.appendChild(actionsTd);
+      messagesBody.appendChild(tr);
+    });
+  }
+
+  function loadMessages() {
+    messagesError.textContent = "";
+    messagesBody.innerHTML = '<tr><td colspan="6">載入中…</td></tr>';
+    return fetch("/api/admin-messages")
+      .then(function (res) {
+        if (res.status === 401) return; // 主要登入狀態由訂單那支 API 判斷，這裡不重複跳轉
+        return res.json().then(function (data) {
+          if (!res.ok) throw new Error(data.error || "載入失敗");
+          return data;
+        });
+      })
+      .then(function (data) {
+        if (data) renderMessages(data.messages || []);
+      })
+      .catch(function (err) {
+        messagesError.textContent = err.message;
+        messagesBody.innerHTML = "";
+      });
+  }
+
   loginForm.addEventListener("submit", function (e) {
     e.preventDefault();
     loginError.textContent = "";
@@ -153,6 +220,7 @@ document.addEventListener("DOMContentLoaded", function () {
         loginForm.reset();
         showDashboard();
         loadBookings();
+        loadMessages();
       })
       .catch(function () {
         loginError.textContent = "密碼錯誤，請再試一次";
@@ -180,6 +248,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return res.json().then(function (data) {
         showDashboard();
         renderBookings(data.bookings || []);
+        loadMessages();
       });
     })
     .catch(function () {

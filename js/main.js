@@ -77,4 +77,53 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  // 留言表單：contact.html 專用，其他頁面沒有 #contactForm 就直接跳過
+  var contactForm = document.getElementById("contactForm");
+  if (contactForm) {
+    var contactResult = document.getElementById("contactResult");
+    contactForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var isEn = document.documentElement.lang === "en";
+      var submitBtn = contactForm.querySelector('button[type="submit"]');
+      var originalHTML = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.textContent = isEn ? "Sending…" : "送出中…";
+      contactResult.style.color = "";
+      contactResult.textContent = "";
+
+      fetch("/api/create-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: document.getElementById("cname").value,
+          phone: document.getElementById("cphone").value,
+          message: document.getElementById("cmsg").value,
+        }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            if (!res.ok) throw new Error(data.error || (isEn ? "Failed to send" : "送出失敗"));
+            return data;
+          });
+        })
+        .then(function () {
+          contactResult.style.color = "#8fd68f";
+          contactResult.textContent = isEn
+            ? "Message sent! We'll get back to you soon."
+            : "留言已送出，我們會盡快與您聯繫。";
+          contactForm.reset();
+        })
+        .catch(function (err) {
+          contactResult.style.color = "#f29a9a";
+          contactResult.textContent = isEn
+            ? "Failed to send: " + err.message + " (you can also reach us by phone)"
+            : "送出失敗：" + err.message + "（也可以直接電話聯絡我們）";
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalHTML;
+        });
+    });
+  }
 });
