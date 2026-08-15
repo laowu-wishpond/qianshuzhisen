@@ -155,6 +155,7 @@ nav.main-nav a.active {
   align-items: flex-end;
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
 }
 
 .hero::after {
@@ -224,6 +225,7 @@ nav.main-nav a.active {
   justify-content: center;
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   text-align: center;
 }
 
