@@ -215,6 +215,42 @@ nav.main-nav a.active {
 
 .page-hero h1 { font-size: 32px; }
 
+/* Healing banner (mid-page full-bleed image with quote) */
+.healing-banner {
+  position: relative;
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  text-align: center;
+}
+
+.healing-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10,20,14,0.55) 0%, rgba(10,20,14,0.35) 40%, rgba(10,20,14,0.6) 100%);
+}
+
+.healing-banner .banner-text {
+  position: relative;
+  z-index: 2;
+  color: var(--white);
+  font-family: "Noto Serif TC", serif;
+  font-size: 30px;
+  font-style: italic;
+  line-height: 1.6;
+  max-width: 640px;
+  padding: 0 24px;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.9), 0 1px 4px rgba(0,0,0,0.85), 0 0 24px rgba(0,0,0,0.6);
+}
+
+@media (max-width: 860px) {
+  .healing-banner .banner-text { font-size: 22px; }
+}
+
 /* Buttons */
 .btn {
   display: inline-block;
