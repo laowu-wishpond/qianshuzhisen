@@ -706,6 +706,8 @@ form.contact-form input, form.contact-form textarea {
   padding: 32px;
 }
 
+.covenant-lightbox[hidden] { display: none; }
+
 .covenant-lightbox img {
   max-width: 100%;
   max-height: 100%;
