@@ -19,20 +19,25 @@
         <li><a href="index.html"><span class="lang-zh">首頁</span><span class="lang-en" hidden>Home</span></a></li>
         <li><a href="about.html"><span class="lang-zh">場地介紹</span><span class="lang-en" hidden>About</span></a></li>
         <li><a href="booking.html" class="active"><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking</span></a></li>
-        <li><a href="directions.html"><span class="lang-zh">交通指引</span><span class="lang-en" hidden>Directions</span></a></li>
         <li><a href="forest-covenant.html"><span class="lang-zh">森林公約</span><span class="lang-en" hidden>Forest Covenant</span></a></li>
+        <li><a href="directions.html"><span class="lang-zh">交通指引</span><span class="lang-en" hidden>Directions</span></a></li>
         <li><a href="faq.html"><span class="lang-zh">常見問題</span><span class="lang-en" hidden>FAQ</span></a></li>
         <li><a href="contact.html"><span class="lang-zh">聯絡我們</span><span class="lang-en" hidden>Contact</span></a></li>
       </ul>
     </nav>
     <button class="lang-toggle" aria-label="切換語言 / Switch language">EN</button>
     <div class="music-widget">
-      <button class="music-toggle" aria-label="選擇背景音樂 / Choose background music" aria-haspopup="true" aria-expanded="false">♪</button>
+      <button class="music-toggle" aria-label="選擇背景音樂 / Choose background music" aria-haspopup="true" aria-expanded="false">
+        <span class="music-toggle-icon">♪</span>
+        <span class="music-toggle-label"><span class="lang-zh">千樹之森點歌單</span><span class="lang-en" hidden>Thousand Trees Song Menu</span></span>
+        <span class="music-toggle-caret">▾</span>
+      </button>
+      <span class="music-now-playing" id="musicNowPlaying" hidden><span class="dot"></span><span id="musicNowPlayingText"></span></span>
       <audio id="bgMusic" loop preload="none"></audio>
       <div class="music-playlist" id="musicPlaylist" hidden>
-        <p class="music-playlist-title"><span class="lang-zh">選一首森林裡的歌</span><span class="lang-en" hidden>Pick a song from the forest</span></p>
+        <p class="music-playlist-title"><span class="lang-zh">點一首歌，陪你在森林裡</span><span class="lang-en" hidden>Pick a song for the forest</span></p>
         <ul id="musicTrackList"></ul>
-        <button type="button" class="music-playlist-stop" id="musicStopBtn"><span class="lang-zh">停止播放</span><span class="lang-en" hidden>Stop playing</span></button>
+        <button type="button" class="music-playlist-stop" id="musicStopBtn"><span class="lang-zh">⏸ 暫停播放</span><span class="lang-en" hidden>⏸ Pause</span></button>
       </div>
     </div>
     <button class="nav-toggle" aria-label="選單">☰</button>
@@ -154,8 +159,8 @@
         <ul>
           <li><a href="about.html"><span class="lang-zh">場地介紹</span><span class="lang-en" hidden>About</span></a></li>
           <li><a href="booking.html"><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking</span></a></li>
-          <li><a href="directions.html"><span class="lang-zh">交通指引</span><span class="lang-en" hidden>Directions</span></a></li>
         <li><a href="forest-covenant.html"><span class="lang-zh">森林公約</span><span class="lang-en" hidden>Forest Covenant</span></a></li>
+          <li><a href="directions.html"><span class="lang-zh">交通指引</span><span class="lang-en" hidden>Directions</span></a></li>
           <li><a href="faq.html"><span class="lang-zh">常見問題</span><span class="lang-en" hidden>FAQ</span></a></li>
         </ul>
       </div>

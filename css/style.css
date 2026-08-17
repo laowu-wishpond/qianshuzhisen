@@ -136,20 +136,55 @@ nav.main-nav a.active {
   border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--gold-strong);
-  width: 32px;
   height: 32px;
-  border-radius: 50%;
-  font-size: 14px;
+  padding: 0 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
   cursor: pointer;
   flex-shrink: 0;
+  white-space: nowrap;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   line-height: 1;
 }
 
+.music-toggle-icon { font-size: 14px; }
+.music-toggle-caret { font-size: 9px; opacity: 0.8; transition: transform 0.15s ease; }
+.music-toggle[aria-expanded="true"] .music-toggle-caret { transform: rotate(180deg); }
+
 .music-toggle:hover { background: var(--bg-card); }
 .music-toggle.playing { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); animation: music-pulse 2.2s ease-in-out infinite; }
+
+.music-now-playing {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--gold-strong);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.music-now-playing .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold-strong);
+  animation: music-dot 1.4s ease-in-out infinite;
+}
+@keyframes music-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 620px) {
+  .music-toggle .music-toggle-label { display: none; }
+  .music-toggle { padding: 0; width: 32px; justify-content: center; border-radius: 50%; }
+}
 
 @keyframes music-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 106, 0.45); }
@@ -209,15 +244,35 @@ nav.main-nav a.active {
   background: rgba(201, 168, 106, 0.16);
   color: var(--gold-strong);
   font-weight: 500;
+  border-left: 2px solid var(--gold);
 }
 
 .music-track .music-track-icon {
   flex-shrink: 0;
-  width: 18px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: var(--gold);
-  font-size: 12px;
+  font-size: 11px;
+  background: rgba(201, 168, 106, 0.12);
 }
+
+.music-track.active .music-track-icon {
+  background: var(--gold);
+  color: var(--bg-deep);
+}
+
+.music-track-hint {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+.music-track.active .music-track-hint { color: var(--gold-strong); }
 
 .music-playlist-stop {
   margin-top: 10px;
@@ -606,6 +661,73 @@ form.contact-form input, form.contact-form textarea {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
+}
+
+/* 森林公約設計圖 */
+.covenant-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.covenant-page {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-card);
+  cursor: zoom-in;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.covenant-page:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.covenant-page img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.covenant-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 7, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 32px;
+}
+
+.covenant-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.covenant-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .covenant-gallery { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .covenant-gallery { grid-template-columns: 1fr; }
 }
 
 .gallery-grid figure { margin: 0; }

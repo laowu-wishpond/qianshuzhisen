@@ -57,6 +57,8 @@ document.addEventListener("DOMContentLoaded", function () {
   var musicPanel = document.getElementById("musicPlaylist");
   var musicList = document.getElementById("musicTrackList");
   var musicStopBtn = document.getElementById("musicStopBtn");
+  var musicNowPlaying = document.getElementById("musicNowPlaying");
+  var musicNowPlayingText = document.getElementById("musicNowPlayingText");
 
   if (music && musicWidget && musicBtn && musicPanel && musicList) {
     var currentTrackId = (function () {
@@ -76,10 +78,39 @@ document.addEventListener("DOMContentLoaded", function () {
       musicBtn.setAttribute("aria-label", playing ? (isEn ? "Pause music" : "關閉背景音樂") : (isEn ? "Choose background music" : "選擇背景音樂"));
     }
 
-    function highlightActiveTrack() {
+    // 更新每首歌左邊的小圖示（未選取 ♪／播放中 ⏸／已選但暫停 ▶），並更新按鈕旁的「現在播放」提示
+    function refreshTrackUI() {
+      var playing = !music.paused;
       musicList.querySelectorAll(".music-track").forEach(function (b) {
-        b.classList.toggle("active", b.dataset.trackId === currentTrackId && !music.paused);
+        var isCurrent = b.dataset.trackId === currentTrackId;
+        b.classList.toggle("active", isCurrent);
+        var icon = b.querySelector(".music-track-icon");
+        var hint = b.querySelector(".music-track-hint");
+        if (!isCurrent) {
+          icon.textContent = "♪";
+          if (hint) hint.remove();
+        } else {
+          icon.textContent = playing ? "⏸" : "▶";
+          if (!hint) {
+            hint = document.createElement("span");
+            hint.className = "music-track-hint";
+            b.appendChild(hint);
+          }
+          var isEn = document.documentElement.lang === "en";
+          hint.textContent = playing ? (isEn ? "Playing" : "播放中") : (isEn ? "Paused" : "已暫停");
+        }
       });
+
+      if (musicNowPlaying && musicNowPlayingText) {
+        if (playing) {
+          var track = findTrack(currentTrackId);
+          var isEn2 = document.documentElement.lang === "en";
+          musicNowPlayingText.textContent = isEn2 ? track.en : track.zh;
+          musicNowPlaying.hidden = false;
+        } else {
+          musicNowPlaying.hidden = true;
+        }
+      }
     }
 
     function playTrack(id) {
@@ -94,9 +125,10 @@ document.addEventListener("DOMContentLoaded", function () {
           localStorage.setItem("siteMusic", "on");
           localStorage.setItem("siteMusicTrack", track.id);
         } catch (e) {}
-        highlightActiveTrack();
+        refreshTrackUI();
       }).catch(function () {
         setMusicBtnState(false);
+        refreshTrackUI();
       });
     }
 
@@ -104,20 +136,20 @@ document.addEventListener("DOMContentLoaded", function () {
       music.pause();
       setMusicBtnState(false);
       try { localStorage.setItem("siteMusic", "off"); } catch (e) {}
-      highlightActiveTrack();
+      refreshTrackUI();
     }
 
     function openPanel() {
       musicPanel.hidden = false;
       musicBtn.setAttribute("aria-expanded", "true");
-      highlightActiveTrack();
+      refreshTrackUI();
     }
     function closePanel() {
       musicPanel.hidden = true;
       musicBtn.setAttribute("aria-expanded", "false");
     }
 
-    // 建立歌單清單
+    // 建立歌單清單：點目前播放中的那首會暫停，點其他首會切換播放
     MUSIC_TRACKS.forEach(function (track) {
       var li = document.createElement("li");
       var btn = document.createElement("button");
@@ -130,8 +162,12 @@ document.addEventListener("DOMContentLoaded", function () {
         '<span class="lang-en" hidden>' + track.en + '</span>';
       btn.addEventListener("click", function (e) {
         e.stopPropagation();
-        playTrack(track.id);
-        closePanel();
+        if (track.id === currentTrackId && !music.paused) {
+          stopMusic();
+        } else {
+          playTrack(track.id);
+          closePanel();
+        }
       });
       li.appendChild(btn);
       musicList.appendChild(li);
@@ -169,11 +205,45 @@ document.addEventListener("DOMContentLoaded", function () {
     if (wantsMusic) {
       music.play().then(function () {
         setMusicBtnState(true);
-        highlightActiveTrack();
+        refreshTrackUI();
       }).catch(function () {
         setMusicBtnState(false);
+        refreshTrackUI();
       });
+    } else {
+      refreshTrackUI();
     }
+  }
+
+  // 森林公約設計圖 lightbox：forest-covenant.html 專用，其他頁面沒有相關元素就直接跳過
+  var covenantLightbox = document.getElementById("covenantLightbox");
+  var covenantLightboxImg = document.getElementById("covenantLightboxImg");
+  var covenantLightboxClose = document.getElementById("covenantLightboxClose");
+  if (covenantLightbox && covenantLightboxImg) {
+    function openCovenantLightbox(src, alt) {
+      covenantLightboxImg.src = src;
+      covenantLightboxImg.alt = alt || "";
+      covenantLightbox.hidden = false;
+    }
+    function closeCovenantLightbox() {
+      covenantLightbox.hidden = true;
+      covenantLightboxImg.src = "";
+    }
+    document.querySelectorAll(".covenant-page").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var img = btn.querySelector("img");
+        openCovenantLightbox(btn.dataset.full, img ? img.alt : "");
+      });
+    });
+    if (covenantLightboxClose) {
+      covenantLightboxClose.addEventListener("click", closeCovenantLightbox);
+    }
+    covenantLightbox.addEventListener("click", function (e) {
+      if (e.target === covenantLightbox) closeCovenantLightbox();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !covenantLightbox.hidden) closeCovenantLightbox();
+    });
   }
 
   // 留言表單：contact.html 專用，其他頁面沒有 #contactForm 就直接跳過

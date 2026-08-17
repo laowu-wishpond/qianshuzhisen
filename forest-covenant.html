@@ -20,20 +20,25 @@
         <li><a href="index.html"><span class="lang-zh">首頁</span><span class="lang-en" hidden>Home</span></a></li>
         <li><a href="about.html"><span class="lang-zh">場地介紹</span><span class="lang-en" hidden>About</span></a></li>
         <li><a href="booking.html"><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking</span></a></li>
-        <li><a href="directions.html"><span class="lang-zh">交通指引</span><span class="lang-en" hidden>Directions</span></a></li>
         <li><a href="forest-covenant.html" class="active"><span class="lang-zh">森林公約</span><span class="lang-en" hidden>Forest Covenant</span></a></li>
+        <li><a href="directions.html"><span class="lang-zh">交通指引</span><span class="lang-en" hidden>Directions</span></a></li>
         <li><a href="faq.html"><span class="lang-zh">常見問題</span><span class="lang-en" hidden>FAQ</span></a></li>
         <li><a href="contact.html"><span class="lang-zh">聯絡我們</span><span class="lang-en" hidden>Contact</span></a></li>
       </ul>
     </nav>
     <button class="lang-toggle" aria-label="切換語言 / Switch language">EN</button>
     <div class="music-widget">
-      <button class="music-toggle" aria-label="選擇背景音樂 / Choose background music" aria-haspopup="true" aria-expanded="false">♪</button>
+      <button class="music-toggle" aria-label="選擇背景音樂 / Choose background music" aria-haspopup="true" aria-expanded="false">
+        <span class="music-toggle-icon">♪</span>
+        <span class="music-toggle-label"><span class="lang-zh">千樹之森點歌單</span><span class="lang-en" hidden>Thousand Trees Song Menu</span></span>
+        <span class="music-toggle-caret">▾</span>
+      </button>
+      <span class="music-now-playing" id="musicNowPlaying" hidden><span class="dot"></span><span id="musicNowPlayingText"></span></span>
       <audio id="bgMusic" loop preload="none"></audio>
       <div class="music-playlist" id="musicPlaylist" hidden>
-        <p class="music-playlist-title"><span class="lang-zh">選一首森林裡的歌</span><span class="lang-en" hidden>Pick a song from the forest</span></p>
+        <p class="music-playlist-title"><span class="lang-zh">點一首歌，陪你在森林裡</span><span class="lang-en" hidden>Pick a song for the forest</span></p>
         <ul id="musicTrackList"></ul>
-        <button type="button" class="music-playlist-stop" id="musicStopBtn"><span class="lang-zh">停止播放</span><span class="lang-en" hidden>Stop playing</span></button>
+        <button type="button" class="music-playlist-stop" id="musicStopBtn"><span class="lang-zh">⏸ 暫停播放</span><span class="lang-en" hidden>⏸ Pause</span></button>
       </div>
     </div>
     <button class="nav-toggle" aria-label="選單">☰</button>
@@ -46,6 +51,42 @@
     <p><span class="lang-zh">守護森林・守護美好</span><span class="lang-en" hidden>Protect the forest, protect what's good</span></p>
   </div>
 </section>
+
+<section>
+  <div class="container" style="max-width:1000px;">
+    <p class="lead" style="text-align:center;">
+      <span class="lang-zh">入住時，我們會請您與同行旅人一起閱讀並簽署這份公約——也是您可以帶回家的紀念。</span>
+      <span class="lang-en" hidden>At check-in, we'll ask you and your fellow travelers to read and sign the covenant below — yours to take home as a keepsake.</span>
+    </p>
+
+    <div class="covenant-gallery">
+      <button type="button" class="covenant-page" data-full="images/covenant/covenant-01-cover.jpg" aria-label="放大檢視">
+        <img src="images/covenant/covenant-01-cover.jpg" alt="森林公約 封面" loading="lazy">
+      </button>
+      <button type="button" class="covenant-page" data-full="images/covenant/covenant-02-welcome.jpg" aria-label="放大檢視">
+        <img src="images/covenant/covenant-02-welcome.jpg" alt="親愛的旅人，歡迎回到森林" loading="lazy">
+      </button>
+      <button type="button" class="covenant-page" data-full="images/covenant/covenant-03-chapters-1-2.jpg" aria-label="放大檢視">
+        <img src="images/covenant/covenant-03-chapters-1-2.jpg" alt="第一章、第二章" loading="lazy">
+      </button>
+      <button type="button" class="covenant-page" data-full="images/covenant/covenant-04-chapters-3-4-pledge.jpg" aria-label="放大檢視">
+        <img src="images/covenant/covenant-04-chapters-3-4-pledge.jpg" alt="第三章、第四章與森林旅人承諾" loading="lazy">
+      </button>
+    </div>
+
+    <div style="text-align:center;margin-top:28px;">
+      <a class="btn btn-primary" href="downloads/forest-covenant.pdf" download>
+        <span class="lang-zh">下載完整公約 PDF（可列印）</span>
+        <span class="lang-en" hidden>Download Full Covenant PDF (printable)</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="covenant-lightbox" id="covenantLightbox" hidden>
+  <button type="button" class="covenant-lightbox-close" id="covenantLightboxClose" aria-label="關閉 / Close">×</button>
+  <img id="covenantLightboxImg" src="" alt="">
+</div>
 
 <section>
   <div class="container" style="max-width:760px;">
@@ -154,8 +195,8 @@
         <ul>
           <li><a href="about.html"><span class="lang-zh">場地介紹</span><span class="lang-en" hidden>About</span></a></li>
           <li><a href="booking.html"><span class="lang-zh">預約日曆</span><span class="lang-en" hidden>Booking</span></a></li>
-          <li><a href="directions.html"><span class="lang-zh">交通指引</span><span class="lang-en" hidden>Directions</span></a></li>
           <li><a href="forest-covenant.html"><span class="lang-zh">森林公約</span><span class="lang-en" hidden>Forest Covenant</span></a></li>
+          <li><a href="directions.html"><span class="lang-zh">交通指引</span><span class="lang-en" hidden>Directions</span></a></li>
           <li><a href="faq.html"><span class="lang-zh">常見問題</span><span class="lang-en" hidden>FAQ</span></a></li>
         </ul>
       </div>
