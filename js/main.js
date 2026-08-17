@@ -215,6 +215,27 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // 林霧晴首頁跑馬燈：index.html 專用，其他頁面沒有相關元素就直接跳過
+  var linwuqingSlideshow = document.getElementById("linwuqingSlideshow");
+  var linwuqingDots = document.getElementById("linwuqingDots");
+  if (linwuqingSlideshow && linwuqingDots) {
+    var linwuqingImgs = linwuqingSlideshow.querySelectorAll("img");
+    linwuqingImgs.forEach(function (img, i) {
+      var dot = document.createElement("span");
+      if (i === 0) dot.className = "active";
+      linwuqingDots.appendChild(dot);
+    });
+    var linwuqingDotEls = linwuqingDots.querySelectorAll("span");
+    var linwuqingIndex = 0;
+    setInterval(function () {
+      linwuqingImgs[linwuqingIndex].classList.remove("active");
+      linwuqingDotEls[linwuqingIndex].classList.remove("active");
+      linwuqingIndex = (linwuqingIndex + 1) % linwuqingImgs.length;
+      linwuqingImgs[linwuqingIndex].classList.add("active");
+      linwuqingDotEls[linwuqingIndex].classList.add("active");
+    }, 5000);
+  }
+
   // 森林公約設計圖 lightbox：forest-covenant.html 專用，其他頁面沒有相關元素就直接跳過
   var covenantLightbox = document.getElementById("covenantLightbox");
   var covenantLightboxImg = document.getElementById("covenantLightboxImg");

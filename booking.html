@@ -53,16 +53,20 @@
 <section>
   <div class="container">
     <p class="section-label"><span class="lang-zh">選擇日期</span><span class="lang-en" hidden>Choose a date</span></p>
-    <h2 class="section-title"><span class="lang-zh">2026 年 8 月 空位查詢</span><span class="lang-en" hidden>Availability for August 2026</span></h2>
+    <h2 class="section-title"><span class="lang-zh">全年空位查詢</span><span class="lang-en" hidden>Year-round availability</span></h2>
     <p class="lead">
-      <span class="lang-zh">點選日期查看空位，並在右側計算帳篷費用。送出申請後，我們將盡快與您聯繫確認。</span>
-      <span class="lang-en" hidden>Click a date to check availability and see the price on the right. We'll contact you to confirm once you submit a request.</span>
+      <span class="lang-zh">用日曆左右箭頭切換月份，點選日期查看空位，並在右側計算帳篷費用。送出申請後，我們將盡快與您聯繫確認。</span>
+      <span class="lang-en" hidden>Use the arrows to switch months, click a date to check availability and see the price on the right. We'll contact you to confirm once you submit a request.</span>
     </p>
 
     <div class="booking-wrap">
       <div class="calendar-card">
         <div class="cal-header">
-          <strong><span class="lang-zh">2026年8月</span><span class="lang-en" hidden>August 2026</span></strong>
+          <div class="cal-nav">
+            <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="上個月 / Previous month">‹</button>
+            <strong id="calMonthLabel"></strong>
+            <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="下個月 / Next month">›</button>
+          </div>
           <span style="font-size:13px;color:var(--gray);"><span class="lang-zh">總容量 60 帳／晚</span><span class="lang-en" hidden>60 sites / night capacity</span></span>
         </div>
         <div class="cal-grid" id="calGrid"></div>

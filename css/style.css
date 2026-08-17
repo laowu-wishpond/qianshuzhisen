@@ -567,6 +567,28 @@ footer li a:hover { color: var(--gold-strong); }
   color: var(--ink);
 }
 
+.cal-nav { display: flex; align-items: center; gap: 10px; }
+
+.cal-nav-btn {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--gold-strong);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cal-nav-btn:hover { background: var(--bg-alt); }
+.cal-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.cal-nav-btn:disabled:hover { background: transparent; }
+
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -707,6 +729,66 @@ form.contact-form input, form.contact-form textarea {
 }
 
 .covenant-lightbox[hidden] { display: none; }
+
+/* 林霧晴 首頁跑馬燈 */
+.linwuqing-section { padding: 8px 0 56px; }
+
+.linwuqing-slideshow {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 0.7;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-deep);
+}
+
+.linwuqing-slideshow img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.05);
+  transition: opacity 2.2s ease;
+}
+
+.linwuqing-slideshow img.active {
+  opacity: 1;
+  z-index: 2;
+  animation: linwuqing-pan 9s ease-in-out infinite alternate;
+}
+
+@keyframes linwuqing-pan {
+  0% { transform: scale(1.03) translate(0, 0); }
+  100% { transform: scale(1.09) translate(-1.5%, -1.5%); }
+}
+
+.linwuqing-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.linwuqing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.linwuqing-dots span.active {
+  background: var(--gold);
+  transform: scale(1.3);
+}
+
+@media (max-width: 520px) {
+  .linwuqing-section .container { max-width: 300px !important; }
+}
 
 .covenant-lightbox img {
   max-width: 100%;
