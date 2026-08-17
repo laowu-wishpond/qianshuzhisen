@@ -27,13 +27,20 @@
       </ul>
     </nav>
     <button class="lang-toggle" aria-label="切換語言 / Switch language">EN</button>
-    <button class="music-toggle" aria-label="播放背景音樂 / Play music">♪</button>
-    <audio id="bgMusic" src="audio/ambient.mp3" loop preload="none"></audio>
+    <div class="music-widget">
+      <button class="music-toggle" aria-label="選擇背景音樂 / Choose background music" aria-haspopup="true" aria-expanded="false">♪</button>
+      <audio id="bgMusic" loop preload="none"></audio>
+      <div class="music-playlist" id="musicPlaylist" hidden>
+        <p class="music-playlist-title"><span class="lang-zh">選一首森林裡的歌</span><span class="lang-en" hidden>Pick a song from the forest</span></p>
+        <ul id="musicTrackList"></ul>
+        <button type="button" class="music-playlist-stop" id="musicStopBtn"><span class="lang-zh">停止播放</span><span class="lang-en" hidden>Stop playing</span></button>
+      </div>
+    </div>
     <button class="nav-toggle" aria-label="選單">☰</button>
   </div>
 </header>
 
-<section class="hero" style="background-image:url('images/entrance.jpg?v=3');background-position:center 20%;">
+<section class="hero" style="background-image:url('images/entrance.jpg?v=4');background-position:center 20%;">
   <div class="hero-content">
     <p class="eyebrow">
       <span class="lang-zh">家族傳承 · 五公頃原始森林</span>
