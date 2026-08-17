@@ -56,27 +56,28 @@ header.site-header {
   display: flex;
   align-items: center;
   padding: 16px 24px;
-  max-width: 1080px;
+  max-width: 1280px;
   margin: 0 auto;
 }
 
 .nav-inner .brand { margin-right: auto; }
 
 .brand {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--ink);
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   letter-spacing: 1px;
+  flex-shrink: 0;
 }
 
 .brand span { color: var(--gold); }
 
 .brand img {
-  height: 60px;
-  width: 60px;
+  height: 48px;
+  width: 48px;
   object-fit: contain;
   border-radius: 50%;
   border: 1px solid var(--border-strong);
@@ -90,7 +91,7 @@ header.site-header {
 
 nav.main-nav ul {
   display: flex;
-  gap: 32px;
+  gap: 26px;
   list-style: none;
 }
 
@@ -100,6 +101,7 @@ nav.main-nav a {
   border-bottom: 1px solid transparent;
   letter-spacing: 0.5px;
   color: var(--ink-soft);
+  white-space: nowrap;
 }
 
 nav.main-nav a:hover,
