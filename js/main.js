@@ -3,7 +3,12 @@ document.addEventListener("DOMContentLoaded", function () {
   var nav = document.querySelector(".main-nav");
   if (toggle && nav) {
     toggle.addEventListener("click", function () {
-      nav.style.display = nav.style.display === "block" ? "none" : "block";
+      nav.classList.toggle("nav-open");
+    });
+    nav.querySelectorAll("a").forEach(function (link) {
+      link.addEventListener("click", function () {
+        nav.classList.remove("nav-open");
+      });
     });
   }
 
