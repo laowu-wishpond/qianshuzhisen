@@ -66,8 +66,16 @@ document.addEventListener("DOMContentLoaded", function () {
   var musicNowPlayingText = document.getElementById("musicNowPlayingText");
 
   if (music && musicWidget && musicBtn && musicPanel && musicList) {
+    // 每位訪客第一次來訪時，隨機指定一首歌當作起始曲目，之後就記住這個選擇
+    // （之後回訪、切換頁面都會延續同一首，除非訪客自己在選單裡換歌或按暫停）
     var currentTrackId = (function () {
-      try { return localStorage.getItem("siteMusicTrack") || MUSIC_TRACKS[0].id; } catch (e) { return MUSIC_TRACKS[0].id; }
+      try {
+        var saved = localStorage.getItem("siteMusicTrack");
+        if (saved) return saved;
+      } catch (e) {}
+      var randomTrack = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
+      try { localStorage.setItem("siteMusicTrack", randomTrack.id); } catch (e) {}
+      return randomTrack.id;
     })();
 
     function findTrack(id) {
@@ -201,44 +209,54 @@ document.addEventListener("DOMContentLoaded", function () {
       if (e.key === "Escape") closePanel();
     });
 
-    // 記住上次選的歌；若上次是播放狀態就嘗試接續播放（受瀏覽器自動播放政策限制）
+    // 預設是「開啟」音樂：訪客一打開網站就嘗試自動播放隨機/上次選的那首，
+    // 除非訪客自己按過暫停（siteMusic 存成 off），才會尊重他們的選擇不要自動播放。
     music.src = findTrack(currentTrackId).file;
 
-    var wantsMusic = false;
-    try { wantsMusic = localStorage.getItem("siteMusic") === "on"; } catch (e) {}
+    var musicPref = null;
+    try { musicPref = localStorage.getItem("siteMusic"); } catch (e) {}
+    var wantsMusic = musicPref !== "off";
 
-    if (wantsMusic) {
+    function attemptAutoplay() {
       music.play().then(function () {
         setMusicBtnState(true);
+        try { localStorage.setItem("siteMusic", "on"); } catch (e) {}
         refreshTrackUI();
       }).catch(function () {
+        // 瀏覽器政策擋下了自動播放（沒有使用者互動前不能自動出聲，很常見），
+        // 改成訪客第一次點擊/觸控/按鍵時再嘗試播放一次。
         setMusicBtnState(false);
         refreshTrackUI();
+        var resumeOnInteraction = function () {
+          document.removeEventListener("click", resumeOnInteraction);
+          document.removeEventListener("touchstart", resumeOnInteraction);
+          document.removeEventListener("keydown", resumeOnInteraction);
+          if (wantsMusic) attemptAutoplay();
+        };
+        document.addEventListener("click", resumeOnInteraction, { once: true });
+        document.addEventListener("touchstart", resumeOnInteraction, { once: true });
+        document.addEventListener("keydown", resumeOnInteraction, { once: true });
       });
+    }
+
+    if (wantsMusic) {
+      attemptAutoplay();
     } else {
       refreshTrackUI();
     }
   }
 
-  // 林霧晴首頁跑馬燈：index.html 專用，其他頁面沒有相關元素就直接跳過
-  var linwuqingSlideshow = document.getElementById("linwuqingSlideshow");
-  var linwuqingDots = document.getElementById("linwuqingDots");
-  if (linwuqingSlideshow && linwuqingDots) {
-    var linwuqingImgs = linwuqingSlideshow.querySelectorAll("img");
-    linwuqingImgs.forEach(function (img, i) {
-      var dot = document.createElement("span");
-      if (i === 0) dot.className = "active";
-      linwuqingDots.appendChild(dot);
+  // 林霧晴首頁 MV：index.html 專用，其他頁面沒有相關元素就直接跳過
+  // 影片本身靜音播放（純視覺背景），真正的聲音來自上面的背景音樂播放器
+  var linwuqingVideo = document.getElementById("linwuqingVideo");
+  if (linwuqingVideo) {
+    var playLinwuqingVideo = function () {
+      linwuqingVideo.play().catch(function () {});
+    };
+    playLinwuqingVideo();
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) playLinwuqingVideo();
     });
-    var linwuqingDotEls = linwuqingDots.querySelectorAll("span");
-    var linwuqingIndex = 0;
-    setInterval(function () {
-      linwuqingImgs[linwuqingIndex].classList.remove("active");
-      linwuqingDotEls[linwuqingIndex].classList.remove("active");
-      linwuqingIndex = (linwuqingIndex + 1) % linwuqingImgs.length;
-      linwuqingImgs[linwuqingIndex].classList.add("active");
-      linwuqingDotEls[linwuqingIndex].classList.add("active");
-    }, 5000);
   }
 
   // 森林公約設計圖 lightbox：forest-covenant.html 專用，其他頁面沒有相關元素就直接跳過
