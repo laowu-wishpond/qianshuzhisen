@@ -13,6 +13,7 @@ import {
   ECPAY_TEST_CREDENTIALS,
   ECPAY_AIO_CHECKOUT_URL,
 } from "../lib/ecpay.js";
+import { linePayFetch, LINEPAY_SANDBOX_CREDENTIALS } from "../lib/linepay.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
     tents,
     people
   );
-  const method = paymentMethod === "ecpay" ? "ecpay" : "bank_transfer";
+  const method = paymentMethod === "ecpay" || paymentMethod === "linepay" ? paymentMethod : "bank_transfer";
 
   const supabase = getSupabaseAdmin();
 
@@ -67,6 +68,56 @@ export default async function handler(req, res) {
       bookingId: booking.id,
       paymentMethod: "bank_transfer",
       totalAmount: total,
+    });
+  }
+
+  const siteUrlCommon = process.env.SITE_URL; // 例如 https://qianshuzhisen.vercel.app（不要有結尾斜線）
+  if (!siteUrlCommon) {
+    return res.status(500).json({ error: "後端尚未設定 SITE_URL 環境變數" });
+  }
+
+  if (method === "linepay") {
+    // ---- LINE Pay Online：呼叫 Request API 取得付款頁面網址 ----
+    const linepayEnv = process.env.LINEPAY_ENV === "production" ? "production" : "sandbox";
+    const credentials = {
+      channelId: process.env.LINEPAY_CHANNEL_ID || LINEPAY_SANDBOX_CREDENTIALS.channelId,
+      channelSecret: process.env.LINEPAY_CHANNEL_SECRET || LINEPAY_SANDBOX_CREDENTIALS.channelSecret,
+    };
+
+    const itemName = `露營帳篷 x${tentsCount}（每帳${peopleCount}人）`;
+
+    const { ok, data } = await linePayFetch(linepayEnv, credentials, "/v3/payments/request", {
+      amount: total,
+      currency: "TWD",
+      orderId: booking.id,
+      packages: [
+        {
+          id: "camping",
+          amount: total,
+          name: "水松千樹之森 露營區訂位",
+          products: [{ name: itemName, quantity: 1, price: total }],
+        },
+      ],
+      redirectUrls: {
+        confirmUrl: `${siteUrlCommon}/api/linepay-confirm`,
+        cancelUrl: `${siteUrlCommon}/booking.html?linepay=cancel`,
+      },
+    });
+
+    if (!ok || data.returnCode !== "0000") {
+      console.error("linepay request failed:", data);
+      return res.status(502).json({ error: "LINE Pay 建立付款失敗，請稍後再試或改用其他付款方式" });
+    }
+
+    await supabase
+      .from("bookings")
+      .update({ linepay_order_id: booking.id, linepay_transaction_id: String(data.info.transactionId) })
+      .eq("id", booking.id);
+
+    return res.status(200).json({
+      bookingId: booking.id,
+      paymentMethod: "linepay",
+      linepayUrl: data.info.paymentUrl.web,
     });
   }
 

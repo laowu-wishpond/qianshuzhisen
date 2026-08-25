@@ -209,6 +209,28 @@ document.addEventListener("DOMContentLoaded", function () {
   var resultEl = document.getElementById("bookingResult");
   var bankNoticeEl = document.getElementById("bankTransferNotice");
 
+  // 訪客從 LINE Pay 付款完成/取消後，會被導回這頁並帶上 ?linepay=success/fail/cancel
+  (function () {
+    var linepayStatus = new URLSearchParams(window.location.search).get("linepay");
+    if (!linepayStatus || !resultEl) return;
+    if (linepayStatus === "success") {
+      resultEl.style.color = "#8fd68f";
+      resultEl.textContent = isEnglish()
+        ? "LINE Pay payment confirmed! We'll contact you soon to confirm your booking."
+        : "LINE Pay 付款已確認！我們會盡快與您聯繫確認訂位。";
+    } else if (linepayStatus === "cancel") {
+      resultEl.style.color = "#f2c766";
+      resultEl.textContent = isEnglish()
+        ? "LINE Pay payment was cancelled. You can try again or choose another payment method."
+        : "已取消 LINE Pay 付款，您可以重新嘗試或選擇其他付款方式。";
+    } else {
+      resultEl.style.color = "#f29a9a";
+      resultEl.textContent = isEnglish()
+        ? "LINE Pay payment failed. Please try again or contact us by phone."
+        : "LINE Pay 付款未完成，請重新嘗試，或直接電話聯絡我們。";
+    }
+  })();
+
   if (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -268,6 +290,13 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             document.body.appendChild(ecpayForm);
             ecpayForm.submit();
+          } else if (data.paymentMethod === "linepay") {
+            bankNoticeEl.style.display = "none";
+            resultEl.style.color = "";
+            resultEl.textContent = isEnglish()
+              ? "Order created — redirecting to LINE Pay…"
+              : "訂單已建立，正在導向 LINE Pay…";
+            window.location.href = data.linepayUrl;
           } else {
             resultEl.style.color = "#8fd68f";
             resultEl.textContent = isEnglish()
