@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var musicPanel = document.getElementById("musicPlaylist");
   var musicList = document.getElementById("musicTrackList");
   var musicStopBtn = document.getElementById("musicStopBtn");
+  var musicMuteBtn = document.getElementById("musicMuteBtn");
   var musicNowPlaying = document.getElementById("musicNowPlaying");
   var musicNowPlayingText = document.getElementById("musicNowPlayingText");
 
@@ -89,6 +90,15 @@ document.addEventListener("DOMContentLoaded", function () {
       musicBtn.classList.toggle("playing", playing);
       var isEn = document.documentElement.lang === "en";
       musicBtn.setAttribute("aria-label", playing ? (isEn ? "Pause music" : "關閉背景音樂") : (isEn ? "Choose background music" : "選擇背景音樂"));
+      if (musicMuteBtn) {
+        musicMuteBtn.classList.toggle("playing", playing);
+        musicMuteBtn.setAttribute("aria-pressed", playing ? "false" : "true");
+        musicMuteBtn.setAttribute("aria-label", playing ? (isEn ? "Turn off music" : "關閉背景音樂") : (isEn ? "Turn on music" : "開啟背景音樂"));
+        var iconSpeaker = musicMuteBtn.querySelector(".icon-speaker");
+        var iconMute = musicMuteBtn.querySelector(".icon-mute");
+        if (iconSpeaker) iconSpeaker.hidden = !playing;
+        if (iconMute) iconMute.hidden = playing;
+      }
     }
 
     // 更新每首歌左邊的小圖示（未選取 ♪／播放中 ⏸／已選但暫停 ▶），並更新按鈕旁的「現在播放」提示
@@ -199,6 +209,19 @@ document.addEventListener("DOMContentLoaded", function () {
       musicStopBtn.addEventListener("click", function (e) {
         e.stopPropagation();
         stopMusic();
+        closePanel();
+      });
+    }
+
+    // 音樂旁的獨立開關鈕：不用打開歌單選單，一鍵直接關閉／恢復播放目前這首歌
+    if (musicMuteBtn) {
+      musicMuteBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (!music.paused) {
+          stopMusic();
+        } else {
+          playTrack(currentTrackId);
+        }
         closePanel();
       });
     }
