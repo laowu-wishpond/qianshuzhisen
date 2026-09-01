@@ -358,8 +358,8 @@ document.addEventListener("DOMContentLoaded", function () {
         curtain.classList.add("curtain-open");
         setTimeout(function () {
           curtain.classList.add("curtain-hidden");
-        }, 1300);
-      }, 350);
+        }, 8700);
+      }, 900);
     }
   }
 });
