@@ -43,162 +43,39 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   font-family: "Noto Serif TC", "PingFang TC", serif;
 }
 
-/* 首頁開場簾幕動畫：插畫從畫面中央往四周展開，最後固定成邊框，直到訪客按「進入森林」 */
+/* 首頁開場動畫：由 CapCut 製作的森林動畫影片全螢幕播放，
+   播放中可隨時按「跳過動畫」，或等影片快結束時按「進入森林」進入網站 */
 .page-curtain {
   position: fixed;
   inset: 0;
   z-index: 999;
+  background: var(--bg-deep);
   pointer-events: none;
 }
-.curtain-frame {
+.curtain-video {
   position: absolute;
   inset: 0;
-  background-image: url('../images/curtain-forest.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: brightness(1.25) saturate(1.15);
-  -webkit-mask-image: radial-gradient(circle at center, transparent 0%, #000 1%);
-  mask-image: radial-gradient(circle at center, transparent 0%, #000 1%);
-}
-.curtain-fireflies {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.firefly {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, #fff6d0 30%, #e0c690 55%, rgba(224,198,144,0) 78%);
-  box-shadow: 0 0 10px 4px rgba(255, 233, 168, 0.95), 0 0 20px 8px rgba(224, 198, 144, 0.5);
-  opacity: 0;
-  --dx: 15px;
-  --dy: -18px;
-  animation: firefly-blink ease-in-out infinite, firefly-drift ease-in-out infinite;
-}
-@keyframes firefly-blink {
-  0% { opacity: 0.05; }
-  8% { opacity: 1; }
-  16% { opacity: 0.15; }
-  24% { opacity: 0.9; }
-  34% { opacity: 0.1; }
-  70% { opacity: 0.08; }
-  82% { opacity: 0.85; }
-  100% { opacity: 0.05; }
-}
-@keyframes firefly-drift {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(calc(var(--dx) * 0.6), calc(var(--dy) * -0.8)); }
-  50% { transform: translate(var(--dx), var(--dy)); }
-  75% { transform: translate(calc(var(--dx) * -0.4), calc(var(--dy) * 0.5)); }
-  100% { transform: translate(0, 0); }
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
-/* 一對台灣藍鵲：兩隻各自獨立從畫面外飛入，時間點錯開，分別停在不同枝頭，
-   而不是同一張圖一起移動 —— 看起來像先後飛來會合，而非綁在一起的貼圖 */
-.curtain-magpie {
-  position: absolute;
-  width: 15%;
-  max-width: 200px;
-  height: auto;
-  opacity: 0;
-  pointer-events: none;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.3));
-}
-.curtain-magpie-1 {
-  left: 65%;
-  top: 26%;
-  transform: translate(-180%, -140%) scale(0.55) rotate(-10deg);
-  transition: transform 3.2s cubic-bezier(0.22, 0.68, 0.35, 1), opacity 1.6s ease;
-}
-.page-curtain.curtain-magpie1-in .curtain-magpie-1 {
-  transform: translate(0, 0) scale(1) rotate(0deg);
-  opacity: 1;
-}
-.page-curtain.curtain-magpie1-landed .curtain-magpie-1 {
-  animation: magpie-hover 5s ease-in-out infinite;
-}
-.curtain-magpie-2 {
-  left: 39%;
-  top: 16%;
-  transform: translate(190%, -150%) scale(0.5) rotate(12deg);
-  transition: transform 3.4s cubic-bezier(0.22, 0.68, 0.35, 1), opacity 1.6s ease;
-}
-.page-curtain.curtain-magpie2-in .curtain-magpie-2 {
-  transform: translate(0, 0) scale(1) rotate(0deg);
-  opacity: 1;
-}
-.page-curtain.curtain-magpie2-landed .curtain-magpie-2 {
-  animation: magpie-hover 4.6s ease-in-out infinite;
-  animation-delay: 0.8s;
-}
-@keyframes magpie-hover {
-  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  50% { transform: translate(0, -5px) scale(1) rotate(-1deg); }
-}
-
-.curtain-butterflies {
-  position: absolute;
-  left: 20%;
-  top: 74%;
-  width: 10%;
-  max-width: 140px;
-  height: auto;
-  transform: translate(160%, 220%) scale(0.5) rotate(14deg);
-  opacity: 0;
-  pointer-events: none;
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.28));
-  transition: transform 3.6s cubic-bezier(0.22, 0.68, 0.35, 1), opacity 2s ease;
-}
-.page-curtain.curtain-butterflies-in .curtain-butterflies {
-  transform: translate(0, 0) scale(1) rotate(0deg);
-  opacity: 1;
-}
-.page-curtain.curtain-butterflies-landed .curtain-butterflies {
-  animation: butterfly-flutter 2.6s ease-in-out infinite;
-}
-@keyframes butterfly-flutter {
-  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  50% { transform: translate(0, -3px) scale(0.97, 1.03) rotate(2deg); }
-}
-
-/* 松鼠：動畫尾聲時在右側樹幹下方出現，接著沿樹幹往上爬到高處，之後原地小幅晃動 */
-.curtain-squirrel {
-  position: absolute;
-  left: 79%;
-  top: 66%;
-  width: 10%;
-  max-width: 170px;
-  height: auto;
-  opacity: 0;
-  pointer-events: none;
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
-  transition: top 4.6s cubic-bezier(0.4, 0.86, 0.44, 1), opacity 1.2s ease;
-}
-.page-curtain.curtain-squirrel-in .curtain-squirrel {
-  opacity: 1;
-}
-.page-curtain.curtain-squirrel-climb .curtain-squirrel {
-  top: 40%;
-}
-.page-curtain.curtain-squirrel-landed .curtain-squirrel {
-  animation: squirrel-wobble 2.4s ease-in-out infinite;
-}
-@keyframes squirrel-wobble {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  25% { transform: translate(-2px, -1px) rotate(-2deg); }
-  75% { transform: translate(2px, -1px) rotate(2deg); }
-}
-
-.curtain-enter-btn {
+.curtain-btn-group {
   position: absolute;
   left: 50%;
   bottom: 14%;
-  transform: translateX(-50%) translateY(16px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.curtain-enter-btn {
   opacity: 0;
   pointer-events: none;
+  transform: translateY(16px);
   background: var(--gold);
   color: var(--bg-deep);
   border: none;
@@ -214,8 +91,34 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
 .page-curtain.curtain-show-btn .curtain-enter-btn {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
+
+.curtain-skip-btn {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ink-soft);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 10px 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  font-family: "Noto Serif TC", serif;
+  transition: opacity 0.8s ease, transform 0.8s ease, background 0.2s ease;
+}
+.curtain-skip-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--ink);
+}
+.page-curtain.curtain-show-skip .curtain-skip-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
 .page-curtain.curtain-dismissed {
   opacity: 0;
   transition: opacity 1s ease;

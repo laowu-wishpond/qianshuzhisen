@@ -339,15 +339,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // 首頁開場動畫：森林插畫從畫面中央向外緩緩展開（約15秒），
-  // 花鳥植物最後固定成畫面四周的邊框，不會自動消失，
-  // 「進入森林」按鈕在第10秒就會出現，訪客不用等動畫全部展開完，
-  // 按下後才淡出，讓出完整網站。
+  // 首頁開場動畫：由 CapCut 製作的森林動畫影片（約15秒）全螢幕播放，
+  // 播放中隨時可按「跳過動畫」略過，影片快結束前「進入森林」按鈕也會出現，
+  // 按下任一按鈕都會淡出，讓出完整網站。
   var curtain = document.getElementById("pageCurtain");
-  var curtainFrame = document.getElementById("curtainFrame");
-  var curtainFireflies = document.getElementById("curtainFireflies");
+  var curtainVideo = document.getElementById("curtainVideo");
   var curtainEnterBtn = document.getElementById("curtainEnterBtn");
-  if (curtain && curtainFrame) {
+  var curtainSkipBtn = document.getElementById("curtainSkipBtn");
+  if (curtain && curtainVideo) {
     var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var alreadyShown = false;
     try {
@@ -356,6 +355,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function dismissCurtain() {
       curtain.classList.add("curtain-dismissed");
+      try {
+        curtainVideo.pause();
+      } catch (e) {}
       setTimeout(function () {
         curtain.classList.add("curtain-removed");
       }, 1000);
@@ -368,115 +370,29 @@ document.addEventListener("DOMContentLoaded", function () {
         sessionStorage.setItem("curtainShown", "1");
       } catch (e) {}
 
-      // 灑一群會閃爍飄動的螢火蟲光點，散布在畫面各處
-      if (curtainFireflies) {
-        var FIREFLY_COUNT = 34;
-        for (var i = 0; i < FIREFLY_COUNT; i++) {
-          var dot = document.createElement("span");
-          dot.className = "firefly";
-          var size = 4 + Math.random() * 5;
-          dot.style.width = size + "px";
-          dot.style.height = size + "px";
-          dot.style.left = Math.random() * 100 + "%";
-          dot.style.top = Math.random() * 100 + "%";
-          var angle = Math.random() * Math.PI * 2;
-          var dist = 22 + Math.random() * 30;
-          dot.style.setProperty("--dx", (Math.cos(angle) * dist).toFixed(1) + "px");
-          dot.style.setProperty("--dy", (Math.sin(angle) * dist).toFixed(1) + "px");
-          dot.style.animationDuration =
-            (1.4 + Math.random() * 2).toFixed(2) + "s, " + (5 + Math.random() * 6).toFixed(2) + "s";
-          dot.style.animationDelay =
-            (Math.random() * 3).toFixed(2) + "s, " + (Math.random() * 5).toFixed(2) + "s";
-          curtainFireflies.appendChild(dot);
-        }
-      }
-
-      var DURATION = 15000; // 展開總時長（毫秒）
-      var HOLD = 500; // 展開前先停留一下
-      var BTN_DELAY = 10000; // 「進入森林」按鈕在動畫開始後第幾毫秒出現（不用等動畫全部展開完）
-      var TARGET_HOLE = 62; // 最終「洞」的大小（畫面對角線的百分比），洞外留下森林邊框
-      var FEATHER = 3; // 邊緣羽化寬度（百分比）
-
-      function easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-      }
-
-      function setHole(percent) {
-        var stop1 = percent.toFixed(2) + "%";
-        var stop2 = (percent + FEATHER).toFixed(2) + "%";
-        var gradient =
-          "radial-gradient(circle at center, transparent " + stop1 + ", #000 " + stop2 + ")";
-        curtainFrame.style.maskImage = gradient;
-        curtainFrame.style.webkitMaskImage = gradient;
-      }
-
-      setHole(1);
+      var SKIP_DELAY = 800; // 「跳過動畫」按鈕很快就會出現，讓訪客隨時可以跳過
+      var BTN_DELAY = 10000; // 「進入森林」按鈕在影片播放約 10 秒後出現，不用等影片全部播完
 
       setTimeout(function () {
-        var start = null;
-        function step(ts) {
-          if (!start) start = ts;
-          var t = Math.min(1, (ts - start) / DURATION);
-          setHole(1 + easeOutCubic(t) * (TARGET_HOLE - 1));
-          if (t < 1) {
-            requestAnimationFrame(step);
-          }
-        }
-        requestAnimationFrame(step);
-      }, HOLD);
+        curtain.classList.add("curtain-show-skip");
+      }, SKIP_DELAY);
 
-      // 按鈕不用等動畫完全展開完才出現，動畫開始後第 10 秒就先讓訪客可以按「進入森林」
       setTimeout(function () {
         curtain.classList.add("curtain-show-btn");
-      }, HOLD + BTN_DELAY);
+      }, BTN_DELAY);
 
-      // 一對台灣藍鵲：兩隻鳥各自獨立飛入畫面（時間點錯開、起點不同），
-      // 分別停在不同枝頭，而不是同一張圖綁在一起移動
-      var MAGPIE1_FLY_DELAY = 3000;
-      var MAGPIE1_LAND_DELAY = 6200; // 需與 CSS 的 transform transition 時間搭配
-      setTimeout(function () {
-        curtain.classList.add("curtain-magpie1-in");
-      }, HOLD + MAGPIE1_FLY_DELAY);
-      setTimeout(function () {
-        curtain.classList.add("curtain-magpie1-landed");
-      }, HOLD + MAGPIE1_LAND_DELAY);
-
-      var MAGPIE2_FLY_DELAY = 4500;
-      var MAGPIE2_LAND_DELAY = 7900;
-      setTimeout(function () {
-        curtain.classList.add("curtain-magpie2-in");
-      }, HOLD + MAGPIE2_FLY_DELAY);
-      setTimeout(function () {
-        curtain.classList.add("curtain-magpie2-landed");
-      }, HOLD + MAGPIE2_LAND_DELAY);
-
-      // 一對黑藍鳳蝶：緊接在藍鵲之後飛入，停在前景花叢上，之後輕輕振翅
-      var BUTTERFLIES_FLY_DELAY = 5300;
-      var BUTTERFLIES_LAND_DELAY = 9200;
-      setTimeout(function () {
-        curtain.classList.add("curtain-butterflies-in");
-      }, HOLD + BUTTERFLIES_FLY_DELAY);
-      setTimeout(function () {
-        curtain.classList.add("curtain-butterflies-landed");
-      }, HOLD + BUTTERFLIES_LAND_DELAY);
-
-      // 松鼠：動畫尾聲時在樹幹下方出現，接著往上爬到高處，之後原地小幅晃動
-      var SQUIRREL_APPEAR_DELAY = 6000;
-      var SQUIRREL_CLIMB_DELAY = 6800; // 需與 CSS 的 top transition 時間搭配
-      var SQUIRREL_LANDED_DELAY = 11500;
-      setTimeout(function () {
-        curtain.classList.add("curtain-squirrel-in");
-      }, HOLD + SQUIRREL_APPEAR_DELAY);
-      setTimeout(function () {
-        curtain.classList.add("curtain-squirrel-climb");
-      }, HOLD + SQUIRREL_CLIMB_DELAY);
-      setTimeout(function () {
-        curtain.classList.add("curtain-squirrel-landed");
-      }, HOLD + SQUIRREL_LANDED_DELAY);
+      // 保險起見，若瀏覽器阻擋了 autoplay，手動再嘗試播放一次
+      var playPromise = curtainVideo.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(function () {});
+      }
     }
 
     if (curtainEnterBtn) {
       curtainEnterBtn.addEventListener("click", dismissCurtain);
+    }
+    if (curtainSkipBtn) {
+      curtainSkipBtn.addEventListener("click", dismissCurtain);
     }
   }
 });
