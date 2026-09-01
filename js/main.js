@@ -344,6 +344,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // 直到訪客按下「進入森林」才淡出，讓出完整網站。
   var curtain = document.getElementById("pageCurtain");
   var curtainFrame = document.getElementById("curtainFrame");
+  var curtainFireflies = document.getElementById("curtainFireflies");
   var curtainEnterBtn = document.getElementById("curtainEnterBtn");
   if (curtain && curtainFrame) {
     var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -365,6 +366,25 @@ document.addEventListener("DOMContentLoaded", function () {
       try {
         sessionStorage.setItem("curtainShown", "1");
       } catch (e) {}
+
+      // 灑一群會閃爍飄動的螢火蟲光點，散布在畫面各處
+      if (curtainFireflies) {
+        var FIREFLY_COUNT = 22;
+        for (var i = 0; i < FIREFLY_COUNT; i++) {
+          var dot = document.createElement("span");
+          dot.className = "firefly";
+          var size = 3 + Math.random() * 4;
+          dot.style.width = size + "px";
+          dot.style.height = size + "px";
+          dot.style.left = Math.random() * 100 + "%";
+          dot.style.top = Math.random() * 100 + "%";
+          dot.style.animationDuration =
+            (1.8 + Math.random() * 2.4).toFixed(2) + "s, " + (4 + Math.random() * 5).toFixed(2) + "s";
+          dot.style.animationDelay =
+            (Math.random() * 4).toFixed(2) + "s, " + (Math.random() * 4).toFixed(2) + "s";
+          curtainFireflies.appendChild(dot);
+        }
+      }
 
       var DURATION = 20000; // 展開總時長（毫秒）
       var HOLD = 500; // 展開前先停留一下
