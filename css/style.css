@@ -43,35 +43,52 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   font-family: "Noto Serif TC", "PingFang TC", serif;
 }
 
-/* 首頁開場簾幕動畫 */
+/* 首頁開場簾幕動畫：插畫從畫面中央往四周展開，最後固定成邊框，直到訪客按「進入森林」 */
 .page-curtain {
   position: fixed;
   inset: 0;
   z-index: 999;
   pointer-events: none;
 }
-.curtain-panel {
+.curtain-frame {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50%;
+  inset: 0;
   background-image: url('../images/curtain-forest.jpg');
-  background-size: 200% 100%;
+  background-size: cover;
+  background-position: center;
   background-repeat: no-repeat;
-  background-color: var(--bg-deep);
-  transition: transform 8.5s cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-mask-image: radial-gradient(circle at center, transparent 0%, #000 1%);
+  mask-image: radial-gradient(circle at center, transparent 0%, #000 1%);
 }
-.curtain-left {
-  left: 0;
-  background-position: left center;
+.curtain-enter-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  transform: translateX(-50%) translateY(16px);
+  opacity: 0;
+  pointer-events: none;
+  background: var(--gold);
+  color: var(--bg-deep);
+  border: none;
+  padding: 14px 40px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: "Noto Serif TC", serif;
+  transition: opacity 1.2s ease, transform 1.2s ease;
 }
-.curtain-right {
-  right: 0;
-  background-position: right center;
+.page-curtain.curtain-show-btn .curtain-enter-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
 }
-.page-curtain.curtain-open .curtain-left { transform: translateX(-100%); }
-.page-curtain.curtain-open .curtain-right { transform: translateX(100%); }
-.page-curtain.curtain-hidden { display: none; }
+.page-curtain.curtain-dismissed {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.page-curtain.curtain-removed { display: none; }
 
 /* Header */
 header.site-header {

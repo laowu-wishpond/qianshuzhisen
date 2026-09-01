@@ -339,27 +339,71 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // 首頁開場簾幕動畫：兩片森林插畫從中間往左右滑開，露出下方 hero
+  // 首頁開場動畫：森林插畫從畫面中央向外緩緩展開（約20秒），
+  // 花鳥植物最後固定成畫面四周的邊框，不會自動消失，
+  // 直到訪客按下「進入森林」才淡出，讓出完整網站。
   var curtain = document.getElementById("pageCurtain");
-  if (curtain) {
+  var curtainFrame = document.getElementById("curtainFrame");
+  var curtainEnterBtn = document.getElementById("curtainEnterBtn");
+  if (curtain && curtainFrame) {
     var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var alreadyShown = false;
     try {
       alreadyShown = sessionStorage.getItem("curtainShown") === "1";
     } catch (e) {}
 
+    function dismissCurtain() {
+      curtain.classList.add("curtain-dismissed");
+      setTimeout(function () {
+        curtain.classList.add("curtain-removed");
+      }, 1000);
+    }
+
     if (reducedMotion || alreadyShown) {
-      curtain.classList.add("curtain-hidden");
+      curtain.classList.add("curtain-removed");
     } else {
       try {
         sessionStorage.setItem("curtainShown", "1");
       } catch (e) {}
+
+      var DURATION = 20000; // 展開總時長（毫秒）
+      var HOLD = 500; // 展開前先停留一下
+      var TARGET_HOLE = 62; // 最終「洞」的大小（畫面對角線的百分比），洞外留下森林邊框
+      var FEATHER = 3; // 邊緣羽化寬度（百分比）
+
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function setHole(percent) {
+        var stop1 = percent.toFixed(2) + "%";
+        var stop2 = (percent + FEATHER).toFixed(2) + "%";
+        var gradient =
+          "radial-gradient(circle at center, transparent " + stop1 + ", #000 " + stop2 + ")";
+        curtainFrame.style.maskImage = gradient;
+        curtainFrame.style.webkitMaskImage = gradient;
+      }
+
+      setHole(1);
+
       setTimeout(function () {
-        curtain.classList.add("curtain-open");
-        setTimeout(function () {
-          curtain.classList.add("curtain-hidden");
-        }, 8700);
-      }, 900);
+        var start = null;
+        function step(ts) {
+          if (!start) start = ts;
+          var t = Math.min(1, (ts - start) / DURATION);
+          setHole(1 + easeOutCubic(t) * (TARGET_HOLE - 1));
+          if (t < 1) {
+            requestAnimationFrame(step);
+          } else {
+            curtain.classList.add("curtain-show-btn");
+          }
+        }
+        requestAnimationFrame(step);
+      }, HOLD);
+    }
+
+    if (curtainEnterBtn) {
+      curtainEnterBtn.addEventListener("click", dismissCurtain);
     }
   }
 });
