@@ -43,6 +43,36 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   font-family: "Noto Serif TC", "PingFang TC", serif;
 }
 
+/* 首頁開場簾幕動畫 */
+.page-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+}
+.curtain-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background-image: url('../images/curtain-forest.jpg');
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-color: var(--bg-deep);
+  transition: transform 1.1s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.curtain-left {
+  left: 0;
+  background-position: left center;
+}
+.curtain-right {
+  right: 0;
+  background-position: right center;
+}
+.page-curtain.curtain-open .curtain-left { transform: translateX(-100%); }
+.page-curtain.curtain-open .curtain-right { transform: translateX(100%); }
+.page-curtain.curtain-hidden { display: none; }
+
 /* Header */
 header.site-header {
   position: sticky;

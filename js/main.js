@@ -338,4 +338,28 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
   }
+
+  // 首頁開場簾幕動畫：兩片森林插畫從中間往左右滑開，露出下方 hero
+  var curtain = document.getElementById("pageCurtain");
+  if (curtain) {
+    var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var alreadyShown = false;
+    try {
+      alreadyShown = sessionStorage.getItem("curtainShown") === "1";
+    } catch (e) {}
+
+    if (reducedMotion || alreadyShown) {
+      curtain.classList.add("curtain-hidden");
+    } else {
+      try {
+        sessionStorage.setItem("curtainShown", "1");
+      } catch (e) {}
+      setTimeout(function () {
+        curtain.classList.add("curtain-open");
+        setTimeout(function () {
+          curtain.classList.add("curtain-hidden");
+        }, 1300);
+      }, 350);
+    }
+  }
 });
