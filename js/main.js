@@ -370,8 +370,8 @@ document.addEventListener("DOMContentLoaded", function () {
         sessionStorage.setItem("curtainShown", "1");
       } catch (e) {}
 
-      var SKIP_DELAY = 800; // 「跳過動畫」按鈕很快就會出現，讓訪客隨時可以跳過
-      var BTN_DELAY = 6500; // 影片縮短為約10秒，「進入森林」按鈕在播放約6.5秒後出現，不用等影片全部播完
+      var SKIP_DELAY = 500; // 「跳過動畫」按鈕幾乎一開始就出現，全程都可以跳過
+      var BTN_DELAY = 500; // 「進入森林」按鈕也從一開始就出現，全程都可以直接進入，不用等影片播完
 
       setTimeout(function () {
         curtain.classList.add("curtain-show-skip");
