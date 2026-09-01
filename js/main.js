@@ -369,19 +369,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // 灑一群會閃爍飄動的螢火蟲光點，散布在畫面各處
       if (curtainFireflies) {
-        var FIREFLY_COUNT = 22;
+        var FIREFLY_COUNT = 34;
         for (var i = 0; i < FIREFLY_COUNT; i++) {
           var dot = document.createElement("span");
           dot.className = "firefly";
-          var size = 3 + Math.random() * 4;
+          var size = 4 + Math.random() * 5;
           dot.style.width = size + "px";
           dot.style.height = size + "px";
           dot.style.left = Math.random() * 100 + "%";
           dot.style.top = Math.random() * 100 + "%";
+          var angle = Math.random() * Math.PI * 2;
+          var dist = 22 + Math.random() * 30;
+          dot.style.setProperty("--dx", (Math.cos(angle) * dist).toFixed(1) + "px");
+          dot.style.setProperty("--dy", (Math.sin(angle) * dist).toFixed(1) + "px");
           dot.style.animationDuration =
-            (1.8 + Math.random() * 2.4).toFixed(2) + "s, " + (4 + Math.random() * 5).toFixed(2) + "s";
+            (1.4 + Math.random() * 2).toFixed(2) + "s, " + (5 + Math.random() * 6).toFixed(2) + "s";
           dot.style.animationDelay =
-            (Math.random() * 4).toFixed(2) + "s, " + (Math.random() * 4).toFixed(2) + "s";
+            (Math.random() * 3).toFixed(2) + "s, " + (Math.random() * 5).toFixed(2) + "s";
           curtainFireflies.appendChild(dot);
         }
       }
