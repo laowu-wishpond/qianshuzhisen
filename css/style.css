@@ -96,6 +96,91 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   100% { transform: translate(0, 0); }
 }
 
+/* 一對台灣藍鵲、一對黑藍鳳蝶：動畫展開途中從畫面外飛入，停在柚子樹枝／花叢間 */
+.curtain-magpies {
+  position: absolute;
+  left: 66%;
+  top: 27%;
+  width: 17%;
+  max-width: 230px;
+  height: auto;
+  transform: translate(-170%, -130%) scale(0.55) rotate(-10deg);
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.3));
+  transition: transform 3.4s cubic-bezier(0.22, 0.68, 0.35, 1), opacity 1.8s ease;
+}
+.page-curtain.curtain-birds-in .curtain-magpies {
+  transform: translate(0, 0) scale(1) rotate(0deg);
+  opacity: 1;
+}
+.page-curtain.curtain-birds-landed .curtain-magpies {
+  animation: magpie-hover 5s ease-in-out infinite;
+}
+@keyframes magpie-hover {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(0, -5px) scale(1) rotate(-1deg); }
+}
+
+.curtain-butterflies {
+  position: absolute;
+  left: 20%;
+  top: 74%;
+  width: 10%;
+  max-width: 140px;
+  height: auto;
+  transform: translate(160%, 220%) scale(0.5) rotate(14deg);
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.28));
+  transition: transform 3.6s cubic-bezier(0.22, 0.68, 0.35, 1), opacity 2s ease;
+}
+.page-curtain.curtain-butterflies-in .curtain-butterflies {
+  transform: translate(0, 0) scale(1) rotate(0deg);
+  opacity: 1;
+}
+.page-curtain.curtain-butterflies-landed .curtain-butterflies {
+  animation: butterfly-flutter 2.6s ease-in-out infinite;
+}
+@keyframes butterfly-flutter {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(0, -3px) scale(0.97, 1.03) rotate(2deg); }
+}
+
+/* 星空帳未來模擬圖：動畫接近尾聲時淡入，疊在森林插畫右下角的小卡片 */
+.curtain-stardome {
+  position: absolute;
+  right: 4%;
+  bottom: 24%;
+  width: 30%;
+  max-width: 320px;
+  min-width: 160px;
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+  transition: opacity 1.4s ease, transform 1.4s ease;
+  text-align: center;
+}
+.curtain-stardome img {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+}
+.curtain-stardome-caption {
+  margin: 8px 0 0;
+  color: #fff8e6;
+  font-family: "Noto Serif TC", serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65);
+}
+.page-curtain.curtain-stardome-in .curtain-stardome {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .curtain-enter-btn {
   position: absolute;
   left: 50%;

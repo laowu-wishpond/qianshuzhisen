@@ -339,9 +339,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // 首頁開場動畫：森林插畫從畫面中央向外緩緩展開（約20秒），
+  // 首頁開場動畫：森林插畫從畫面中央向外緩緩展開（約15秒），
   // 花鳥植物最後固定成畫面四周的邊框，不會自動消失，
-  // 直到訪客按下「進入森林」才淡出，讓出完整網站。
+  // 「進入森林」按鈕在第10秒就會出現，訪客不用等動畫全部展開完，
+  // 按下後才淡出，讓出完整網站。
   var curtain = document.getElementById("pageCurtain");
   var curtainFrame = document.getElementById("curtainFrame");
   var curtainFireflies = document.getElementById("curtainFireflies");
@@ -390,8 +391,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
-      var DURATION = 20000; // 展開總時長（毫秒）
+      var DURATION = 15000; // 展開總時長（毫秒）
       var HOLD = 500; // 展開前先停留一下
+      var BTN_DELAY = 10000; // 「進入森林」按鈕在動畫開始後第幾毫秒出現（不用等動畫全部展開完）
       var TARGET_HOLE = 62; // 最終「洞」的大小（畫面對角線的百分比），洞外留下森林邊框
       var FEATHER = 3; // 邊緣羽化寬度（百分比）
 
@@ -418,12 +420,41 @@ document.addEventListener("DOMContentLoaded", function () {
           setHole(1 + easeOutCubic(t) * (TARGET_HOLE - 1));
           if (t < 1) {
             requestAnimationFrame(step);
-          } else {
-            curtain.classList.add("curtain-show-btn");
           }
         }
         requestAnimationFrame(step);
       }, HOLD);
+
+      // 按鈕不用等動畫完全展開完才出現，動畫開始後第 10 秒就先讓訪客可以按「進入森林」
+      setTimeout(function () {
+        curtain.classList.add("curtain-show-btn");
+      }, HOLD + BTN_DELAY);
+
+      // 一對台灣藍鵲：動畫展開途中飛入畫面，停在柚子樹枝間，之後輕輕振翅
+      var BIRDS_FLY_DELAY = 3000;
+      var BIRDS_LAND_DELAY = 7200; // 需與 CSS 的 transform transition 時間搭配
+      setTimeout(function () {
+        curtain.classList.add("curtain-birds-in");
+      }, HOLD + BIRDS_FLY_DELAY);
+      setTimeout(function () {
+        curtain.classList.add("curtain-birds-landed");
+      }, HOLD + BIRDS_LAND_DELAY);
+
+      // 一對黑藍鳳蝶：緊接在藍鵲之後飛入，停在前景花叢上，之後輕輕振翅
+      var BUTTERFLIES_FLY_DELAY = 5300;
+      var BUTTERFLIES_LAND_DELAY = 9200;
+      setTimeout(function () {
+        curtain.classList.add("curtain-butterflies-in");
+      }, HOLD + BUTTERFLIES_FLY_DELAY);
+      setTimeout(function () {
+        curtain.classList.add("curtain-butterflies-landed");
+      }, HOLD + BUTTERFLIES_LAND_DELAY);
+
+      // 星空帳未來模擬圖：動畫接近尾聲時，淡入畫面右下角的小卡片
+      var STARDOME_DELAY = 9600;
+      setTimeout(function () {
+        curtain.classList.add("curtain-stardome-in");
+      }, HOLD + STARDOME_DELAY);
     }
 
     if (curtainEnterBtn) {
