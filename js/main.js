@@ -371,7 +371,7 @@ document.addEventListener("DOMContentLoaded", function () {
       } catch (e) {}
 
       var SKIP_DELAY = 800; // 「跳過動畫」按鈕很快就會出現，讓訪客隨時可以跳過
-      var BTN_DELAY = 10000; // 「進入森林」按鈕在影片播放約 10 秒後出現，不用等影片全部播完
+      var BTN_DELAY = 6500; // 影片縮短為約10秒，「進入森林」按鈕在播放約6.5秒後出現，不用等影片全部播完
 
       setTimeout(function () {
         curtain.classList.add("curtain-show-skip");

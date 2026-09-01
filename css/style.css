@@ -57,8 +57,11 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* 影片是直式構圖，寬螢幕桌機用 cover 會裁掉太多畫面內容（如貓頭鷹、山羌），
+     改用 contain 確保完整內容一定看得到，兩側留白用森林深色背景填滿 */
+  object-fit: contain;
   object-position: center;
+  background: var(--bg-deep);
 }
 
 .curtain-btn-group {
