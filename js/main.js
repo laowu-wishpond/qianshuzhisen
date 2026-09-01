@@ -430,15 +430,25 @@ document.addEventListener("DOMContentLoaded", function () {
         curtain.classList.add("curtain-show-btn");
       }, HOLD + BTN_DELAY);
 
-      // 一對台灣藍鵲：動畫展開途中飛入畫面，停在柚子樹枝間，之後輕輕振翅
-      var BIRDS_FLY_DELAY = 3000;
-      var BIRDS_LAND_DELAY = 7200; // 需與 CSS 的 transform transition 時間搭配
+      // 一對台灣藍鵲：兩隻鳥各自獨立飛入畫面（時間點錯開、起點不同），
+      // 分別停在不同枝頭，而不是同一張圖綁在一起移動
+      var MAGPIE1_FLY_DELAY = 3000;
+      var MAGPIE1_LAND_DELAY = 6200; // 需與 CSS 的 transform transition 時間搭配
       setTimeout(function () {
-        curtain.classList.add("curtain-birds-in");
-      }, HOLD + BIRDS_FLY_DELAY);
+        curtain.classList.add("curtain-magpie1-in");
+      }, HOLD + MAGPIE1_FLY_DELAY);
       setTimeout(function () {
-        curtain.classList.add("curtain-birds-landed");
-      }, HOLD + BIRDS_LAND_DELAY);
+        curtain.classList.add("curtain-magpie1-landed");
+      }, HOLD + MAGPIE1_LAND_DELAY);
+
+      var MAGPIE2_FLY_DELAY = 4500;
+      var MAGPIE2_LAND_DELAY = 7900;
+      setTimeout(function () {
+        curtain.classList.add("curtain-magpie2-in");
+      }, HOLD + MAGPIE2_FLY_DELAY);
+      setTimeout(function () {
+        curtain.classList.add("curtain-magpie2-landed");
+      }, HOLD + MAGPIE2_LAND_DELAY);
 
       // 一對黑藍鳳蝶：緊接在藍鵲之後飛入，停在前景花叢上，之後輕輕振翅
       var BUTTERFLIES_FLY_DELAY = 5300;
@@ -450,11 +460,19 @@ document.addEventListener("DOMContentLoaded", function () {
         curtain.classList.add("curtain-butterflies-landed");
       }, HOLD + BUTTERFLIES_LAND_DELAY);
 
-      // 星空帳未來模擬圖：動畫接近尾聲時，淡入畫面右下角的小卡片
-      var STARDOME_DELAY = 9600;
+      // 松鼠：動畫尾聲時在樹幹下方出現，接著往上爬到高處，之後原地小幅晃動
+      var SQUIRREL_APPEAR_DELAY = 6000;
+      var SQUIRREL_CLIMB_DELAY = 6800; // 需與 CSS 的 top transition 時間搭配
+      var SQUIRREL_LANDED_DELAY = 11500;
       setTimeout(function () {
-        curtain.classList.add("curtain-stardome-in");
-      }, HOLD + STARDOME_DELAY);
+        curtain.classList.add("curtain-squirrel-in");
+      }, HOLD + SQUIRREL_APPEAR_DELAY);
+      setTimeout(function () {
+        curtain.classList.add("curtain-squirrel-climb");
+      }, HOLD + SQUIRREL_CLIMB_DELAY);
+      setTimeout(function () {
+        curtain.classList.add("curtain-squirrel-landed");
+      }, HOLD + SQUIRREL_LANDED_DELAY);
     }
 
     if (curtainEnterBtn) {
