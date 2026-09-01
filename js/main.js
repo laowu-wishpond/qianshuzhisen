@@ -339,9 +339,11 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // 首頁開場動畫：由 CapCut 製作的森林動畫影片（約15秒）全螢幕播放，
-  // 播放中隨時可按「跳過動畫」略過，影片快結束前「進入森林」按鈕也會出現，
-  // 按下任一按鈕都會淡出，讓出完整網站。
+  // 首頁開場動畫：由 CapCut 製作的森林動物動畫影片（約10秒）全螢幕播放，
+  // 播放中隨時可按「跳過動畫」或「進入森林」——
+  // 「跳過動畫」會淡入星空帳揭曉畫面（網頁疊加，不是影片內容），
+  // 影片播完也會自動淡入同一個星空帳畫面；
+  // 「進入森林」不管在哪個畫面，按下都會直接淡出、讓出完整網站。
   var curtain = document.getElementById("pageCurtain");
   var curtainVideo = document.getElementById("curtainVideo");
   var curtainEnterBtn = document.getElementById("curtainEnterBtn");
@@ -386,13 +388,23 @@ document.addEventListener("DOMContentLoaded", function () {
       if (playPromise && typeof playPromise.catch === "function") {
         playPromise.catch(function () {});
       }
+
+      // 淡入星空帳揭曉畫面：影片自然播完，或按下「跳過動畫」都會觸發
+      function showStardome() {
+        if (curtain.classList.contains("curtain-stardome-show")) return;
+        curtain.classList.add("curtain-stardome-show");
+        try {
+          curtainVideo.pause();
+        } catch (e) {}
+      }
+      curtainVideo.addEventListener("ended", showStardome);
+      if (curtainSkipBtn) {
+        curtainSkipBtn.addEventListener("click", showStardome);
+      }
     }
 
     if (curtainEnterBtn) {
       curtainEnterBtn.addEventListener("click", dismissCurtain);
-    }
-    if (curtainSkipBtn) {
-      curtainSkipBtn.addEventListener("click", dismissCurtain);
     }
   }
 });

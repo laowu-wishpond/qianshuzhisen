@@ -64,6 +64,60 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   background: var(--bg-deep);
 }
 
+/* 星空帳揭曉畫面：按「跳過動畫」或影片播完後，淡入取代森林影片，
+   用真正的網頁元素疊在上面（不是烤進影片畫面裡），位置永遠不會跟按鈕打架 */
+.curtain-stardome-reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.4s ease;
+  overflow: hidden;
+}
+.page-curtain.curtain-stardome-show .curtain-stardome-reveal {
+  opacity: 1;
+}
+.page-curtain.curtain-stardome-show .curtain-video {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.curtain-stardome-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.04);
+}
+.curtain-stardome-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(224, 198, 144, 0.28) 0%, rgba(224, 198, 144, 0.08) 38%, transparent 65%);
+}
+.curtain-stardome-caption {
+  position: absolute;
+  left: 50%;
+  top: 7%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.curtain-stardome-caption .title {
+  font-family: "Noto Serif TC", serif;
+  font-size: 34px;
+  letter-spacing: 8px;
+  color: var(--gold-strong);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6), 0 0 30px rgba(224, 198, 144, 0.35);
+}
+.curtain-stardome-caption .sub {
+  margin-top: 8px;
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: var(--ink-soft);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
 .curtain-btn-group {
   position: absolute;
   left: 50%;
@@ -73,6 +127,7 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   flex-direction: column;
   align-items: center;
   gap: 14px;
+  z-index: 2;
 }
 
 .curtain-enter-btn {
@@ -120,6 +175,11 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
+}
+/* 到了星空帳揭曉畫面就不用再顯示「跳過動畫」了 */
+.page-curtain.curtain-stardome-show .curtain-skip-btn {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .page-curtain.curtain-dismissed {
