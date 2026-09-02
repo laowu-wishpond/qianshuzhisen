@@ -19,6 +19,47 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // 首頁改版為單頁式敘事流程後，「預約日曆」「森林公約」等連結統一寫成 index.html#booking
+  // 這種格式。如果訪客本來就在首頁，就不要整頁重新載入，直接平滑捲動過去就好；
+  // 如果是從其他頁面（如常見問題）點過來，就讓瀏覽器正常導頁到首頁再跳到該區塊。
+  document.querySelectorAll('a[href*="index.html#"]').forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      var path = window.location.pathname;
+      var onHome = path === "/" || path === "" || /\/index\.html$/.test(path);
+      if (!onHome) return;
+      var hash = link.getAttribute("href").split("#")[1];
+      var target = hash ? document.getElementById(hash) : null;
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        try { history.pushState(null, "", "#" + hash); } catch (err) {}
+        if (nav) nav.classList.remove("nav-open");
+      }
+    });
+  });
+
+  // 滾動淡入效果：畫面上有 .reveal class 的區塊，捲動到快進入視窗時才慢慢浮現
+  var revealEls = document.querySelectorAll(".reveal");
+  if (revealEls.length) {
+    if ("IntersectionObserver" in window) {
+      var revealObserver = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("in-view");
+              revealObserver.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+      );
+      revealEls.forEach(function (el) { revealObserver.observe(el); });
+    } else {
+      // 瀏覽器不支援 IntersectionObserver 的話，直接全部顯示，不要讓內容永遠隱藏
+      revealEls.forEach(function (el) { el.classList.add("in-view"); });
+    }
+  }
+
   function applyLang(lang) {
     var isEn = lang === "en";
     document.documentElement.lang = isEn ? "en" : "zh-Hant";

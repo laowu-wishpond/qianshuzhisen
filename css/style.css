@@ -1074,3 +1074,98 @@ form.contact-form input, form.contact-form textarea {
     white-space: normal;
   }
 }
+
+/* ===== 首頁單頁式敘事流程（2026 改版）=====
+   跟著林大哥規劃的順序滾動說故事：森林全景漸現、老樹溪流生態、
+   建設進程、營位、三個理由、森林居民，最後預約與森林公約直接嵌成首頁區塊。 */
+
+html { scroll-behavior: smooth; }
+
+/* 滾動淡入工具 class：預設半透明+微微下沉，進入視窗後才浮現，配合 main.js 的 IntersectionObserver */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 1.1s ease, transform 1.1s ease;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-stagger.in-view > * { transition-delay: calc(var(--stagger-i, 0) * 0.12s); }
+
+/* 森林全景／樹影慢慢浮現 —— 大面積滿版森林景，文字淡入 */
+.panorama-reveal {
+  position: relative;
+  height: 86vh;
+  min-height: 480px;
+  max-height: 760px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+.panorama-reveal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 20, 14, 0.2) 0%, rgba(10, 20, 14, 0.62) 100%);
+}
+.panorama-reveal .panorama-text {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  padding: 0 24px;
+  color: var(--ink-soft);
+}
+.panorama-reveal .panorama-eyebrow {
+  display: block;
+  font-size: 12.5px;
+  letter-spacing: 5px;
+  opacity: 0.85;
+  margin-bottom: 16px;
+}
+.panorama-reveal .panorama-text h2 {
+  font-family: "Noto Serif TC", serif;
+  font-weight: 500;
+  font-size: clamp(22px, 4vw, 34px);
+  line-height: 1.85;
+  color: var(--ink);
+}
+
+/* 森林公約嵌入首頁後的精簡摘要卡（完整四章仍在 forest-covenant.html 可查） */
+.covenant-chapters {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin: 28px 0;
+}
+.covenant-chapter {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  background: var(--bg-card);
+}
+.covenant-chapter h4 {
+  font-family: "Noto Serif TC", serif;
+  font-size: 15px;
+  color: var(--gold-strong);
+  margin-bottom: 8px;
+}
+.covenant-chapter p {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.8;
+}
+
+/* 首頁區塊間的錨點定位微調：導覽列是 fixed 效果不強，但預留一點空間避免標題貼齊視窗頂端 */
+#story, #ecology, #progress, #sites, #reasons, #wildlife, #booking, #covenant {
+  scroll-margin-top: 18px;
+}
+
+@media (max-width: 860px) {
+  .panorama-reveal { height: 70vh; }
+  .covenant-chapters { grid-template-columns: 1fr; }
+}
