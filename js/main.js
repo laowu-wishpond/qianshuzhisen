@@ -4,6 +4,13 @@ document.addEventListener("DOMContentLoaded", function () {
   if (toggle && nav) {
     toggle.addEventListener("click", function () {
       nav.classList.toggle("nav-open");
+      // 手機版選單打開時，順手把音樂選單收起來，避免兩個下拉選單疊在一起互相遮擋
+      var openMusicPanel = document.getElementById("musicPlaylist");
+      var openMusicBtn = document.querySelector(".music-toggle");
+      if (openMusicPanel && !openMusicPanel.hidden) {
+        openMusicPanel.hidden = true;
+        if (openMusicBtn) openMusicBtn.setAttribute("aria-expanded", "false");
+      }
     });
     nav.querySelectorAll("a").forEach(function (link) {
       link.addEventListener("click", function () {
@@ -165,6 +172,8 @@ document.addEventListener("DOMContentLoaded", function () {
     function openPanel() {
       musicPanel.hidden = false;
       musicBtn.setAttribute("aria-expanded", "true");
+      // 打開歌單選單時，也把手機版導覽選單收起來，兩個下拉選單不要同時開著
+      if (nav) nav.classList.remove("nav-open");
       refreshTrackUI();
     }
     function closePanel() {
