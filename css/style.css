@@ -957,6 +957,21 @@ form.contact-form input, form.contact-form textarea {
   .covenant-gallery { grid-template-columns: 1fr; }
 }
 
+/* 森林公約濃縮成一張精簡版之後，畫廊只有一張圖，置中顯示、寬度收窄，不要被4欄網格拉伸 */
+.covenant-gallery-single {
+  grid-template-columns: 1fr;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* 手繪插畫風的三張故事場景圖：直式單欄堆疊，讓每張裡面的文字卡片維持可讀大小 */
+.covenant-gallery-story {
+  grid-template-columns: 1fr;
+  max-width: 900px;
+  margin: 0 auto;
+  gap: 24px;
+}
+
 .gallery-grid figure { margin: 0; }
 
 .gallery-grid img {
