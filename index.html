@@ -12,6 +12,68 @@
 </head>
 <body>
 
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <symbol id="critter-tree1" viewBox="0 0 70 70">
+      <rect x="31" y="58" width="8" height="10" rx="2" fill="#7a5636"/>
+      <path d="M35,10 L52,36 L44,36 L58,58 L12,58 L26,36 L18,36 Z" fill="#4a6b3f"/>
+    </symbol>
+    <symbol id="critter-tree2" viewBox="0 0 70 70">
+      <rect x="31" y="58" width="8" height="10" rx="2" fill="#7a5636"/>
+      <circle cx="35" cy="24" r="13" fill="#6f9a5a"/>
+      <circle cx="35" cy="42" r="18" fill="#4a6b3f"/>
+    </symbol>
+    <symbol id="critter-tree3" viewBox="0 0 70 70">
+      <rect x="31" y="58" width="8" height="10" rx="2" fill="#7a5636"/>
+      <path d="M35,12 C48,10 54,22 50,30 C60,32 60,46 50,50 C52,60 40,64 32,60 C22,66 10,60 12,50 C2,46 4,32 14,30 C10,20 22,10 35,12 Z" fill="#c9a86a"/>
+    </symbol>
+    <symbol id="critter-tree4" viewBox="0 0 70 70">
+      <rect x="31" y="58" width="8" height="10" rx="2" fill="#7a5636"/>
+      <path d="M35,10 C52,10 56,32 46,40 C56,46 52,58 36,58 L30,58 C14,58 10,46 20,40 C10,32 18,10 35,10 Z" fill="#839a6c"/>
+      <g fill="#5c7a4a" opacity="0.85">
+        <circle cx="27" cy="26" r="2"/><circle cx="40" cy="22" r="2"/><circle cx="46" cy="34" r="2"/>
+        <circle cx="22" cy="40" r="2"/><circle cx="35" cy="36" r="2"/><circle cx="45" cy="46" r="2"/>
+        <circle cx="25" cy="50" r="2"/><circle cx="38" cy="50" r="2"/>
+      </g>
+    </symbol>
+    <symbol id="critter-tree5" viewBox="0 0 70 70">
+      <rect x="31" y="58" width="8" height="10" rx="2" fill="#7a5636"/>
+      <path d="M35,10 L54,34 L35,34 L56,58 L14,58 L35,34 L16,34 Z" fill="#5c8a4a"/>
+      <path d="M35,10 L44,34 L35,34 L45,58 L35,58 L35,10 Z" fill="#75a862" opacity="0.85"/>
+    </symbol>
+    <symbol id="critter-tree6" viewBox="0 0 70 70">
+      <rect x="31" y="58" width="8" height="10" rx="2" fill="#7a5636"/>
+      <path d="M35,14 L46,30 L24,30 Z" fill="#c2ab55"/>
+      <path d="M35,26 L50,44 L20,44 Z" fill="#b39d4a"/>
+      <path d="M35,38 L56,58 L14,58 Z" fill="#a38e40"/>
+    </symbol>
+    <symbol id="critter-firefly" viewBox="0 0 80 80">
+      <ellipse cx="40" cy="40" rx="10" ry="7" fill="#3a2e20"/>
+      <circle class="firefly-glow" cx="52" cy="40" r="6" fill="#e0c690"/>
+      <circle class="firefly-glow" cx="52" cy="40" r="10" fill="#e0c690" opacity="0.35"/>
+      <circle class="firefly-glow" cx="52" cy="40" r="16" fill="#e0c690" opacity="0.15"/>
+      <ellipse cx="34" cy="34" rx="12" ry="5" fill="#c9a86a" opacity="0.7" transform="rotate(-18 34 34)"/>
+      <ellipse cx="34" cy="46" rx="12" ry="5" fill="#c9a86a" opacity="0.7" transform="rotate(18 34 46)"/>
+      <line x1="30" y1="36" x2="24" y2="30" stroke="#3a2e20" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="30" y1="44" x2="24" y2="50" stroke="#3a2e20" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="critter-ladybug" viewBox="0 0 80 80">
+      <ellipse cx="40" cy="44" rx="20" ry="17" fill="#b5493a"/>
+      <path d="M20,44 A20,17 0 0 1 60,44 Z" fill="#8f3427"/>
+      <line x1="40" y1="27" x2="40" y2="61" stroke="#3a2418" stroke-width="1.6"/>
+      <circle cx="40" cy="28" r="9" fill="#26201a"/>
+      <line x1="36" y1="21" x2="32" y2="14" stroke="#26201a" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="44" y1="21" x2="48" y2="14" stroke="#26201a" stroke-width="1.8" stroke-linecap="round"/>
+      <g fill="#26201a">
+        <circle cx="30" cy="38" r="3"/>
+        <circle cx="30" cy="52" r="3"/>
+        <circle cx="50" cy="38" r="3"/>
+        <circle cx="50" cy="52" r="3"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
 <div class="page-curtain" id="pageCurtain" aria-hidden="true">
   <video class="curtain-video" id="curtainVideo" src="videos/curtain-intro-v2.mp4" autoplay muted playsinline preload="auto"></video>
   <div class="curtain-stardome-reveal" id="curtainStardomeReveal" aria-hidden="true">
@@ -87,7 +149,8 @@
   </div>
 </section>
 
-<section>
+<section class="section-critters">
+  <svg class="critter critter-tree" style="left:14px; top:50%; width:46px; transform:translateY(-50%);"><use href="#critter-tree1"></use></svg><svg class="critter critter-firefly" style="right:18px; top:35%; width:40px;"><use href="#critter-firefly"></use></svg>
   <div class="container">
     <div class="facts">
       <div class="fact"><strong>5</strong><span><span class="lang-zh">公頃原始林地</span><span class="lang-en" hidden>hectares of primal forest</span></span></div>
@@ -228,7 +291,8 @@
   </div>
 </section>
 
-<section id="ecology">
+<section id="ecology" class="section-critters">
+  <svg class="critter critter-tree" style="left:16px; top:50px; width:64px;"><use href="#critter-tree3"></use></svg><svg class="critter critter-tree" style="right:20px; bottom:50px; width:56px;"><use href="#critter-tree5"></use></svg>
   <div class="container grid-2">
     <div>
       <p class="section-label reveal"><span class="lang-zh">森林生態</span><span class="lang-en" hidden>Forest ecology</span></p>
@@ -246,7 +310,8 @@
   </div>
 </section>
 
-<section id="land" class="tinted">
+<section id="land" class="tinted section-critters">
+  <svg class="critter critter-firefly" style="left:22px; top:45%; width:42px;"><use href="#critter-firefly"></use></svg><svg class="critter critter-tree" style="right:16px; bottom:40px; width:58px;"><use href="#critter-tree2"></use></svg>
   <div class="container">
     <p class="section-label reveal"><span class="lang-zh">關於我們</span><span class="lang-en" hidden>About us</span></p>
     <h2 class="section-title reveal"><span class="lang-zh">一片家族守護的土地</span><span class="lang-en" hidden>Land a family has watched over</span></h2>
@@ -290,7 +355,8 @@
   </div>
 </section>
 
-<section id="progress">
+<section id="progress" class="section-critters">
+  <svg class="critter critter-tree" style="left:18px; top:60px; width:60px;"><use href="#critter-tree4"></use></svg><svg class="critter critter-ladybug" style="right:26px; bottom:70px; width:34px;"><use href="#critter-ladybug"></use></svg>
   <div class="container">
     <p class="section-label reveal"><span class="lang-zh">建設進度</span><span class="lang-en" hidden>Construction progress</span></p>
     <h2 class="section-title reveal"><span class="lang-zh">看得見的用心</span><span class="lang-en" hidden>Progress you can see</span></h2>
@@ -299,6 +365,16 @@
       <span class="lang-en" hidden>From clearing the ground to laying platform decking and building the site office, we're preparing this land step by step — and happy to show you every stage of it.</span>
     </p>
     <div class="grid-3">
+      <div class="card reveal">
+        <img src="images/ecology-pond.jpg" alt="林間生態池造景">
+        <div class="card-body">
+          <h3><span class="lang-zh">林間生態池造景</span><span class="lang-en" hidden>Forest ecology pond</span></h3>
+          <p>
+            <span class="lang-zh">沿溪引水打造的生態池，卵石駁岸與原生老樹相映，也是園區重要的生態基地。</span>
+            <span class="lang-en" hidden>A stream-fed ecology pond lined with river stone, framed by the forest's mature trees — an important habitat feature on the grounds.</span>
+          </p>
+        </div>
+      </div>
       <div class="card reveal">
         <img src="images/deck.png" alt="營位平台鋪設">
         <div class="card-body">
@@ -346,6 +422,26 @@
           <p>
             <span class="lang-zh">初期營位規劃採木屑鋪面，兼顧排水與踩踏舒適度，示意圖。</span>
             <span class="lang-en" hidden>Early-phase sites are planned with wood-chip flooring for drainage and comfort underfoot. Concept render.</span>
+          </p>
+        </div>
+      </div>
+      <div class="card reveal">
+        <img src="images/nest-lounge-1.jpg" alt="樹上鳥巢咖啡空間">
+        <div class="card-body">
+          <h3><span class="lang-zh">樹上鳥巢咖啡空間</span><span class="lang-en" hidden>Treetop nest lounge</span></h3>
+          <p>
+            <span class="lang-zh">依著老樹搭建的鳥巢造型平台，未來將規劃為林間咖啡休憩空間。</span>
+            <span class="lang-en" hidden>A bird's-nest-shaped platform built around a mature tree, planned as an elevated forest café and lounge space.</span>
+          </p>
+        </div>
+      </div>
+      <div class="card reveal">
+        <img src="images/nest-lounge-2.jpg" alt="樹上鳥巢咖啡空間全景">
+        <div class="card-body">
+          <h3><span class="lang-zh">鳥巢空間全景</span><span class="lang-en" hidden>Nest lounge, full view</span></h3>
+          <p>
+            <span class="lang-zh">木構階梯環繞樹幹而上，兩側巢形座位圍繞樹身展開，是園區最具特色的新地標。</span>
+            <span class="lang-en" hidden>A timber staircase spirals up around the trunk to twin nest-like seating pods — one of the campground's most distinctive new landmarks.</span>
           </p>
         </div>
       </div>
@@ -399,7 +495,8 @@
   </div>
 </section>
 
-<section id="reasons">
+<section id="reasons" class="section-critters">
+  <svg class="critter critter-tree" style="left:16px; top:45%; width:58px; transform:translateY(-50%);"><use href="#critter-tree6"></use></svg><svg class="critter critter-tree" style="right:20px; top:60px; width:48px;"><use href="#critter-tree1"></use></svg>
   <div class="container">
     <p class="section-label reveal"><span class="lang-zh">為什麼選擇我們</span><span class="lang-en" hidden>Why choose us</span></p>
     <h2 class="section-title reveal"><span class="lang-zh">純森林系露營場的三個理由</span><span class="lang-en" hidden>Three reasons this is a pure-forest campground</span></h2>
@@ -445,7 +542,8 @@
   </p>
 </section>
 
-<section id="wildlife" class="tinted">
+<section id="wildlife" class="tinted section-critters">
+  <svg class="critter critter-tree" style="left:20px; bottom:50px; width:56px;"><use href="#critter-tree5"></use></svg><svg class="critter critter-firefly" style="right:18px; top:70px; width:40px;"><use href="#critter-firefly"></use></svg><svg class="critter critter-ladybug" style="right:60px; bottom:40px; width:30px;"><use href="#critter-ladybug"></use></svg>
   <div class="container">
     <p class="section-label reveal"><span class="lang-zh">森林住民</span><span class="lang-en" hidden>Forest residents</span></p>
     <h2 class="section-title reveal"><span class="lang-zh">走進林間，遇見誰都不奇怪</span><span class="lang-en" hidden>Anyone you meet in these woods belongs here</span></h2>

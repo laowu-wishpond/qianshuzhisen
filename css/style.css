@@ -997,6 +997,37 @@ form.contact-form input, form.contact-form textarea {
   background: var(--bg-deep);
 }
 
+/* 首頁各區塊留白處的小樹／螢火蟲／瓢蟲裝飾，只在夠寬的螢幕上顯示（避免跟內容打架） */
+.section-critters { position: relative; }
+
+.critter {
+  display: none;
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+@media (min-width: 1240px) {
+  .critter { display: block; }
+}
+
+.critter-firefly .firefly-glow {
+  animation: critterFireflyPulse 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+.critter-firefly:nth-of-type(3n) .firefly-glow { animation-delay: 1s; }
+.critter-firefly:nth-of-type(3n+1) .firefly-glow { animation-delay: 2s; }
+
+@keyframes critterFireflyPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .critter-firefly .firefly-glow { animation: none; }
+}
+
 .linwuqing-cinema-video video {
   width: 100%;
   display: block;
