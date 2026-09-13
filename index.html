@@ -99,9 +99,9 @@
   </div>
 </section>
 
-<section class="linwuqing-section">
-  <div class="container linwuqing-container">
-    <div class="linwuqing-slideshow">
+<section class="linwuqing-cinema">
+  <div class="linwuqing-cinema-inner">
+    <div class="linwuqing-cinema-video">
       <video
         id="linwuqingVideo"
         src="videos/linwuqing-mv.mp4"
@@ -113,6 +113,17 @@
         preload="metadata"
         aria-label="林霧晴 歡迎回家 MV"
       ></video>
+    </div>
+    <div class="linwuqing-cinema-text">
+      <p class="section-label"><span class="lang-zh">限定收藏</span><span class="lang-en" hidden>A Keepsake</span></p>
+      <h2 class="section-title"><span class="lang-zh">林霧晴・歡迎回家</span><span class="lang-en" hidden>Lin Wu-Qing · Welcome Home</span></h2>
+      <p class="lead">
+        <span class="lang-zh">為水松千樹之森譜寫的第一首歌，獻給每一個歸來的人。點下面的按鈕，讓這段森林光影配上它的主題曲一起播放。</span>
+        <span class="lang-en" hidden>The first song written for Shuisong Thousand-Tree Forest, for everyone coming home. Press play below to pair this forest scene with its theme song.</span>
+      </p>
+      <button type="button" class="btn btn-primary linwuqing-cinema-play" id="linwuqingPlayBtn">
+        <span class="lang-zh">播放《歡迎回家》♪</span><span class="lang-en" hidden>Play &quot;Welcome Home&quot; ♪</span>
+      </button>
     </div>
   </div>
 </section>
@@ -616,5 +627,16 @@
 
 <script src="js/main.js"></script>
 <script src="js/booking.js"></script>
+<script>
+// 「限定收藏」區塊的播放按鈕：直接播放點歌單裡的《歡迎回家》（07），沿用既有歌單邏輯
+(function () {
+  var btn = document.getElementById("linwuqingPlayBtn");
+  if (!btn) return;
+  btn.addEventListener("click", function () {
+    var track = document.querySelector('.music-track[data-track-id="07"]');
+    if (track) track.click();
+  });
+})();
+</script>
 </body>
 </html>
