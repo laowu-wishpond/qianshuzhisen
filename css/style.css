@@ -907,10 +907,12 @@ form.contact-form input, form.contact-form textarea {
 /* 林霧晴 首頁跑馬燈 */
 .linwuqing-section { padding: 8px 0 56px; }
 
+.linwuqing-container { max-width: 720px; }
+
 .linwuqing-slideshow {
   position: relative;
   width: 100%;
-  aspect-ratio: 0.7;
+  aspect-ratio: 16 / 9;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
@@ -923,12 +925,12 @@ form.contact-form input, form.contact-form textarea {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   background: var(--bg-deep);
 }
 
-@media (max-width: 520px) {
-  .linwuqing-section .container { max-width: 300px !important; }
+@media (max-width: 700px) {
+  .linwuqing-section .container.linwuqing-container { max-width: 100%; padding: 0 16px; }
 }
 
 .covenant-lightbox img {
