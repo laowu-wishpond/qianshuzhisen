@@ -940,15 +940,17 @@ form.contact-form input, form.contact-form textarea {
 }
 
 .cinema-deco-leftcluster {
-  left: -6px;
+  left: -10px;
   bottom: -24px;
-  width: 260px;
+  width: 340px;
+  z-index: 1;
 }
 
 .cinema-deco-rightcluster {
-  right: -6px;
+  right: -10px;
   bottom: -24px;
-  width: 250px;
+  width: 320px;
+  z-index: 1;
 }
 
 .cinema-deco-butterfly {
@@ -959,32 +961,87 @@ form.contact-form input, form.contact-form textarea {
   transform-origin: center;
 }
 
+.cinema-deco-butterfly2 {
+  top: 90px;
+  left: 6%;
+  width: 60px;
+  animation: cinemaButterflyFloat 5.2s ease-in-out infinite;
+  animation-delay: 0.8s;
+  transform-origin: center;
+}
+
+.cinema-deco-butterfly3 {
+  top: 210px;
+  right: 4%;
+  width: 46px;
+  animation: cinemaButterflyFloat 7.4s ease-in-out infinite;
+  animation-delay: 1.6s;
+  transform-origin: center;
+}
+
 @keyframes cinemaButterflyFloat {
   0%, 100% { transform: translateY(0) rotate(-4deg); }
   50% { transform: translateY(-16px) rotate(4deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cinema-deco-butterfly { animation: none; }
+  .cinema-deco-butterfly,
+  .cinema-deco-butterfly2,
+  .cinema-deco-butterfly3 { animation: none; }
 }
 
 .cinema-deco-butterfly .butterfly-wing-r,
-.cinema-deco-butterfly .butterfly-wing-l {
+.cinema-deco-butterfly .butterfly-wing-l,
+.cinema-deco-butterfly2 .butterfly-wing-r,
+.cinema-deco-butterfly2 .butterfly-wing-l,
+.cinema-deco-butterfly3 .butterfly-wing-r,
+.cinema-deco-butterfly3 .butterfly-wing-l {
   stroke: #8aa0c8;
   stroke-width: 1;
   stroke-opacity: 0.35;
 }
-.cinema-deco-butterfly .wing-main { fill: #1c2a4a; }
-.cinema-deco-butterfly .wing-spot { fill: #4d6fb5; fill-opacity: 0.85; stroke: none; }
-.cinema-deco-butterfly .wing-red-spot { fill: #b23a2e; stroke: none; }
+.cinema-deco-butterfly .wing-main,
+.cinema-deco-butterfly2 .wing-main,
+.cinema-deco-butterfly3 .wing-main { fill: #1c2a4a; }
+.cinema-deco-butterfly .wing-spot,
+.cinema-deco-butterfly2 .wing-spot,
+.cinema-deco-butterfly3 .wing-spot { fill: #4d6fb5; fill-opacity: 0.85; stroke: none; }
+.cinema-deco-butterfly .wing-red-spot,
+.cinema-deco-butterfly2 .wing-red-spot,
+.cinema-deco-butterfly3 .wing-red-spot { fill: #b23a2e; stroke: none; }
 .cinema-deco-butterfly .butterfly-body ellipse,
-.cinema-deco-butterfly .butterfly-body circle { fill: #12141a; }
-.cinema-deco-butterfly .antenna { stroke: #12141a; stroke-width: 1.4; fill: none; }
+.cinema-deco-butterfly .butterfly-body circle,
+.cinema-deco-butterfly2 .butterfly-body ellipse,
+.cinema-deco-butterfly2 .butterfly-body circle,
+.cinema-deco-butterfly3 .butterfly-body ellipse,
+.cinema-deco-butterfly3 .butterfly-body circle { fill: #12141a; }
+.cinema-deco-butterfly .antenna,
+.cinema-deco-butterfly2 .antenna,
+.cinema-deco-butterfly3 .antenna { stroke: #12141a; stroke-width: 1.4; fill: none; }
+
+/* 第二種蝴蝶配色：琥珀色，增加變化 */
+.cinema-deco-butterfly2 .wing-main { fill: #7a4a1c; }
+.cinema-deco-butterfly2 .wing-spot { fill: #d69a4d; fill-opacity: 0.9; }
+.cinema-deco-butterfly3 .wing-main { fill: #1c2a4a; }
+.cinema-deco-butterfly3 .wing-spot { fill: #6fa87a; fill-opacity: 0.85; }
+
+.cinema-critter {
+  display: none;
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+@media (min-width: 1240px) {
+  .cinema-critter { display: block; }
+}
 
 @media (max-width: 700px) {
   .cinema-deco-leftcluster { width: 108px; left: -8px; bottom: -8px; }
   .cinema-deco-rightcluster { width: 104px; right: -8px; bottom: -8px; }
   .cinema-deco-butterfly { width: 56px; top: 40px; right: 14px; }
+  .cinema-deco-butterfly2, .cinema-deco-butterfly3 { display: none; }
 }
 
 .linwuqing-cinema-video {
