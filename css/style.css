@@ -939,26 +939,22 @@ form.contact-form input, form.contact-form textarea {
   height: auto;
 }
 
-.cinema-deco-fern {
-  left: -10px;
-  bottom: -22px;
-  width: 210px;
-  color: #8ea875;
-  opacity: 0.62;
+.cinema-deco-leftcluster {
+  left: -6px;
+  bottom: -24px;
+  width: 260px;
 }
 
-.cinema-deco-daisy {
+.cinema-deco-rightcluster {
   right: -6px;
-  bottom: -10px;
-  width: 140px;
-  color: #7c9468;
-  opacity: 0.55;
+  bottom: -24px;
+  width: 250px;
 }
 
 .cinema-deco-butterfly {
-  top: 44px;
-  right: 8%;
-  width: 92px;
+  top: 30px;
+  right: 12%;
+  width: 100px;
   animation: cinemaButterflyFloat 6.5s ease-in-out infinite;
   transform-origin: center;
 }
@@ -986,9 +982,9 @@ form.contact-form input, form.contact-form textarea {
 .cinema-deco-butterfly .antenna { stroke: #12141a; stroke-width: 1.4; fill: none; }
 
 @media (max-width: 700px) {
-  .cinema-deco-fern { width: 100px; left: -12px; bottom: -8px; }
-  .cinema-deco-daisy { width: 88px; right: -10px; bottom: -4px; }
-  .cinema-deco-butterfly { width: 54px; top: 44px; right: 16px; }
+  .cinema-deco-leftcluster { width: 108px; left: -8px; bottom: -8px; }
+  .cinema-deco-rightcluster { width: 104px; right: -8px; bottom: -8px; }
+  .cinema-deco-butterfly { width: 56px; top: 40px; right: 14px; }
 }
 
 .linwuqing-cinema-video {
