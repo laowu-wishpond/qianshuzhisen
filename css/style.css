@@ -40,7 +40,7 @@ img { max-width: 100%; display: block; }
 }
 
 h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
-  font-family: "Noto Serif TC", "PingFang TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
 }
 
 /* 首頁開場動畫：由 CapCut 製作的森林動畫影片全螢幕播放，
@@ -104,7 +104,7 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   text-align: center;
 }
 .curtain-stardome-caption .title {
-  font-family: "Noto Serif TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
   font-size: 34px;
   letter-spacing: 8px;
   color: var(--gold-strong);
@@ -143,7 +143,7 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   font-weight: 700;
   letter-spacing: 2px;
   cursor: pointer;
-  font-family: "Noto Serif TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
   transition: opacity 1.2s ease, transform 1.2s ease;
 }
 .page-curtain.curtain-show-btn .curtain-enter-btn {
@@ -164,7 +164,7 @@ h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
   font-size: 14px;
   letter-spacing: 1.5px;
   cursor: pointer;
-  font-family: "Noto Serif TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
   transition: opacity 0.8s ease, transform 0.8s ease, background 0.2s ease;
 }
 .curtain-skip-btn:hover {
@@ -492,16 +492,23 @@ nav.main-nav a.active {
 }
 
 .hero-content .eyebrow {
-  font-size: 13px;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 500;
   letter-spacing: 3px;
   color: var(--gold-strong);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(5, 10, 7, 0.4);
+  backdrop-filter: blur(2px);
   text-transform: uppercase;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.85), 0 1px 3px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.85);
 }
 
 .hero-content h1 {
-  font-size: 44px;
+  font-size: 58px;
+  line-height: 1.15;
   font-weight: 700;
   margin-bottom: 16px;
   color: var(--ink);
@@ -547,7 +554,7 @@ nav.main-nav a.active {
   position: relative;
   z-index: 2;
   color: var(--white);
-  font-family: "Noto Serif TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
   font-size: 30px;
   font-style: italic;
   line-height: 1.6;
@@ -668,7 +675,7 @@ h2.section-title {
   display: block;
   font-size: 32px;
   color: var(--gold);
-  font-family: "Noto Serif TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
 }
 
 .facts .fact span {
@@ -832,7 +839,7 @@ footer li a:hover { color: var(--gold-strong); }
   align-items: baseline;
   margin-top: 6px;
 }
-.calc-total .amount { font-size: 28px; font-weight: 700; color: var(--gold); font-family: "Noto Serif TC", serif; }
+.calc-total .amount { font-size: 28px; font-weight: 700; color: var(--gold); font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif; }
 
 form.contact-form { display: grid; gap: 16px; max-width: 520px; }
 form.contact-form label { font-size: 14px; color: var(--ink-soft); margin-bottom: 4px; display: block; }
@@ -1065,7 +1072,7 @@ form.contact-form input, form.contact-form textarea {
   padding-left: 20px;
   font-size: 19px;
   color: var(--ink);
-  font-family: "Noto Serif TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
   font-style: italic;
   margin: 32px 0;
 }
@@ -1078,7 +1085,7 @@ form.contact-form input, form.contact-form textarea {
   .gallery-grid { grid-template-columns: repeat(2, 1fr); }
   .booking-wrap { grid-template-columns: 1fr; }
   footer .footer-grid { grid-template-columns: 1fr; }
-  .hero-content h1 { font-size: 32px; }
+  .hero-content h1 { font-size: 36px; }
 
   nav.main-nav.nav-open {
     display: block;
@@ -1160,7 +1167,7 @@ html { scroll-behavior: smooth; }
   margin-bottom: 16px;
 }
 .panorama-reveal .panorama-text h2 {
-  font-family: "Noto Serif TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
   font-weight: 500;
   font-size: clamp(22px, 4vw, 34px);
   line-height: 1.85;
@@ -1181,7 +1188,7 @@ html { scroll-behavior: smooth; }
   background: var(--bg-card);
 }
 .covenant-chapter h4 {
-  font-family: "Noto Serif TC", serif;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
   font-size: 15px;
   color: var(--gold-strong);
   margin-bottom: 8px;
