@@ -1057,6 +1057,25 @@ form.contact-form input, form.contact-form textarea {
 /* 首頁各區塊留白處的小樹／螢火蟲／瓢蟲裝飾，只在夠寬的螢幕上顯示（避免跟內容打架） */
 .section-critters { position: relative; }
 
+/* 全站通用：藤蔓／蕨類／菇菇／小花／飛行軌跡裝飾，從區塊四個角落「長出來」，只在夠寬的螢幕上顯示 */
+.page-deco {
+  display: none;
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+@media (min-width: 1240px) {
+  .page-deco { display: block; }
+}
+
+.page-deco-flip-x { transform: scaleX(-1); }
+.page-deco-flip-y { transform: scaleY(-1); }
+.page-deco-flip-xy { transform: scale(-1, -1); }
+
+.page-deco-trail.critter-ladybug-trail path { stroke: #d97a63; }
+
 .critter {
   display: none;
   position: absolute;
