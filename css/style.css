@@ -8,6 +8,7 @@
   --ink-muted: #8a9686;
   --gold: #c9a86a;
   --gold-strong: #e0c690;
+  --gold-yellow: #e0ab3d;
   --border: rgba(201, 168, 106, 0.22);
   --border-strong: rgba(201, 168, 106, 0.4);
   --white: #ffffff;
@@ -615,11 +616,11 @@ section { padding: 80px 0; }
   display: inline-block;
   font-size: 16px;
   letter-spacing: 2.5px;
-  color: var(--gold);
+  color: var(--gold-yellow);
   font-weight: 700;
   margin-bottom: 12px;
   padding: 5px 16px;
-  border: 1.5px solid var(--gold);
+  border: 1.5px solid var(--gold-yellow);
   border-radius: 3px;
   text-transform: uppercase;
 }
@@ -702,29 +703,30 @@ h2.section-title {
 
 .facts .fact {
   position: relative;
-  width: 120px;
+  width: 134px;
 }
 
 .facts .fact strong {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 108px;
-  height: 108px;
+  width: 122px;
+  height: 122px;
   margin: 0 auto 12px;
   border-radius: 50%;
   border: 3px solid var(--gold-strong);
   background: var(--bg-card);
   box-shadow: inset 0 0 0 4px var(--bg), 0 3px 10px rgba(0,0,0,0.2);
-  font-size: 36px;
+  font-size: 44px;
+  font-weight: 700;
   line-height: 1.05;
   color: var(--gold-strong);
   font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
-  text-shadow: 0 0 12px rgba(224,198,144,0.35);
+  text-shadow: 0 0 14px rgba(224,198,144,0.4);
 }
 
 .facts .fact-num-sm {
-  font-size: 25px;
+  font-size: 30px;
 }
 
 .facts .fact span {
@@ -739,9 +741,9 @@ h2.section-title {
 .facts .fact-bolt {
   position: absolute;
   top: -6px;
-  right: 6px;
-  width: 32px;
-  height: 32px;
+  right: 4px;
+  width: 34px;
+  height: 34px;
   transform: rotate(12deg);
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
   z-index: 2;
