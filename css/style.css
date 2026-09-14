@@ -1066,7 +1066,7 @@ form.contact-form input, form.contact-form textarea {
   opacity: 0.92;
 }
 
-@media (min-width: 1240px) {
+@media (min-width: 1440px) {
   .page-deco { display: block; }
 }
 
@@ -1084,7 +1084,7 @@ form.contact-form input, form.contact-form textarea {
   opacity: 0.9;
 }
 
-@media (min-width: 1240px) {
+@media (min-width: 1440px) {
   .critter { display: block; }
 }
 
