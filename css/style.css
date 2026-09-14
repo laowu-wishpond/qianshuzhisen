@@ -23,6 +23,11 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   font-family: "Noto Sans TC", "PingFang TC", "微軟正黑體", sans-serif;
   color: var(--ink);
@@ -634,6 +639,15 @@ section { padding: 80px 0; }
 
 @media (min-width: 861px) {
   .ecology-cypress { display: block; }
+}
+
+.section-label-icon {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  vertical-align: middle;
+  margin-left: 10px;
+  margin-bottom: 12px;
 }
 
 h2.section-title {
