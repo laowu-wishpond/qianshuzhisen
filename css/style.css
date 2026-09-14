@@ -668,19 +668,53 @@ h2.section-title {
   justify-content: space-around;
   text-align: center;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 24px 18px;
+}
+
+.facts .fact {
+  position: relative;
+  width: 120px;
 }
 
 .facts .fact strong {
-  display: block;
-  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  border: 2.5px solid var(--gold);
+  background: var(--bg-card);
+  box-shadow: inset 0 0 0 4px var(--bg), 0 3px 8px rgba(0,0,0,0.18);
+  font-size: 30px;
+  line-height: 1.05;
   color: var(--gold);
   font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+}
+
+.facts .fact-num-sm {
+  font-size: 21px;
 }
 
 .facts .fact span {
   font-size: 13px;
   color: var(--ink-soft);
+}
+
+.facts .fact-power {
+  overflow: visible;
+}
+
+.facts .fact-bolt {
+  position: absolute;
+  top: -6px;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  transform: rotate(12deg);
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+  z-index: 2;
 }
 
 /* Footer */
