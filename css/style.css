@@ -696,6 +696,19 @@ h2.section-title {
 
 .tinted { background: var(--bg-alt); }
 
+.corner-illustration {
+  position: absolute;
+  height: auto;
+  z-index: 1;
+  pointer-events: none;
+}
+@media (max-width: 860px) {
+  .corner-illustration { display: none; }
+}
+@media (min-width: 861px) {
+  .sites-lead { margin-bottom: 120px; }
+}
+
 .tinted-dark {
   background: var(--bg-deep);
   color: var(--white);
