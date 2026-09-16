@@ -994,6 +994,32 @@ form.contact-form input, form.contact-form textarea {
   gap: 20px;
 }
 
+/* 森林公約封面：放大成主視覺卡片，角落疊上小鳥木牌／松鼠裝飾，避免版面太空 */
+.covenant-featured-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 40px;
+}
+.covenant-featured {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+}
+.covenant-featured img:first-child {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+.covenant-featured-deco {
+  position: absolute;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+}
+
 /* 森林公約設計圖 */
 .covenant-gallery {
   display: grid;
