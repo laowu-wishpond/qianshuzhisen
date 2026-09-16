@@ -707,6 +707,26 @@ h2.section-title {
 }
 @media (min-width: 861px) {
   .sites-lead { margin-bottom: 120px; }
+  .wildlife-lead { padding-left: 150px; }
+}
+
+.corner-illustration-static {
+  display: block;
+  height: auto;
+  pointer-events: none;
+  margin: 28px 0 0 auto;
+}
+@media (max-width: 860px) {
+  .corner-illustration-static { display: none; }
+}
+
+.deco-inline {
+  display: block;
+  height: auto;
+  pointer-events: none;
+}
+@media (max-width: 860px) {
+  .deco-inline { display: none; }
 }
 
 .tinted-dark {
