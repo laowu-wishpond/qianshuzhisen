@@ -714,11 +714,6 @@ h2.section-title {
 @media (max-width: 860px) {
   .corner-illustration { display: none; }
 }
-@media (min-width: 861px) {
-  .sites-lead { margin-bottom: 120px; }
-  .wildlife-lead { padding-left: 150px; }
-}
-
 /* Secondary/supporting accents (one-off closing signs, small critters
    placed in normal flow rather than the top-right corner). Same shadow
    language as .corner-illustration for cohesion; width stays per-instance
@@ -742,6 +737,65 @@ h2.section-title {
 }
 @media (max-width: 860px) {
   .deco-inline { display: none; }
+}
+
+/* Illustrated hero: the illustration is shown at its natural aspect ratio
+   (full width, height:auto) so it is NEVER cropped on any viewport, with
+   the section's label/title/lead overlaid on top of it instead of sitting
+   in plain text beside a small corner accent. This is the standard
+   treatment for every "thematic intro" section (ecology, land, wildlife,
+   sites, reasons) so they all read as one consistent illustrated language.
+   On mobile the image is short once scaled to full width, so the text
+   drops below it in normal flow rather than overlaying — the shared
+   bottom-fade gradient makes that transition feel like one continuous
+   panel rather than two stacked pieces. */
+.illustrated-hero {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 36px;
+}
+.illustrated-hero-media {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.illustrated-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(8, 16, 11, 0.12) 0%, rgba(8, 16, 11, 0.55) 62%, rgba(8, 16, 11, 0.93) 100%);
+}
+.illustrated-hero-text {
+  position: relative;
+  z-index: 2;
+  padding: 20px 20px 26px;
+}
+.illustrated-hero-text .section-label,
+.illustrated-hero-text h2.section-title,
+.illustrated-hero-text .lead,
+.illustrated-hero-text .quote-block {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 0, 0, 0.45);
+}
+.illustrated-hero-text .lead:last-child,
+.illustrated-hero-text .quote-block:last-child {
+  margin-bottom: 0;
+}
+@media (min-width: 861px) {
+  .illustrated-hero::before {
+    background: linear-gradient(100deg, rgba(8, 16, 11, 0.9) 0%, rgba(8, 16, 11, 0.72) 30%, rgba(8, 16, 11, 0.18) 58%, rgba(8, 16, 11, 0) 78%);
+  }
+  .illustrated-hero-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 46%;
+    padding: 0 4% 0 5%;
+  }
 }
 
 .tinted-dark {
