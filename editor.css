@@ -1,0 +1,5097 @@
+
+/* ════════ 全域 ════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft JhengHei","蘋方-繁",Arial,sans-serif;background:#dde3ef;min-height:100vh}
+
+/* ════════ 工具列 ════════ */
+#toolbar{
+  position:fixed;top:0;left:0;right:0;z-index:1000;background:#1a3a6b;
+  display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:7px 12px;
+  box-shadow:0 2px 10px rgba(0,0,0,.4);
+  width:100%;box-sizing:border-box;
+}
+/* v93: 工具列收合時只顯示第一行 */
+#toolbar.tb-collapsed{
+  max-height:42px;overflow:hidden;flex-wrap:nowrap;
+}
+/* spacer 佔位，高度由 JS 動態設定 */
+#toolbar-spacer{display:block;width:100%;}
+.logo{color:#fff;font-size:14px;font-weight:700;margin-right:8px;white-space:nowrap}
+
+/* v225：品牌 logo（v254 改標題為「萬格AI華語考卷出題神器」，比照landing page）—— 圖示（考卷+打勾）+ 文字組合，
+   取代原本純文字的「📝 中文考卷編輯器」，放在工具列最左邊。 */
+.brand-logo{
+  display:flex;align-items:center;gap:7px;margin-right:10px;
+  white-space:nowrap;flex-shrink:0;
+}
+.brand-logo-icon{flex-shrink:0;display:block}
+.brand-logo-name{
+  color:#fff;font-size:15px;font-weight:800;letter-spacing:.3px;
+}
+.brand-logo-accent{color:#f0a500;font-weight:800;margin:0 1px}
+
+/* ── v81: 列印預覽按鈕 ── */
+.preview-btn {
+  margin-left: auto;   /* 推到工具列最右側 */
+  background: #f0a500;
+  color: #1a2a00;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  transition: background .2s, transform .1s;
+  letter-spacing: 0.02em;
+}
+.preview-btn:hover { background: #ffba20; transform: scale(1.04); }
+.preview-btn.active {
+  background: #2ecc71;
+  color: #fff;
+}
+.preview-btn.active:hover { background: #27b55e; }
+
+/* ── v81: 列印預覽模式 — body 帶 class=print-preview ── */
+/* v123: toolbar stays visible in print-preview (only dims non-preview items) */
+/* body.print-preview #toolbar was removed - toolbar must stay visible */
+body.print-preview #toolbar-spacer { display: none !important; }
+body.print-preview #add-panel { display: none !important; }
+
+/* 隱藏所有編輯相關按鈕/控制元件 */
+body.print-preview .big-actions,
+body.print-preview .sec-actions,
+body.print-preview .row-actions,
+body.print-preview .anno-ruby-btn,
+body.print-preview .score-ruby-btn,
+body.print-preview .sab,
+body.print-preview .defs-toggle-btn,
+body.print-preview .defs-del-btn,
+body.print-preview .defs-btn-row,
+body.print-preview .sub-del-btn,
+body.print-preview .ap-btn,
+/* v87: 預覽/列印時 logo 不可 resize */
+body.print-preview #btn-tb-back{display:none!important}
+/* v125: 列印預覽隱藏 cv-criteria 操作欄（避免空白缺角）*/
+body.print-preview .cv-row-btns{
+  visibility:collapse!important;
+  width:0!important;padding:0!important;border:none!important;
+  font-size:0!important;line-height:0!important;
+  overflow:hidden!important;
+}
+body.print-preview .cv-criteria{table-layout:auto!important}
+body.print-preview .cv-student{table-layout:auto!important}
+/* v135-hotfix: 強制隱藏 Exam Criteria 表格最後一欄（操作欄）*/
+body.print-preview .cv-criteria th:last-child,
+body.print-preview .cv-criteria td:last-child {
+  width: 0 !important; max-width: 0 !important;
+  padding: 0 !important; margin: 0 !important;
+  border: none !important; overflow: hidden !important;
+  font-size: 0 !important; line-height: 0 !important;
+  visibility: collapse !important;
+}
+@media print {
+  .cv-criteria th:last-child,
+  .cv-criteria td:last-child {
+    width: 0 !important; max-width: 0 !important;
+    padding: 0 !important; margin: 0 !important;
+    border: none !important; overflow: hidden !important;
+    font-size: 0 !important; line-height: 0 !important;
+    visibility: collapse !important;
+  }
+}
+body.print-preview .cv-row-resize-handle{display:none!important}
+body.print-preview .cv-col-resize-handle{display:none!important}
+body.print-preview #btn-tb-toggle{display:none!important}
+body.print-preview .logo-resize-handle{display:none!important}
+body.print-preview .cover-logo::after{display:none!important}
+body.print-preview [contenteditable]:focus { outline: none !important; background: transparent !important; }
+
+/* 隱藏 input/select 控制元件 (toolbar 內保留，其他隱藏) */
+body.print-preview .anno-phon-side,
+body.print-preview .anno-phon-bottom,
+body.print-preview .compact-toggle-btn,
+body.print-preview .sab-collapse { display: none !important; }
+
+/* 考卷紙張背景白底，去掉陰影 */
+body.print-preview .a4 {
+  box-shadow: 0 0 0 1px #ccc !important;
+  background: #fff !important;
+  line-height: var(--exam-lh, 1.4);
+  letter-spacing: var(--exam-ls, 0px);
+}
+body.print-preview #paper-wrap { background: #e8e8e8; }
+/* v204：預覽模式下封面也跟著縮回內容實際高度，不再固定撐滿 297mm，
+   讓「看預覽」畫面跟實際列印結果一致（封面內容結束後，如果這頁還有空間，
+   後面題目會直接接著往上補上來，不會看到一大塊空白）。 */
+body.print-preview .a4-cover { min-height: 0 !important; }
+
+/* contenteditable 在預覽模式不可互動 */
+body.print-preview [contenteditable] {
+  pointer-events: none;
+  user-select: text;
+}
+body.print-preview input:not(.char-input),
+body.print-preview select,
+body.print-preview button:not(#btn-preview):not(.tone-btn) { pointer-events: none !important; opacity: 0 !important; }
+/* v135: 功能按鈕在預覽時完全隱藏（不佔空間）*/
+body.print-preview .rab,
+body.print-preview .rab-center,
+body.print-preview .passage-ruby-btn,
+body.print-preview .cv-table-ruby-btn { display: none !important; }
+/* v93: char-input (國字格) 在列印預覽保持可見，但禁止互動 */
+body.print-preview .char-input { pointer-events: none !important; opacity: 1 !important; }
+body.print-preview .char-input::placeholder { color: transparent !important; }
+body.print-preview input::placeholder { color: transparent !important; }
+
+/* v123: toolbar 半透明，但預覽按鈕和列印按鈕仍可用 */
+body.print-preview #toolbar > *:not(#btn-preview) { opacity: 0.35; pointer-events: none; }
+body.print-preview #btn-preview { opacity: 1 !important; pointer-events: all !important; }
+/* v123: 工具列在預覽模式保持可見（不隱藏），但整體調暗 */
+body.print-preview #toolbar { opacity: 0.7; }
+
+/* v116: 列印時完整清除所有 UI（不需要先開預覽模式） */
+@page {
+  size: A4 portrait;
+  margin: 0mm;  /* 讓 .a4 的 padding 完全控制邊距，避免 Chrome 預設邊距壓縮寬度 */
+}
+@media print {
+  /* ─ 系統 UI 全部隱藏 ─ */
+  #toolbar, #toolbar-spacer, #add-panel, #preview-banner,
+  #btn-tb-toggle, #btn-tb-back, #ap-show { display: none !important; }
+  /* v123: @media print 中一律隱藏 toolbar（真正列印時才需要隱藏） */
+  #toolbar, #toolbar-spacer { display: none !important; }
+
+  /* ─ 編輯按鈕 ─ */
+  .big-actions, .sec-actions, .row-actions,
+  .sab, .sab-del, .ap-btn,
+  .anno-ruby-btn, .score-ruby-btn,
+  .defs-toggle-btn, .defs-del-btn, .defs-btn-row, .sub-del-btn,
+  .anno-phon-side, .anno-phon-bottom,
+  .compact-toggle-btn, .sab-collapse,
+  .rab, .rab-center,
+  .grid-drag-handle, .row-spacing-handle,
+  .logo-resize-handle, .cover-logo::after,
+  .match-row-resize-handle, .sec-gap-handle { display: none !important; }
+  /* v198: 選取中的大題外框只在編輯畫面看得到，列印時不能出現 */
+  .section.section-focused { outline: none !important; }
+  /* v203: 選取中的拼音格外框也只在編輯畫面看得到 */
+  .zy-cell.pincell-focused { outline: none !important; background: transparent !important; }
+
+  /* ─ 底部版權列 ─ */
+  .exam-footer { display: none !important; }
+  /* v125: 操作欄在列印時完全隱藏（col 寬度不再佔用空間）*/
+  .cv-row-btns {
+    visibility: collapse !important;
+    width: 0 !important; padding: 0 !important; border: none !important;
+    font-size: 0 !important; line-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .cv-criteria, .cv-student { table-layout: auto !important; }
+
+  /* ─ input/select 透明（除國字格） ─ */
+  input:not(.char-input), select, button:not(.char-input) {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  .char-input {
+    opacity: 1 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  /* v135: 列印時隱藏 resize 手把和虛線框 */
+  .instr-cell { resize: none !important; overflow: hidden !important; }
+  .free-edit-area { resize: none !important; border: none !important; overflow: hidden !important; }
+  .cv-block-actions { display: none !important; }
+  /* ─ 格子佔位字消失 ─ */
+  .char-input::placeholder,
+  input::placeholder { color: transparent !important; }
+
+  /* ─ contenteditable 列印時不顯示邊框 ─ */
+  [contenteditable]:focus { outline: none !important; background: transparent !important; }
+  [contenteditable] { pointer-events: none; user-select: text; }
+  /* v116: 隱藏 data-ph 佔位偽元素 */
+  [data-ph]::before { content: none !important; }
+  .zy-cell::before, .char-input::before { content: none !important; }
+}
+
+/* v83: 行距滑桿 */
+#tb-linespacing {
+  width: 80px;
+  accent-color: #adc8ff;
+  cursor: pointer;
+  vertical-align: middle;
+}
+#tb-lh-val {
+  color: #adc8ff;
+  font-size: 10px;
+  min-width: 26px;
+  display: inline-block;
+  text-align: center;
+}
+.tbg-slider { gap: 4px; align-items: center; }
+.tbg{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border-radius:5px;padding:3px 8px}
+.tbl{color:#adc8ff;font-size:10px;white-space:nowrap}
+
+/* ══ v198: 工具列三大分區（考卷基本設定／整體字體與注音／大題專屬設定） ══
+   每一區用 width:100% 強迫換行，加上淡色底＋左側色條，讓分類看起來有主題感，
+   跟商周總監反映的「分類不夠清楚」對應。 */
+.tb-section{
+  display:flex;align-items:center;flex-wrap:wrap;gap:5px;
+  width:100%;padding:6px 8px 6px 10px;margin-top:2px;border-radius:6px;
+  border-left:3px solid transparent;
+}
+.tb-section-label{
+  color:#fff;font-size:11px;font-weight:700;white-space:nowrap;
+  margin-right:6px;letter-spacing:.02em;opacity:.92;
+}
+.tb-section-global{ background:rgba(255,255,255,.03); border-left-color:#5c6ac4; }
+.tb-section-font{ background:rgba(255,255,255,.05); border-left-color:#2ecc71; }
+.tb-section-context{ background:rgba(240,165,0,.12); border-left-color:#f0a500; min-height:34px; }
+
+/* ══ v234：工具列手風琴分類收合 ══
+   每個 .tb-group 是一個功能分類，預設只顯示 .tb-group-header 這一列標題，
+   點下去展開 .tb-group-body（原本攤開的一整排 .tbg/.tbtn 控制項）。
+   5個分類各給不同的左側色條，方便一眼分辨，跟原本三大區塊的視覺語言一致。 */
+.tb-group{ width:100%; }
+.tb-group-header{
+  display:flex; align-items:center; width:100%;
+  background:rgba(255,255,255,.05); border:none; border-left:3px solid #5c6ac4;
+  border-radius:6px; margin-top:2px; padding:7px 10px;
+  color:#fff; font-size:12px; font-weight:700; letter-spacing:.02em;
+  cursor:pointer; font-family:inherit; text-align:left;
+}
+.tb-group-header:hover{ background:rgba(255,255,255,.11); }
+.tb-group-header .tb-group-arrow{
+  margin-left:auto; font-size:9px; opacity:.75; transition:transform .15s;
+}
+.tb-group.open .tb-group-header .tb-group-arrow{ transform:rotate(90deg); }
+.tb-group-body{
+  display:none; align-items:center; flex-wrap:wrap; gap:5px;
+  width:100%; padding:6px 8px 6px 10px; margin-top:2px; border-radius:6px;
+  background:rgba(255,255,255,.02);
+}
+.tb-group.open .tb-group-body{ display:flex; }
+#tbgrp-mode  .tb-group-header{ border-left-color:#5c6ac4; }
+#tbgrp-paper .tb-group-header{ border-left-color:#f0a500; }
+#tbgrp-ai    .tb-group-header{ border-left-color:#c0392b; }
+#tbgrp-font  .tb-group-header{ border-left-color:#2ecc71; }
+
+/* v243：工具列改版——分類內的段落分隔線／純文字小標（例如分類三內「出題」「田字格」兩段，
+   分類一開新考卷/匯入舊版/完整備份三顆破壞性動作按鈕跟下方輸入欄位之間的分隔），
+   靠 width:100% 讓它在 flex-wrap 的 .tb-group-body 裡自動另起一行。 */
+.tb-group-sep{ width:100%; height:1px; background:rgba(255,255,255,.18); margin:3px 0 4px; }
+.tb-group-sublabel{
+  width:100%; color:#ffd68a; font-size:10px; font-weight:700;
+  letter-spacing:.03em; margin-top:2px;
+}
+/* 常駐帶（#tb-pinned-band）裡用的直向分隔線，因為那裡是單排、不換行 */
+.tb-group-sep-v{ width:1px; height:18px; align-self:center; background:rgba(255,255,255,.18); margin:0 2px; }
+
+/* v243：常駐帶——存草稿/開草稿/上一步/下一步/部首查詢/讀音查詢，位於分類四之下、
+   考卷預覽區之上，永遠顯示、不受手風琴收合影響（跟 #btn-preview 同一個設計邏輯，
+   詳見 v239 註解）。 */
+#tb-pinned-band{
+  display:flex; align-items:center; flex-wrap:wrap; gap:5px;
+  width:100%; padding:6px 8px 6px 10px; margin-top:4px; border-radius:6px;
+  background:rgba(255,255,255,.06); border-top:1px solid rgba(255,255,255,.15);
+}
+.tb-context-hint{ color:#ffd68a; font-size:11px; opacity:.9; }
+#tb-context-controls{ display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
+
+/* 目前選取中的大題，在畫面上用左側色條標出來（列印/預覽模式不顯示） */
+.section.section-focused{
+  outline:2px solid #f0a500; outline-offset:2px; border-radius:3px;
+}
+body.print-preview .section.section-focused{ outline:none; }
+
+/* v203: 目前用「本格拼音大小」選取中的那一格拼音，橘框標示方便對照 */
+.zy-cell.pincell-focused{ outline:2px solid #f0a500; outline-offset:1px; background:rgba(240,165,0,.1); }
+body.print-preview .zy-cell.pincell-focused{ outline:none; background:transparent; }
+.tbg input[type=text]{
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  color:#fff;border-radius:4px;padding:2px 6px;font-size:11px;font-family:inherit;width:118px
+}
+.tbg input[type=text]:focus{outline:none;background:rgba(255,255,255,.25)}
+.tbg select{
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  color:#fff;border-radius:4px;padding:2px 5px;font-size:11px;font-family:inherit;cursor:pointer
+}
+.tbg select option{background:#1a3a6b}
+/* v203: 工具列裡的「本格拼音大小」－/＋/還原按鈕，跟原本 .rab（考卷紙面上用的）
+   顏色不同，這裡改成配合深色工具列背景 */
+.tbg .rab{
+  background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);
+  padding:2px 8px;font-size:11px;
+}
+.tbg .rab:hover{background:rgba(255,255,255,.32)}
+.tbtn{
+  border:none;border-radius:5px;cursor:pointer;padding:5px 11px;
+  font-size:11px;font-family:inherit;font-weight:600;white-space:nowrap;transition:opacity .15s
+}
+.tbtn:hover{opacity:.82}
+.btn-blue{background:#3a7bd5;color:#fff}
+.btn-green{background:#1e8c3a;color:#fff}
+.btn-gray{background:#5a6374;color:#fff}
+/* v88: undo / redo 按鈕 */
+.undo-btn,.redo-btn{background:#6a5acd;color:#fff}
+.undo-btn:disabled,.redo-btn:disabled{
+  opacity:0.35;cursor:not-allowed;pointer-events:none
+}
+.undo-btn:not(:disabled):hover,.redo-btn:not(:disabled):hover{opacity:.82}
+
+/* ════════ A4 ════════ */
+#paper-wrap{display:flex;flex-direction:column;align-items:center;padding:20px 50px 60px;gap:24px}
+.a4{width:210mm;min-height:297mm;background:#fff;box-shadow:0 3px 20px rgba(0,0,0,.25);padding:10mm 12mm 12mm 14mm;position:relative}
+/* v123: English font override via CSS variable */
+:root{--en-font:''}
+body.has-enfont .cover-page *:not([data-zh]),
+body.has-enfont .a4 .cv-table td,
+body.has-enfont .cover-t1,
+body.has-enfont .cover-t2,
+body.has-enfont .cover-t3,
+body.has-enfont .cv-instr td {
+  font-family: var(--en-font) !important;
+}
+
+
+/* ════════ 頁首 ════════ */
+.exam-header{
+  background:#1a3a6b;padding:5px 12px 4px;
+  display:flex;align-items:center;justify-content:space-between
+}
+.exam-header [contenteditable]{
+  color:#fff;outline:none;border-bottom:1px dashed transparent;transition:border-color .2s
+}
+.exam-header [contenteditable]:hover,
+.exam-header [contenteditable]:focus{border-bottom-color:rgba(255,255,255,.6)}
+.hd-school{font-size:10pt}
+.hd-school:empty:before{
+  content:"（請輸入學校名稱）";
+  color:rgba(255,255,255,.5);
+  font-size:10pt;
+  font-style:italic;
+}
+.hd-title:empty:before{
+  content:"（請輸入考卷標題）";
+  color:rgba(255,255,255,.5);
+  font-style:italic;
+}
+.hd-info:empty:before{
+  content:"（學期 / 年度）";
+  color:rgba(255,255,255,.5);
+  font-size:8.5pt;
+  font-style:italic;
+}
+.hd-title{font-size:11pt;font-weight:700;flex:1;text-align:center;padding:0 8px}
+.hd-info{font-size:8.5pt;white-space:nowrap}
+
+.student-bar{display:flex;border:1px solid #3a7bd5;border-top:none;margin-bottom:7px}
+/* ── v86: 精簡頁首（單行）CSS ── */
+.exam-compact-hdr{
+  display:none;
+  border-bottom:2px solid #1a3a6b;
+  padding:4px 8px 3px;
+  font-size:11pt;
+  font-weight:700;
+  color:#1a3a6b;
+  text-align:center;
+  letter-spacing:0.05em;
+  margin-bottom:4px;
+  cursor:text;
+  outline:none;
+}
+.exam-compact-hdr:empty:before{
+  content:"（請輸入：學校 + 考試名稱，例：台中市烏日國小 114年度下學期期中考）";
+  color:#aaa;
+  font-weight:400;
+  font-size:9pt;
+}
+.exam-compact-hdr:focus{
+  background:rgba(26,58,107,.04);
+  border-bottom-color:#3a7bd5;
+}
+/* compact 模式：隱藏完整頁首，只顯示單行 */
+.a4.compact-pagehdr .exam-header,
+.a4.compact-pagehdr .student-bar{display:none!important}
+.a4.compact-pagehdr .exam-compact-hdr{display:block!important}
+/* 原本 no-pagehdr 保留 */
+.a4.no-pagehdr .exam-compact-hdr{display:none!important}
+
+/* v207：姓名/班級/座號/得分這排字體大小以前是寫死 8pt，老師沒辦法調，
+   改成用 CSS 變數 --sf-fontsize（預設值還是 8pt，沒調過的舊考卷長得完全一樣），
+   工具列新增「班級姓名字體大小」控制項可以調整這個變數。
+   字型（標楷體/黑體…）本來就是跟著全域「字型」設定繼承下來（這裡沒設
+   font-family，所以會自動吃 body 的字型），不用另外做控制項。 */
+.sf{border-right:1px solid #3a7bd5;padding:3px 6px;font-size:var(--sf-fontsize,8pt);color:#1a3a6b;white-space:nowrap}
+.sf:last-child{border-right:none}
+.sf-name{flex:2.2}.sf-class{flex:1.5}.sf-no{flex:1}.sf-score{flex:1.3}
+
+/* ════════ 題目區塊 ════════ */
+.section{margin-bottom:var(--exam-section-gap,3px);position:relative}
+
+/* v270：大題「上方留白」拖曳把手——外觀比照連連看的列高拖曳把手
+   （.match-row-resize-handle），半透明黃色系（呼應老師說的「黃色框框」），
+   平常淡淡一條，滑鼠移上去/拖曳中顏色變深，方便老師發現、抓得到。 */
+.sec-gap-handle{
+  display:block;width:100%;height:12px;margin-bottom:1px;
+  cursor:ns-resize;user-select:none;-webkit-user-select:none;
+  position:relative;opacity:0.6;transition:opacity .15s;
+  background:linear-gradient(to bottom,
+    transparent 4px,
+    #e8b83a 4px, #e8b83a 6px,
+    transparent 6px);
+}
+.sec-gap-handle::after{
+  content:'⋯ 拖曳調整此大題上方留白 ⋯';
+  position:absolute;left:50%;top:0;transform:translateX(-50%);
+  font-size:7pt;color:#a67c00;line-height:12px;
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;
+}
+.sec-gap-handle:hover{
+  opacity:1;
+  background:linear-gradient(to bottom,
+    transparent 3px,
+    #d99a00 3px, #d99a00 5px,
+    transparent 5px);
+}
+.sec-gap-handle:hover::after{ opacity:1; }
+.sec-gap-handle.dragging{
+  opacity:1;
+  background:linear-gradient(to bottom,
+    transparent 3px,
+    #e74c3c 3px, #e74c3c 5px,
+    transparent 5px);
+}
+.sec-gap-handle.dragging::after{ opacity:1; color:#e74c3c; }
+body.print-preview .sec-gap-handle{ display:none !important; }
+
+.section-hdr{
+  display:flex;align-items:center;background:#d6e8ff;
+  border:1px solid #3a7bd5;padding:3px 8px;margin-bottom:2px;
+  font-size:9pt;font-weight:700;color:#1a3a6b
+}
+/* v135: 隱藏大題標題欄 */
+.no-sechdr .section-hdr{ display:none !important; }
+.no-sechdr .sec-actions{ display:none !important; }
+/* v135: 空白自由編輯區 */
+.free-edit-area:empty:before{content:attr(data-ph);color:#aaa;font-style:italic;pointer-events:none}
+.free-edit-area:focus{border-color:#3a7bd5!important;background:rgba(58,123,213,.02)}
+/* v135: 封面區塊移動 */
+.cv-block{position:relative}
+.cv-block-actions{
+  position:absolute;right:-36px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:2px;
+}
+.cv-block-actions .cv-row-btn{
+  width:28px;height:20px;font-size:10px;
+  display:flex;align-items:center;justify-content:center;
+}
+body.print-preview .cv-block-actions{display:none!important}
+.sec-title{outline:none;flex:1}
+.sec-title:focus{border-bottom:1px dashed #1a3a6b}
+.sec-score-wrap{font-size:8pt;color:#555;margin-left:8px;white-space:nowrap}
+.sec-score-val{outline:none;min-width:28px;display:inline-block}
+.sec-score-val:focus{border-bottom:1px dashed #555}
+.sec-actions{
+  position:absolute;right:-34px;top:0;
+  display:flex;flex-direction:column;gap:2px
+}
+.sab{
+  width:32px;height:22px;border:none;border-radius:3px;cursor:pointer;
+  font-size:9px;background:#dde8ff;color:#1a3a6b;
+  display:flex;align-items:center;justify-content:center;
+  white-space:nowrap;
+}
+.sab:hover{background:#b0ccff}
+.sab-del{background:#ffe0e0;color:#c00}
+.sab-del:hover{background:#ffb3b3}
+.sab-collapse{background:#7ab87a;color:#fff;font-weight:bold;line-height:1;}
+.sab-collapse:hover{background:#4a9a4a}
+
+/* ════════════════════════════════════════
+   ★ 字格單元結構說明
+   ─────────────────────────────────────
+   模式 A（僅注音 / 僅拼音）:
+     .char-unit (flex-col)
+       └─ .char-body (flex-row)
+            ├─ .char-box  18×18mm
+            └─ .zy-col    6×18mm（單一空白格）
+   模式 B（注音＋拼音）:
+     .char-unit (flex-col)
+       └─ .char-body (flex-row)
+            ├─ .char-box  18×36mm（高度加倍）
+            └─ .zy-both   6×36mm (flex-col)
+                 ├─ .zy-col.zhuyin-col  6×18mm
+                 └─ .zy-col.pinyin-col  6×18mm
+   最後一列：
+       └─ .tone-row  24mm×5.5mm
+════════════════════════════════════════ */
+
+
+/* ── 小題題號（每行字格前） ── */
+.grid-line{display:flex;align-items:flex-start;gap:4px}
+.qno{
+  width:14mm; flex:0 0 14mm;
+  font-size:10.5pt; font-weight:700; color:#1a3a6b;
+  text-align:right; padding-top:1.6mm;
+  user-select:text; cursor:text;
+}
+.qno:focus{background:rgba(58,123,213,.10); outline:none}
+
+/* v37: 直列出題（不等於直書排版）
+   - 題號在上
+   - 同一題格子往下長
+*/
+.grid-row-wrap.qvert .grid-line{flex-direction:column;align-items:flex-start;gap:2px}
+.grid-row-wrap.qvert .qno{width:auto;flex:0 0 auto;text-align:left;padding-top:0;margin:0 0 1mm 0}
+.grid-row-wrap.qvert .grid-row{flex-direction:column;gap:0}
+/* 題內格子無縫：直列用 margin-top 重疊邊框 */
+.grid-row-wrap.qvert .grid-row .char-unit + .char-unit{margin-left:0;margin-top:-1.2px}
+
+.grid-row-wrap{margin-bottom:0}
+/* v38: 直列出題時，題目(每題)要從右到左並排，自動換行 */
+/* v175 修正：使用者反映「橫書＋直列出題」（例如模組2/3但字格題選直列）時，
+   兩題之間留了一大段空白、貼不起來——根因是這裡跟 .a4.vertical .section >
+   .grid-body（直書模式專用的另一段規則）用了不同的 column-gap：那邊只有
+   2px（貼合），這邊卻是 6mm（約23px，看起來像沒貼齊）。改成跟直書模式
+   一致的 2px，不管是「直書」還是「橫書＋直列出題」，兩題都會緊貼在一起。 */
+/* v180 嘗試修正過（改成column+nowrap強制單一直行），但使用者測試後回報：
+   這個模式其實應該是「題目並排成橫向多欄」（像傳統直書一欄一欄排），不是
+   單一直行——改成column會讓題目變成上下堆疊，不是使用者要的效果，已還原。 */
+/* v181 修正：使用者反映兩個問題——(1) 只有一題時題目卡在最右邊、貼不到大題
+   標題的左邊起始位置，只能往右移不能往左移；(2) 兩題並排時，中間看起來還
+   是留了一大段空白貼不緊。根因找到兩個：
+   (1) flex-direction:row-reverse 時，預設 justify-content（flex-start）
+       是從「主軸起點」開始排列，而 row-reverse 的主軸起點在右邊，所以整組
+       題目永遠貼右、左邊留白——改成 justify-content:flex-end 讓它貼左邊
+       （row-reverse 時 flex-end 對應的是左邊），跟大題標題起始位置一致。
+   (2) 每一題的操作工具列（+2格/+1格/刪除此行...等按鈕，.row-actions）比
+       實際格子本身寬很多（工具列要放6顆按鈕，格子可能只有4個字寬），但
+       兩者是同一個 .grid-row-wrap 的子元素，.grid-row-wrap 沒設寬度時會
+       自動撐到最寬的子元素（也就是工具列）的寬度，導致格子兩旁留了一大片
+       看不見的空白——兩題並排時，中間看起來的「空隙」其實是這片空白，不是
+       真的排版間距。 */
+/* v182 修正：v181把 .row-actions 限制成最大寬度100px、讓它自動換行，結果
+   使用者反映：換行後工具列變成一長條（4~5列按鈕）反而更佔空間、更難看，
+   而且「最後一題」因為把手還留著（多10px高度），跟其他題的工具列上下對
+   不齊。根本問題是：這個工具列本來就不該影響版面寬度/高度——改法是把它
+   整個從版面中「拿出來」：改成絕對定位、平常完全隱藏，滑鼠移到該題格子
+   上面（或點進去編輯）時才浮出來蓋在格子正上方，用完立刻消失。這樣
+   .grid-row-wrap 的寬高就完全由「格子本身」決定，不會再被工具列撐開，
+   題目之間也不會再因為工具列而錯位或留白。（跟 .a4.vertical 那邊
+   .row-spacing-handle 平常隱藏、hover才出現，是同一套做法。） */
+/* v256 修正：老師反映「橫書＋直列出題」（字格題選「直列」，但整張考卷仍是
+   一般橫書、由左到右閱讀）時，題目1、2、3…卻由右到左排列，跟考卷其他部分的
+   閱讀方向相反、題號看起來像亂跳。根因：這裡從 v38 就一直用 row-reverse（＋
+   flex-end 貼左），是為了模擬直書由右到左的閱讀習慣，但這條規則沒有限定只在
+   整頁真的是直書（.a4.vertical）時才生效，導致單純橫書、只是這一題字格選了
+   「直列」外觀的情況也被套用，變成整份橫書考卷裡插進一段莫名其妙由右到左的
+   題目。改成一般 row（＋flex-start）由左到右，符合橫書考卷的閱讀方向；真正
+   的直書模式（.a4.vertical）有自己另外一套規則（見上面 v220/v221 及
+   body.compact-density .a4.vertical .section > .grid-body 那幾條），不受這裡影響。 */
+.grid-body.qflow{display:flex;flex-wrap:wrap;flex-direction:row;justify-content:flex-start;align-items:flex-start;column-gap:2px;row-gap:3px}  /* v256: 橫書＋直列時改由左到右，見上方說明 */
+.grid-body.qflow > .grid-row-wrap{ width:fit-content; }  /* v182: 讓每一題寬度只跟著格子本身，不被工具列撐開 */
+/* v260：老師反映直列題（每題格子由上往下疊）的「多題之間怎麼排」應該給選——
+   原本永遠是上面那條規則的「往右併排、放不下才換行」，這裡加一個「往下排」
+   的選項，第2題直接接在第1題正下方、單一直行往下接續，不會併排。
+   v261 更新：「往右/往下」老師反映橫列題也想要、而且橫書直書頁面都該能選，
+   不該只綁在「直列」底下——原本的 .qflow-down 改名成 .qdown，並且不再限定
+   要搭配 .qflow，改成 .qflow 或 .hflow 都能疊加這個修飾class，只覆寫「多題
+   之間」怎麼排，不動「這一題格子本身」橫列/直列的排法（見下面 v261 區塊，
+   跟 applyQLayout／applyQArrange 兩個各自獨立的下拉選單相呼應）。 */
+.grid-body.qflow.qdown,
+.grid-body.hflow.qdown{
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+.grid-body.qflow.qdown > .grid-row-wrap,
+.grid-body.hflow.qdown > .grid-row-wrap{ width:auto; }  /* 往下排時每題各自佔一整行，不需要fit-content縮寬 */
+
+.row-actions{display:flex;gap:3px;margin-bottom:2px}
+/* v113: qflow 模式下 row-actions 橫向排列節省高度 */
+/* v182: 改成浮動工具列——平常隱藏，滑鼠移到這一題（或工具列本身）才出現，
+   蓋在格子正上方，不佔用版面空間，不會撐寬/撐高、也不會跟旁邊題目錯位 */
+.grid-body.qflow .row-actions{
+  position:absolute;
+  left:0; bottom:100%;
+  margin-bottom:2px;
+  width:max-content; max-width:160px;
+  flex-direction:row;flex-wrap:wrap;gap:2px;
+  font-size:10px;
+  background:#fff;
+  border:1px solid #cdd7e5;
+  border-radius:4px;
+  padding:2px 3px;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+  z-index:6;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .12s;
+}
+.grid-body.qflow .grid-row-wrap:hover > .row-actions,
+.grid-body.qflow .grid-row-wrap:focus-within > .row-actions{
+  opacity:1;
+  pointer-events:auto;
+}
+body.print-preview .grid-body.qflow .row-actions{ display:none !important; }
+
+/* v93: 格子橫向拖曳把手 */
+.grid-drag-handle{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:14px;min-width:14px;height:100%;min-height:24px;
+  cursor:ew-resize;
+  color:#aab;font-size:13px;
+  user-select:none;-webkit-user-select:none;
+  padding:0 1px;
+  border-right:2px dashed #ccd;
+  margin-right:4px;
+  flex-shrink:0;
+  background:transparent;
+  transition:background .15s;
+}
+.grid-drag-handle:hover{background:#e8f0ff;border-right-color:#3a7bd5;color:#3a7bd5}
+/* v97: 格子行垂直間距拖曳把手 */
+.row-spacing-handle{
+  display:block;
+  width:100%;
+  height:10px;
+  cursor:ns-resize;
+  user-select:none;
+  -webkit-user-select:none;
+  position:relative;
+  flex-shrink:0;
+  opacity:0.35;
+  transition:opacity .15s;
+  background:
+    linear-gradient(to bottom,
+      transparent 4px,
+      #7aabf0 4px, #7aabf0 5px,
+      transparent 5px);
+}
+.row-spacing-handle::after{
+  content:'⇕';
+  position:absolute;
+  left:50%;transform:translateX(-50%);
+  top:-1px;
+  font-size:8px;
+  color:#7aabf0;
+  line-height:10px;
+  pointer-events:none;
+}
+.row-spacing-handle:hover{
+  opacity:1;
+  background:
+    linear-gradient(to bottom,
+      transparent 4px,
+      #3a7bd5 4px, #3a7bd5 5px,
+      transparent 5px);
+}
+.row-spacing-handle:hover::after{ color:#3a7bd5; }
+/* 拖曳中 */
+.row-spacing-handle.dragging{
+  opacity:1;
+  background:
+    linear-gradient(to bottom,
+      transparent 4px,
+      #e74c3c 4px, #e74c3c 5px,
+      transparent 5px);
+}
+/* 列印/預覽隱藏 */
+body.print-preview .row-spacing-handle{ display:none !important; }
+
+/* v181 修正：使用者反映「拖完間距把手一次，放開後再拖第二次就凍住沒反應」。
+   實測發現根因：橫書＋直列（.grid-body.qflow）時，每一題都各自有一個把手，
+   但這些把手其實共用同一個「題目間距」設定——拖任何一題的把手，全部題目的
+   間距都會一起變，導致「除了最後一題以外」的題目位置全部跟著往右移動，
+   使用者剛放開滑鼠的那個把手，下一秒已經不在原本的螢幕座標上了（滑鼠點下
+   去自然沒反應，感覺像凍住）。只有「最後一題」（最靠左、位置固定不動）的
+   把手，不管怎麼拖都不會移位。改法：既然全部把手本來就是共用同一個設定，
+   乾脆只留最後一題的把手可以用，其餘題目的把手先隱藏起來，避免使用者點到
+   會「跑掉」的把手。 */
+.grid-body.qflow .grid-row-wrap:not(:last-child) .row-spacing-handle{ display:none; }
+
+/* v247 修正：老師反映字格題「最後一題」跟前面幾題不等高——根因找到了：
+   上面這個把手（row-spacing-handle）本來就會插在每一題最前面，「最後一題」
+   （DOM順序最後、規則裡唯一保留把手可以用的那一題）雖然把手是隱藏的其他題
+   都沒事，但它自己的把手沒被隱藏，還是用一般版面排列（in-flow）的方式，
+   實際佔了 10px 的高度，等於「最後一題」比其他題目整體多長出 10px，看起來
+   就是「最後一題比較高、跟前面對不齊」。跟 .a4.vertical 直書模式那邊（見上方
+   v113 區塊）已經修過的手法一樣：把手改成 position:absolute 浮在格子正上方
+   （脫離文件流），不管有沒有顯示，都不會再佔用 .grid-row-wrap 的版面高度，
+   這樣每一題的高度就只由字格本身決定，不會再因為把手而跟其他題目不等高。 */
+.grid-body.qflow .grid-row-wrap .row-spacing-handle{
+  position:absolute;
+  top:-9px; left:0; right:0; width:100%;
+  z-index:6;
+}
+
+.grid-drag-handle:active{background:#cce0ff}
+.grid-row-wrap{position:relative}
+/* 列印時隱藏把手 */
+@media print{.grid-drag-handle{display:none!important}}
+body.print-preview .grid-drag-handle{display:none!important}
+/* v93: 置中按鈕（在 row-actions 中）*/
+.rab-center{background:#1a8c70;color:#fff;}
+.rab-center:hover{background:#147a5e}
+
+.rab{
+  border:none;border-radius:3px;cursor:pointer;padding:1px 7px;
+  font-size:10px;background:#eef4ff;color:#1a3a6b;transition:background .15s
+}
+.rab:hover{background:#cfe0ff}
+.grid-row{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:0}
+/* v34: 連續字格(同一題)不留白；邊框重疊避免雙線 */
+.grid-row .char-unit + .char-unit{ margin-left:-1.2px; }
+.a4.vertical .grid-row .char-unit + .char-unit{ margin-left:0; margin-top:-1.2px; }
+
+
+/* ── 字格單元 ── */
+.char-unit{display:flex;flex-direction:column;flex-shrink:0}
+.char-body{display:flex;flex-direction:row;align-items:stretch;flex-shrink:0}
+
+/* ── 大字格：預設 18×18mm；both 模式由 JS 改 height ── */
+.char-box{
+  width:14mm;height:14mm;
+  border:1.2px solid #3a7bd5;
+  position:relative;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden
+}
+/* 十字虛線 */
+.char-box.cross::before{
+  content:'';position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed #a8c8f0
+}
+.char-box.cross::after{
+  content:'';position:absolute;top:50%;left:0;right:0;border-top:1px dashed #a8c8f0
+}
+.char-input{
+  width:100%;height:100%;font-size:11pt;font-weight:500;
+  text-align:center;outline:none;border:none;background:transparent;
+  caret-color:#1a3a6b;position:relative;z-index:2;color:#111;
+  overflow:hidden;min-width:0;min-height:0;
+  padding:0;margin:0;box-sizing:border-box;cursor:text;
+  font-family:inherit;
+  /* 垂直置中：用 flex 父容器控制，input 本身 height:100% */
+}
+.char-input:focus{background:rgba(58,123,213,.06)}
+.char-input::placeholder{color:transparent;font-size:9pt}
+
+/* v238: AI出題字格題「交替出題」方向切換小圖示——只出現在滑鼠移到格子上時，
+   點一下切換這一格是「看注音寫國字」還是「看國字寫注音」，列印/預覽時隱藏 */
+.unit-dir-toggle{
+  display:none;position:absolute;top:-6px;right:-6px;z-index:6;
+  width:13px;height:13px;line-height:11px;text-align:center;
+  font-size:9px;padding:0;border:1px solid #3a7bd5;border-radius:50%;
+  background:#eaf2ff;color:#3a7bd5;cursor:pointer;
+}
+.char-unit:hover .unit-dir-toggle{display:block}
+.unit-dir-toggle:hover{background:#3a7bd5;color:#fff}
+@media print{ .unit-dir-toggle{ display:none !important; } }
+body.print-preview .unit-dir-toggle{ display:none !important; }
+
+/* ── 注音/拼音側欄：★ 整格空白，不分三格 ── */
+.zy-col{
+  width:4.5mm;           /* 初始預設值，會被 JS _syncZyColWidth 動態更新 */
+  border:1.2px solid #3a8a3a;   /* 綠色邊框，仿傳統默寫紙 */
+  border-left:none;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:visible;position:relative  /* v113: 允許拼音超出格框 */
+}
+.zy-col.zhuyin-col{background:#fff;height:14mm}  /* 白色背景，傳統格式 */
+.zy-col.pinyin-col{background:#fff;height:14mm;border-top:1px dashed #7ab87a}
+.zy-col.single-col {height:14mm}   /* 單模式 */
+
+.zy-cell{
+  width:100%;height:100%;
+  outline:none;font-size:6.5pt;
+  text-align:center;
+  display:flex;align-items:center;justify-content:center;
+  cursor:text;line-height:1.2;word-break:break-all;
+  color:#333;padding:1px;
+  overflow:visible;max-width:100%;min-width:0  /* v113: 移除截字限制 */
+}
+/* v259 修正：老師反映字格題的注音欄（一個字對應多個注音符號，例如「暖」
+   ㄋㄨㄢˇ有4個符號）原本應該是直式（一個符號一行、由上往下疊），但現在
+   會橫向卡在一起（同一行擠2個符號才換行）。根因：注音欄的內容一直都是
+   純文字（沒有插入換行符），單純靠 word-break:break-all 讓瀏覽器「寬度不夠
+   才換行」——字格大小設定越大（例如20mm特大），注音欄跟著變寬（v138：寬度
+   固定抓字格的40%），寬度一旦大於一個注音符號的寬度，兩個符號就會擠在同一
+   行才換行，不再是老師要的單一直行。改法：注音欄（不含拼音格 .pin）改用
+   writing-mode:vertical-rl 讓文字內容本身直式排列，符號會照順序由上往下疊
+   成單一直行，不管欄位多寬都不會有「兩個符號擠一行」的問題，也不用再靠
+   換行符或限制欄寬這種不夠穩定的做法。（拼音格.pin不受影響，拼音的直式/
+   橫式已經由v254的_isCompactBothPinCell另外處理，見上方formatPinyin。） */
+.zy-cell:not(.pin){
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+.zy-cell.pin{
+  /* font-size: inherited from applyZySize */font-family:Arial,Helvetica,sans-serif;
+  /* 直向拼音：改為 block，讓 <br> 和 \n 正常換行 */
+  display:block;          /* ← 覆蓋 .zy-cell 的 flex */
+  text-align:center;
+  white-space:pre-wrap;
+  line-height:1.15;
+  padding:2px 0;
+  overflow:visible;  /* v113: 允許拼音超出格子顯示，避免被截斷 */
+  word-break:break-all;
+}
+.zy-cell:focus{background:rgba(58,138,58,.12)}  /* 綠色focus */
+.zy-cell:empty::before{content:attr(data-ph);color:#ccc;pointer-events:none;font-size:5pt}
+
+
+
+/* ── 延伸框十字：只有垂直中線（橫線已被上排 char-box 的底邊代替） ── */
+.char-ext.cross-ext{position:relative;}
+.char-ext.cross-ext::before{
+  content:'';position:absolute;
+  left:50%;top:0;bottom:0;
+  border-left:1px dashed #a8c8f0;
+}
+.char-ext.cross-ext::after{
+  content:'';position:absolute;
+  top:50%;left:0;right:0;
+  border-top:1px dashed #a8c8f0;
+}
+/* ── 空白延伸框：both 模式下排，視覺延伸字格邊框 ── */
+.char-ext{
+  width:14mm;height:14mm;
+  border:1.2px solid #3a7bd5;
+  border-top:none;
+  flex-shrink:0;
+  background:transparent;
+}
+/* ── 注音+拼音雙欄容器 ── */
+.zy-both{
+  display:flex;flex-direction:column;
+  width:4.5mm;flex-shrink:0
+}
+
+/* ── v254：both 模式（注音＋拼音）緊湊版拼音說明列 ──
+   橫書時：字格＋注音在右那一排下面，一行橫排文字置中對齊，當作拼音說明
+   （比照行銷參考圖：字格、注音在右、拼音橫排在下）。
+   直書時另外覆蓋成窄長條、逐字直排，跟舊版一樣併排在注音欄旁邊，
+   見下方 .a4.vertical .pin-caption-row。 */
+.pin-caption-row{
+  display:flex;align-items:flex-start;justify-content:center;
+  flex-shrink:0;margin-top:0.8mm;
+}
+.pin-caption-row .zy-cell.pin{
+  width:auto;height:auto;
+  border:none;background:transparent;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:7pt;color:#2f8f52;
+  text-align:center;white-space:nowrap;
+  line-height:1.2;padding:0;
+}
+.pin-caption-row .zy-cell.pin:empty::before{
+  content:attr(data-ph);color:#ccc;font-size:6pt;
+}
+.pin-caption-row .zy-cell.pin:focus{background:rgba(58,138,58,.12)}
+
+/* ── ★ 幾聲選擇器 ── */
+.tone-row{
+  display:none;  /* 預設隱藏，聲調直接打在注音格內 */
+  display:flex;width:18.5mm;height:5mm;
+  border:1px solid #b0c8e8;border-top:none;
+  background:#f8fbff;overflow:hidden
+}
+/* both 模式字格較高，tone-row 對齊總寬 */
+.tone-row.wide{width:18.5mm}
+
+.tone-btn{
+  flex:1;border:none;border-right:1px solid #ccdff0;
+  background:transparent;cursor:pointer;
+  font-size:11px;font-family:"Microsoft JhengHei",Arial,sans-serif;
+  color:#3a5a8a;padding:0;line-height:1;
+  transition:background .12s,color .12s;
+  display:flex;align-items:center;justify-content:center
+}
+.tone-btn:last-child{border-right:none}
+.tone-btn:hover{background:#d6eaff;color:#1a3a6b}
+.tone-btn.active{background:#1a3a6b;color:#fff;font-weight:700}
+
+/* ── 選擇題 ── */
+.mc-question{margin-bottom:5px;font-size:9pt}
+.mc-stem{display:flex;align-items:baseline;gap:4px;margin-bottom:3px}
+.mc-no{color:#1a3a6b;font-weight:700;white-space:nowrap}
+.mc-blank{width:28px;display:inline-block;border-bottom:1.5px solid #333}
+.mc-text{outline:none;flex:1;min-width:80px;border-bottom:1px dashed transparent}
+.mc-text:focus{border-bottom-color:#3a7bd5}
+.mc-options{display:flex;flex-wrap:wrap;padding-left:18px}
+.mc-opt{display:flex;align-items:baseline;gap:3px;width:25%;min-width:70px;margin-bottom:2px}
+.opt-letter{color:#1a3a6b;font-weight:700;white-space:nowrap}
+.opt-text{outline:none;flex:1;border-bottom:1px dashed transparent}
+.opt-text:focus{border-bottom-color:#3a7bd5}
+
+/* ── 空白行 ── */
+.blank-line{border-bottom:1px solid #3a7bd5;height:10mm;width:100%;margin-bottom:2px}
+
+/* ── 頁尾 ── */
+.exam-footer{text-align:center;font-size:7pt;color:#bbb;margin-top:14px;padding-top:5px;border-top:1px dashed #ddd;clear:both}
+body.print-preview .exam-footer { display: none !important; }
+
+/* ── 浮動面板 ── */
+#add-panel{
+  position:fixed;bottom:20px;right:20px;z-index:500;
+  background:#1a3a6b;border-radius:10px;
+  padding:8px 12px;box-shadow:0 4px 18px rgba(0,0,0,.35);
+  display:flex;flex-direction:column;gap:5px
+}
+.ap-title{color:#adc8ff;font-size:10px;font-weight:700;text-align:center}
+.ap-btn{
+  border:none;border-radius:5px;cursor:pointer;padding:6px 12px;
+  font-size:11px;font-family:inherit;font-weight:600;
+  text-align:left;white-space:nowrap;transition:opacity .15s
+}
+.ap-btn:hover{opacity:.85}
+
+/* ════════ 列印樣式 ════════ */
+@media print{
+  body{background:#fff}
+  #toolbar,#add-panel,.sec-actions,.row-actions,
+  .big-actions,.anno-ruby-btn,.score-ruby-btn,
+  .defs-toggle-btn,.defs-del-btn,.defs-btn-row,
+  .sub-del-btn,.sab,.rab,.rab-center,
+  .cv-block-actions,.passage-ruby-btn,
+  .cv-table-ruby-btn{display:none!important}
+  /* v81: 列印預覽橫幅也隱藏 */
+  #preview-banner{display:none!important}
+  /* v119: 列印版面完整修正 - 使用固定210mm寬度 */
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm !important;
+  }
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm !important;
+    background: white !important;
+  }
+  #paper-wrap {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    background: transparent !important;
+    gap: 0 !important;
+  }
+  .a4 {
+    display: block !important;
+    box-shadow: none !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    padding: 10mm 12mm 12mm 14mm !important;
+    margin: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    background: white !important;
+    overflow: visible !important;
+    position: relative !important;
+  }
+  .a4-cover {
+    padding: 14mm 14mm 12mm 14mm !important;
+    overflow: hidden !important;
+  }
+  .page-break-hint, .add-page-btn, .del-page-btn,
+  #btn-add-page { display: none !important; }
+
+  /* v135: 防止關鍵元素被分頁截斷 */
+  .big-hdr { break-inside: avoid; page-break-inside: avoid; }
+  .mc-question { break-inside: avoid; page-break-inside: avoid; }
+  .grid-row-wrap { break-inside: avoid; page-break-inside: avoid; }
+  .section-hdr { break-inside: avoid; page-break-inside: avoid; break-after: avoid; page-break-after: avoid; }
+  .cv-table { break-inside: avoid; page-break-inside: avoid; }
+  .cv-block { break-inside: avoid; page-break-inside: avoid; }
+  .reading-passage { break-inside: avoid; page-break-inside: avoid; }
+  /* v213：老師反映列印預覽「頁底跟下一頁的藍框連死，沒有空格」——
+     以前只有 .section-hdr（藍色大題標題那個框）自己有 break-inside/break-after
+     avoid，但整個 .section（標題+底下的作答內容）沒有，所以當一個大題剩下的
+     內容裝不進當頁剩餘空間時，瀏覽器會直接從大題「中間」硬切，藍色標題框
+     被單獨留在上一頁的最底部，緊貼著頁緣、內容延續到下一頁最頂部也是緊貼
+     頁緣，兩邊都沒有留白，看起來就像被截斷、黏在一起。這裡讓整個 .section
+     盡量保持完整不被從中間切開——裝不下的話，瀏覽器會把「整個大題」一起
+     推到下一頁最上面（那一頁本身還是有 .a4 的 10mm 上邊距，不會緊貼頁緣），
+     而不是把大題攔腰截斷。如果單一大題本身就比一整頁還高（例如超長的閱讀
+     測驗或字格題），瀏覽器還是會被迫從中間切開，這是單一大題內容量的物理
+     限制，不是這裡能解決的。 */
+  .section { break-inside: avoid; page-break-inside: avoid; }
+
+  /* 列印時：聲調按鈕全隱藏，只顯示選中的那個 */
+  .tone-btn{ display:none }
+  .tone-btn.active{
+    display:flex;
+    background:transparent !important;   /* 不依賴背景色 */
+    color:#000 !important;               /* 黑字，確保印得出來 */
+    font-size:10px;
+    font-weight:700;
+    border-radius:0;
+    border:1px solid #999;               /* 加框線，讓位置清楚 */
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  /* 整個 tone-row 列印時也要顯示（只保留有選中聲調的那格） */
+  .tone-row{
+    border-color:#ccc;
+    background:transparent !important;
+  }
+  /* 若選擇「隱藏聲調列」，列印時也維持隱藏 */
+  .tone-row[style*="display: none"],
+  .tone-row[style*="display:none"]{
+    display:none !important;
+  }
+}
+
+/* ════════════════════════════════════════
+   ★ 直書模式 (.a4.vertical)
+   - 每個 .grid-row-wrap 變成一「直列」
+   - 多列從右至左排列
+   - 注音欄在字格右側（傳統直書位置）
+════════════════════════════════════════ */
+
+/* 直書時 A4 上的 section body 改為橫向排列，從右到左
+   v149 修正：原本用 :not(.section-hdr):not(.sec-actions) 會連
+   閱讀測驗(.reading-body)、連連看(.match-body)、自由編輯區等
+   也一起被強制變成 flex 橫排，造成閱讀測驗題框被擠到右側、變窄。
+   這條規則其實只是為了「字格題」(.grid-body) 設計的，改成只鎖定
+   .grid-body，其他題型維持正常的區塊(block)排版，不受影響。
+
+   v177 修正：使用者反映「模組1（真直書）看國字寫注音」多題時，題目是
+   「並列」（左右排開，題號1跟題號2左右並排在同一橫排），而不是她要的
+   「直列」（題目由上往下一路接續下去，同一欄）。
+   根因：原本 flex-direction:row-reverse + flex-wrap:wrap 是把每一題
+   （本身已經是一個直向小欄）當成「橫向排列的項目」在排——因為容器沒有
+   固定高度，wrap 永遠不會因為「高度不夠」觸發，只會因為「寬度不夠」
+   觸發，所以只要寬度夠放兩題，就會兩題並排（並列），第三題才被擠到
+   下一「橫排」，效果變成一批一批並排，不是連續直列。
+   改法：flex-direction 改成 column（由上往下依序疊放，不會再並排）。
+   這樣同一欄裡的題目就會一路往下接續，不會左右併排。
+
+   v178 修正：v177改完後題目確實直列貼合了，但對齊方式原本用flex-end
+   （靠右），使用者反映「不管直式橫式，題幹從左邊開始，題目也該從最
+   左邊開始」——題目框跟大題標題（左上角）中間留了一大片空白，看起來
+   沒對齊。改成flex-start（靠左），跟大題標題的起始位置一致。
+
+   v179 修正：v178改完後，題目數量一多（3題以上）又出現「並列」——
+   第1、3題並排在同一橫排，第2題卻掉到完全不同的位置。根因：
+   flex-wrap:wrap在flex-direction:column時，理論上要「這一欄的高度
+   滿了才換下一欄」，但.grid-body本身沒有設定固定高度（高度是跟著內容
+   長的），沒有固定高度就沒有「滿了」這件事，於是換欄的時機變得不可
+   預期、跟視覺對不上，才會出現1、3題並排、2題跑位的怪現象。
+   改法：既然使用者要的其實是「不管幾題，永遠單一直行、一路往下接
+   續」，乾脆把flex-wrap關掉（改成nowrap），就不會再有意外換欄，題目
+   數量再多也會穩定地一路往下排。 */
+/* v258 修正：老師反映直書頁面裡，字格題選「橫列（題號在左）」時，按
+   「新增題」新的一題卻是往下疊在前一題下面，不是像傳統直書考卷那樣
+   排成並排的欄（往旁邊移）。追查後發現：下面這條規則原本沒有區分
+   「直列(.qflow)」跟「橫列(不帶.qflow，實際上帶的是.hflow)」——不管字格題
+   選哪一種出題排列，只要整頁是直書(.a4.vertical)，通通被這條規則的
+   flex-direction:column 強制變成單一直行、一路往下疊（這是v177~179原本
+   針對「直列」題型設計的行為，當時沒有另外處理「橫列」的狀況）。
+   其實「橫列」模式在橫書頁面本來就有一條現成的並排流動規則
+   （.grid-body.hflow，見下面v114），新增題會緊接著前一題往右排、放不下
+   才換行——這正是這裡要的效果。改法：把這條規則限定只在「直列(.qflow)」
+   時生效，「橫列」不再被這條規則攔截、蓋掉，讓.hflow那條原本就有的規則
+   自然生效，直書頁面的橫列模式就會跟橫書頁面一致，新增題往右併排，不會
+   再一路往下疊。（不新增一條重複的並排規則，直接沿用.hflow，兩種頁面
+   方向以後也只需要維護同一套橫列排版邏輯。） */
+/* v261 更新：這條規則原本不分青紅皂白把「直列(.qflow)」在直書頁面永遠固定
+   成「往下疊」，但老師現在要直書頁面的直列題也能選「往右併排」——改成依
+   .qdown（多題排列方向，見上面 applyQArrange／.qdown 說明）這個修飾class
+   分成兩種：沒有.qdown（預設，往右）就沿用跟橫書頁面一致的「並排、放不下
+   才換行」；有.qdown（往下）才維持v177~179驗證過的「單一直行、一路往下疊」。
+   橫列(.hflow)在直書頁面本來就沒有另外覆寫、自然沿用.hflow自己的並排規則
+   （見v258說明）；這裡只補上橫列+往下這個新組合要用到的往下疊規則。 */
+.a4.vertical .section > .grid-body.qflow:not(.qdown) {
+  display: flex;
+  flex-direction: row;      /* v261：往右＝並排，放不下才換行 */
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  column-gap: 2px;
+  row-gap: 3px;
+}
+.a4.vertical .section > .grid-body.qflow.qdown,
+.a4.vertical .section > .grid-body.hflow.qdown {
+  display: flex;
+  flex-direction: column;   /* v177: 由上往下疊，不再並列 */
+  align-items: flex-start;  /* v178: 靠左對齊，跟大題標題起始位置一致 */
+  flex-wrap: nowrap;        /* v179: 關掉換欄，永遠單一直行 */
+  gap: 2px;
+}
+/* v207 修正：模組1（緊湊雙欄＋直書）底下，大題標題（.section-hdr）其實是
+   直書靠右對齊（見下面 body.compact-density .a4.vertical .section-hdr 那條規則，
+   margin-left:auto 把標題推到最右邊），但上面 v178 那條規則卻讓題目內容靠左對齊，
+   兩者對不起來，畫面上就變成「標題在最右邊、題目內容在最左邊」，中間留一大片
+   空白，看起來完全跑版。這裡針對「緊湊雙欄＋直書」這個特定組合，改成題目內容
+   也靠右對齊，跟標題貼齊，符合傳統直書「由右到左」排版習慣。
+   （只在 body.compact-density 底下生效，不影響「直書但沒開緊湊雙欄」的情況，
+   那種情況標題還是橫式滿版banner，維持原本靠左對齊即可。） */
+/* v220 修正：老師拿真實傳統國小考卷照片來對比，指出模組1的字格題排版「一團
+   亂」，印出來不能看。跟參考照片比對後發現：v177~179 當初為了避免「字數一多
+   會亂排」，把字格題改成「不管幾個字，永遠疊成單一一直行、一路往下」，但這
+   跟真實傳統考卷的排法不一樣——真實考卷是「一欄放滿一定數量的字之後，換到
+   左邊新的一欄，好幾欄並排」，不會讓同一欄無限往下拉長。v177~179 那個亂排
+   bug，根因其實是「flex-direction:column + flex-wrap:wrap」在容器高度是
+   auto（跟著內容長）的情況下換欄時機不穩定；這裡改用完全不同的作法——直接
+   沿用這個檔案裡本來就有、已經穩定運作的 .grid-body.qflow 排版邏輯（橫書＋
+   直列模式一直都是這樣排，見上面 v116/v181/v182），也就是「flex-direction:
+   row-reverse + flex-wrap:wrap」：這是依照容器「寬度」（不是高度）來決定
+   何時換欄，寬度是固定值不會像高度一樣有 auto 的循環依賴問題，所以不會重演
+   v179 那個亂排 bug，同時能讓字格題像參考照片一樣分成好幾欄由右到左並排、
+   有效利用版面寬度，不會再擠成一小條、旁邊留一大片空白。 */
+/* v221 修正：老師反映「字格題的格子應該從右邊開始」——實測發現 .grid-body
+   實際上是 writing-mode:horizontal-tb（沒有真的套用 vertical-rl，直書效果是
+   靠 flex-direction:row-reverse 手動排出來的「視覺上由右到左」），這種情況下
+   flex-direction:row-reverse 的「主軸起點」其實是螢幕右邊，「主軸終點」是螢幕
+   左邊；justify-content:flex-end 是把內容推到「主軸終點」＝左邊，所以字數不多
+   （不滿一整排）的時候，格子會貼在最左邊、右邊留一大片空白，跟老師要的「從右
+   邊開始」相反。改成 justify-content:flex-start（推到主軸起點＝右邊）才對。
+   已用 Claude in Chrome 實測驗證：字格從左邊(x=369)貼齊右邊(x=951~1064，跟
+   容器右緣切齊)。 */
+body.compact-density .a4.vertical .section > .grid-body {
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  align-content: flex-start;
+  column-gap: 2px;
+  row-gap: 3px;
+}
+body.compact-density .a4.vertical .section > .grid-body > .grid-row-wrap {
+  flex-shrink: 0;
+  width: fit-content;
+}
+
+/* v150: 保險加固 —— 不管前面那條規則有沒有生效（例如瀏覽器快取還沒更新），
+   直接針對「閱讀測驗」「連連看」「自由編輯區」等非字格題的內容容器，
+   強制維持正常滿版、置中排版，不會再被擠向右側、留一大片左側空白。 */
+.a4.vertical .section > .reading-body,
+.a4.vertical .section > .match-body,
+.a4.vertical .section > .free-edit-area {
+  display: block !important;
+  float: none !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.a4.vertical .reading-passage-wrap,
+.a4.vertical .sec-defs,
+.a4.vertical .reading-passage,
+.a4.vertical .reading-qs,
+.a4.vertical .big-defs {
+  display: block !important;
+  float: none !important;
+  clear: both !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* 直書時每個 grid-row-wrap 成為一直列 */
+.a4.vertical .grid-row-wrap {
+  display: flex;
+  flex-direction: column;        /* 由上而下 */
+  align-items: flex-start;
+}
+
+/* 直書時 row-actions 改為直向顯示在列頂端 */
+.a4.vertical .row-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 0;
+  margin-left: 2px;
+  order: 1;   /* 放在右邊 */
+}
+
+.a4.vertical .row-actions .rab {
+  font-size: 8px;
+  padding: 1px 3px;
+  writing-mode: horizontal-tb;
+}
+
+/* 直書時 .grid-row 改為直向（字格由上而下） */
+.a4.vertical .grid-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  order: 0;  /* 放在左邊（視覺上是主體） */
+}
+
+/* v36: 直列模式題號置頂；三格題往下長（強制覆寫） */
+.a4.vertical .grid-line{
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
+}
+.a4.vertical .qno{
+  width: auto !important;
+  flex: 0 0 auto !important;
+  text-align: left !important;
+  padding-top: 0 !important;
+  margin: 0 0 1mm 0 !important;
+}
+
+/* 直書時 .char-unit 改為橫排：
+   左邊字格，右邊注音欄（傳統直書注音在右側） */
+.a4.vertical .char-unit {
+  flex-direction: row;
+}
+
+/* 直書時 .char-body 也是橫排（字格 + 注音並排） */
+.a4.vertical .char-body {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+/* 直書時注音欄邊框調整（改為左邊框） */
+.a4.vertical .zy-col {
+  border-left: 1.2px solid #3a8a3a;  /* 綠色邊框 */
+}
+
+.a4.vertical .zy-col.zhuyin-col,
+.a4.vertical .zy-col.single-col{
+  border-top: 1.2px solid #3a8a3a; /* 上端封閉 */
+}
+.a4.vertical .zy-col.pinyin-col{
+  border-top: 1px dashed #7ab87a;   /* 上下分隔虛線 */
+}
+
+
+/* v39: 直書時移除空白延伸框（避免拼音欄前出現空白一格） */
+.a4.vertical .char-ext{
+  display:none !important;
+  width:0 !important;
+  height:0 !important;
+  border:none !important;
+}
+
+/* v254：直書時 both 模式的拼音說明列（.pin-caption-row）維持跟舊版 pinyin-col
+   一樣的窄長條樣式，跟字格、注音欄併排在同一條直書列裡（不是橫書那種置中
+   橫排說明文字，直書沒有「字格正下方」這個概念，下面是下一個字）。 */
+.a4.vertical .pin-caption-row{
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:0;
+  width:4.5mm;height:14mm;
+  border:1.2px solid #3a8a3a;border-left:none;border-top:1px dashed #7ab87a;
+  background:#fff;
+}
+.a4.vertical .pin-caption-row .zy-cell.pin{
+  width:100%;height:100%;
+  border:none;background:transparent;
+  white-space:pre-wrap;
+}
+
+
+/* 直書時 tone-row 改為直書方向（緊貼字格下方，比聲調按鈕更緊湊） */
+.a4.vertical .tone-row {
+  flex-direction: column;
+  width: 5mm;
+  height: auto;
+  align-self: stretch;
+  margin-left: 0;
+}
+.a4.vertical .tone-btn {
+  width: 5mm;
+  height: calc(100% / 5);
+  font-size: 7px;
+  padding: 0;
+  writing-mode: horizontal-tb;
+}
+
+/* 直書時輸入框文字也是直書 */
+.a4.vertical .char-input {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+
+/* 直書時注音欄文字也直書 */
+.a4.vertical .zy-cell {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  width: 4.5mm;
+  height: 14mm;
+}
+
+/* v40: 直書時拼音格仍用換行直排，不要再套 vertical-rl（避免只剩最後一個字母） */
+.a4.vertical .zy-cell.pin{
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+}
+
+@media print {
+  .a4.vertical .row-actions { display: none; }
+}
+
+
+/* ══════════════════════════════════════════
+   封面（第 1 頁）- 通用公版（可換Logo/內容）
+   參考格式：Wagor/WISE 考卷封面範例 [Source](https://www.genspark.ai/api/files/s/yOyEHq1P)
+══════════════════════════════════════════ */
+.a4-cover{padding:14mm 14mm 12mm 14mm}
+.cover-top{display:flex;align-items:center;gap:10mm;margin-bottom:6mm}
+/* v89: logo 以 JS 拖曳調整大小 */
+.cover-logo{
+  width:42mm;height:42mm;
+  flex:0 0 auto;
+  min-width:20mm;max-width:100mm;
+  min-height:20mm;max-height:100mm;
+  border:1px dashed #999;border-radius:4mm;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  background:#fff;
+  box-sizing:border-box;
+  position:relative;
+  user-select:none;
+}
+.cover-logo img{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:none;
+}
+.cover-logo.has-logo{border-style:solid;border-color:#aaa}
+.cover-logo.has-logo img{display:block}
+.cover-logo.has-logo .logo-ph{display:none}
+.cover-logo .logo-ph{
+  font-size:8.5pt;color:#aaa;line-height:1.4;
+  text-align:center;padding:2mm;
+  pointer-events:none;
+}
+/* 右下角拖把 */
+.logo-resize-handle{
+  position:absolute;
+  bottom:0;right:0;
+  width:18px;height:18px;
+  cursor:se-resize;
+  background:linear-gradient(135deg,transparent 40%,#999 40%,#999 55%,transparent 55%,
+    transparent 65%,#999 65%,#999 78%,transparent 78%);
+  border-radius:0 0 4mm 0;
+  opacity:0.5;
+  transition:opacity .15s;
+}
+.cover-logo:hover .logo-resize-handle{opacity:1}
+.cover-logo.resizing .logo-resize-handle{opacity:1}
+/* 列印時隱藏拖把 */
+@media print{
+  .cover-logo{resize:none;overflow:hidden}
+  .cover-logo::after{display:none}
+}
+
+.cover-titles{flex:1;text-align:center}
+.cover-t1{font-size:20pt;font-weight:700;color:#1a2a6b;line-height:1.2}
+.cover-t2{font-size:16pt;font-weight:700;color:#1a2a6b;line-height:1.2;margin-top:1.5mm}
+.cover-t3{font-size:10.5pt;color:#111;margin-top:3mm}
+
+.cv-table{width:100%;border-collapse:collapse;margin:7mm 0 0 0;table-layout:fixed}
+.cv-table th,.cv-table td{border:1px solid #333;padding:2.2mm 2.5mm;font-size:10pt;vertical-align:middle}
+.cv-table th{background:#cfcfcf;font-weight:700;text-align:center}
+.cv-table .subhead th{background:#fff;font-weight:700}
+
+/* Student table */
+.cv-student th{font-size:13pt}
+.cv-student td{height:10mm}
+
+/* Criteria table */
+.cv-criteria th{height:10mm}
+.cv-criteria td{height:8mm}
+.cv-criteria .col-sec{width:12%}
+.cv-criteria .col-desc{width:64%}
+.cv-criteria .col-val{width:12%}
+.cv-criteria .col-score{width:12%}
+/* v123: row action buttons */
+.cv-row-btns {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  align-items: center;
+}
+.cv-col-btns-hdr { width:14%; font-weight:400; background:#f8f8f8; }
+.cv-row-btn {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid #bbb;
+  cursor: pointer;
+  background: #f5f5f5;
+  color: #333;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.cv-row-btn:hover { background: #e0e8ff; border-color: #66a; }
+.cv-row-btn.del { color: #c33; border-color: #e77; background: #fff0f0; }
+.cv-row-btn.del:hover { background: #ffe0e0; }
+@media print {
+  .cv-row-btns {
+    visibility: collapse !important;
+    width: 0 !important; padding: 0 !important; border: none !important;
+    font-size: 0 !important; line-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .cv-criteria, .cv-student { table-layout: auto !important; }
+}
+
+/* Instructions */
+.cv-instr .instr-cell{white-space:pre-wrap;line-height:1.35;min-height:15mm;resize:vertical;overflow:auto}
+/* v135: 列印時 instr-cell 不顯示 resize 手把 */
+
+/* 封面上的可編輯文字 */
+.cover-page [contenteditable="true"]{outline:none}
+.cover-page [contenteditable="true"]:focus{background:rgba(0,0,0,.05)}
+
+@media print{
+  /* v204 修正：封面內容通常不多，但以前這裡強制 page-break-after:always，
+     等於封面不管內容多短，後面一定會硬性換頁，留下一大塊列印出來的空白紙。
+     改成 auto（不再強制斷頁）＋ min-height:0（封面高度縮回跟內容一樣高，
+     不再被撐滿一整張 297mm），這樣封面內容結束後，如果這張紙還有剩餘空間，
+     第一大題會自動接著往下排、印在同一張紙的剩餘空間，不浪費紙。
+     如果封面內容本身就很長、已經超過一頁，還是會自然換頁，不受影響。 */
+  .a4-cover{
+    page-break-after:auto !important;
+    break-after:auto !important;
+    min-height:0 !important;
+  }
+}
+/* v135: 列印時強制保留所有表格邊框 */
+@media print {
+  .cv-table,
+  .cv-table th,
+  .cv-table td {
+    border: 1.5px solid #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .cv-table th {
+    background: #cfcfcf !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .cv-student th, .cv-student td {
+    border: 1.5px solid #000 !important;
+  }
+  .cv-instr th, .cv-instr td {
+    border: 1.5px solid #000 !important;
+  }
+  .student-bar {
+    border: 1.5px solid #000 !important;
+    border-top: none !important;
+  }
+  .sf {
+    border-right: 1.5px solid #000 !important;
+  }
+  .sf:last-child {
+    border-right: none !important;
+  }
+  .exam-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+/* v135: 列印預覽也強制保留表格邊框 */
+body.print-preview .cv-table th,
+body.print-preview .cv-table td {
+  border: 1.5px solid #000 !important;
+}
+body.print-preview .cv-table th {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+body.print-preview .student-bar {
+  border: 1.5px solid #000 !important;
+  border-top: none !important;
+}
+body.print-preview .sf {
+  border-right: 1.5px solid #000 !important;
+}
+body.print-preview .sf:last-child {
+  border-right: none !important;
+}
+.a4.no-pagehdr .exam-header,
+.a4.no-pagehdr .student-bar{display:none}
+
+
+
+.big-hdr{
+  border:1px solid #333;background:#f2f2f2;
+  padding:0.5mm 2mm 0.8mm;margin:2.5mm 0 1.5mm 0;
+  position:relative; overflow:visible;
+  /* v80: 手動可調整大小；v84: 縮小預設 padding */
+  resize:vertical; min-height:22px; overflow:auto;
+  box-sizing:border-box;
+}
+/* 摺疊狀態 */
+.big-hdr.collapsed .big-sub,
+.big-hdr.collapsed .big-defs,
+.big-hdr.collapsed .big-score-wrap {
+  display:none !important;
+}
+.big-hdr.collapsed { padding-bottom:1mm; min-height:0; }
+.big-hdr .big-title{display:flex;align-items:center;flex-wrap:nowrap;gap:4px;}
+.big-hdr .big-title .anno-main{flex:1;min-width:0;}
+.big-hdr .big-title{font-weight:800;font-size:12pt;line-height:1.2}
+.big-hdr .big-sub{font-size:10.5pt;color:#333;margin-top:0}
+/* v84: big-hdr 標題行注音後，不要有大量底部 padding（避免主副標題間距過大）*/
+.big-hdr .big-title .anno-zh.has-ruby {
+  padding-bottom: 0.15em !important;
+  padding-top: 0 !important;
+}
+.big-hdr .big-sub.anno-title { margin-top: 0 !important; }
+
+.big-hdr [contenteditable="true"]{outline:none}
+.big-hdr [contenteditable="true"]:focus{background:rgba(0,0,0,.06)}
+
+
+/* v52: 選擇題/閱讀/連連看 支援 國字+注音/拼音（依工具列模式顯示） */
+.ruby-line{display:flex; align-items:flex-start; gap:2mm; margin:0;}
+.ruby-line .ruby-phon{width:10mm; min-height:8mm; border:1px dashed #7ab87a; border-radius:2px; padding:1px 1.2px; font-size:6.5pt; line-height:1.15; text-align:center; white-space:pre-wrap;}
+.ruby-line .ruby-phon:empty:before{content:attr(placeholder); color:#9bb99b;}
+.ruby-line .ruby-zh{flex:1; min-height:8mm; border-bottom:1px dotted #bbb; padding:1px 2px;}
+.ruby-line .ruby-zh:empty:before{content:attr(placeholder); color:#aaa;}
+
+body[data-mode="none"] .ruby-phon{display:none;}
+body[data-mode="zh"] .ruby-pin{display:none;}
+body[data-mode="en"] .ruby-zy{display:none;}
+
+.mc-stem{display:flex; align-items:flex-start; gap:2mm; margin:1mm 0;}
+.mc-no{white-space:nowrap;}
+.mc-options .mc-opt{display:flex; gap:2mm; align-items:flex-start; margin:1mm 0;}
+
+.reading-passage{border:1px solid #bbb; border-radius:3px; padding:3mm; min-height:25mm; margin:2mm 0 3mm; width:100%; box-sizing:border-box;}
+.reading-passage:empty:before{content:attr(placeholder); color:#aaa;}
+.read-stem{display:flex; gap:2mm; align-items:flex-start; margin:1mm 0;}
+.read-no{white-space:nowrap;color:#1a3a6b;font-weight:700;}
+.read-options .read-opt{display:flex; gap:2mm; align-items:flex-start; margin:1mm 0;}
+
+.sec-defs{border:1px dashed #cfcfcf; border-radius:3px; padding:2mm; margin:2mm 0; width:100%; box-sizing:border-box; position:relative;}
+/* v159: 閱讀測驗/配對題的詞語定義欄也能隱藏/刪除，跟其他題型一致 */
+.sec-defs.defs-hidden > *:not(.sec-defs-title):not(.defs-btn-row){ display:none !important; }
+/* v83: 閱讀測驗詞語/定義欄充滿寬度 */
+.sec-defs .anno-title{ width:100%; box-sizing:border-box; }
+.sec-defs .anno-title .anno-main{ flex:1; min-width:80px; }
+.reading-passage{ cursor:text; }
+
+.sec-defs-title{font-size:10pt; color:#555; margin-bottom:1mm;}
+
+.big-defs{margin-top:2mm; border-top:1px dashed #cfcfcf; padding-top:2mm; position:relative;}
+.big-defs.defs-hidden > *:not(.big-defs-title):not(.defs-btn-row){ display:none !important; }
+/* v82: 按鈕列改用 flex 排列，放在標題右側 */
+.defs-btn-row{
+  position:absolute; right:0; top:1mm;
+  display:flex; gap:4px; align-items:center;
+}
+.defs-toggle-btn{
+  font-size:8pt; padding:1px 6px; border:1px solid #aaa;
+  background:#f9f9f9; border-radius:3px; cursor:pointer; color:#555;
+}
+.defs-toggle-btn:hover{background:#e0f0e0;}
+.defs-del-btn{
+  font-size:8pt; padding:1px 6px; border:1px solid #e88;
+  background:#fff0f0; border-radius:3px; cursor:pointer; color:#c00;
+}
+.defs-del-btn:hover{background:#ffd0d0;}
+.big-defs-title{
+  font-size:10.5pt; color:#333; margin-bottom:1.5mm;
+  font-style:italic; outline:none; min-height:1.2em;
+  border-bottom:1px dashed transparent;
+}
+.big-defs-title:focus{ border-bottom:1px dashed #7ab87a; background:rgba(0,0,0,.03); }
+.big-defs-title:empty:before{ content:attr(placeholder); color:#aaa; font-style:italic; }
+
+.match-row{display:grid; grid-template-columns: auto minmax(16mm,1fr) auto; gap:2mm; align-items:start; margin:1.5mm 0;}
+/* v264：老師反映格子（.match-left/.match-right）太寬，兩邊幾乎貼到版面邊緣，
+   中間畫連連看的線根本沒空間——原本用1fr讓兩邊格子自動撐滿剩餘寬度，格子
+   越寬、中間留給畫線的10mm固定欄位相對就越窄。改成兩邊欄位用auto（照著
+   格子本身設定的width走，見下面.match-left,.match-right的新width:55mm），
+   中間改成minmax(16mm,1fr)吃掉所有剩餘空間，兩邊格子縮小之後中間會自動
+   變寬，不用另外調整版面比例。 */
+.match-mid{text-align:center; color:#666; padding-top:2mm;}
+.match-tag{font-weight:700; color:#1f4a7a; margin-bottom:1mm;}
+.match-left,.match-right{border:1px dashed #cfcfcf; border-radius:3px; padding:2mm; min-height:10mm; width:55mm; position:relative; text-align:center;}
+/* v267：老師反映格子裡的文字（含逐字注音／💬按鈕）都靠左，希望可以置中——
+   上面的 text-align:center 只能讓「項目編號 1./A.」（.match-tag，純文字流）置中，
+   文字本體跟注音是用 .anno-title/.anno-main 的 flex 排版（不是純文字流），
+   text-align 對 flex 排版的子項沒有作用，要另外設定 justify-content/align-items
+   才會真的置中。 */
+.match-left .anno-title,.match-right .anno-title{ justify-content:center; }
+/* v267 補充：.anno-line .anno-main{flex:1} 這條規則（讓文字欄在題幹/選項等場合
+   自動撐滿剩餘空間、方便旁邊還有拼音輸入框時對齊）在連連看這裡反而是問題——
+   .anno-main 被撐滿之後，置中的 justify-content 已經沒有多餘空間可以置中了。
+   連連看這裡沒有拼音輸入框（makeAnnoLineRubyOnly 已經把它們移除），不需要撐滿，
+   所以用比 .anno-line .anno-main 更高的選擇器優先度，改回 flex:none（縮回文字本身
+   的寬度），再搭配 align-items:center 讓文字（連同下面的逐字注音按鈕）一起置中。 */
+.match-left .anno-line-ruby-only .anno-main,.match-right .anno-line-ruby-only .anno-main{ align-items:center; flex:none; min-width:0; }
+/* v263：老師反映預設格子太高，項目跟項目中間空白太多，小朋友紙本畫連連看
+   的線要繞一大段（先往下、才能橫過去），改成比較貼合實際內容高度的10mm
+   （原本18mm，跟v257拖曳把手能縮到的最小值8mm很接近，一般一行文字＋
+   逐字按鈕都放得下），拖曳把手（見下面v257/v263）還是可以再自由調整。
+
+.ins-img{border:1px dashed #bbb; padding:1mm; border-radius:2px; background:#fff;}
+
+
+
+/* v52: 大題（big-hdr）操作鈕 + 置右上 */
+.big-hdr{position:relative;}
+/* v84: 大題框底部拖拉把手視覺提示 */
+.big-hdr::after {
+  content: '⋮⋮';
+  position: absolute;
+  bottom: 1px;
+  right: 5px;
+  font-size: 8pt;
+  color: #aaa;
+  letter-spacing: -2px;
+  pointer-events: none;
+  line-height: 1;
+}
+.big-hdr:hover::after { color: #777; }
+
+.big-actions{position:absolute; right:4px; top:4px; display:flex; gap:4px;}
+.big-actions .sab{font-size:11px; padding:1px 5px;}
+
+
+
+/* v52: 浮動題型面板可拖曳 + 可收合/隱藏 */
+#add-panel{touch-action:none;}
+#add-panel.hidden{display:none !important;}
+#add-panel.collapsed .ap-btn{display:none;}
+#add-panel.collapsed{padding:8px 10px;}
+.ap-head{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:move;user-select:none;}
+.ap-head-btns{display:flex;gap:6px;}
+.ap-ico{border:none;border-radius:6px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;
+  font-weight:800;line-height:1;padding:3px 8px;font-size:12px}
+.ap-ico:hover{background:rgba(255,255,255,.22)}
+/* v82: ap-show — 面板已隱藏時出現的「呼叫」按鈕，顯眼浮動 */
+/* v93: 浮動「回工具列」按鈕 */
+#btn-tb-back{
+  position:fixed;left:12px;bottom:18px;z-index:500;
+  background:#1a3a6b;color:#fff;border:none;
+  border-radius:999px;padding:7px 14px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,0,0,.35);
+  display:none;
+  transition:opacity .2s;
+}
+#btn-tb-back:hover{opacity:.85}
+#ap-show{
+  position:fixed;right:18px;bottom:18px;z-index:201;display:none;
+  background:linear-gradient(135deg,#ff4fa1,#ff7043);
+  color:#fff;border:none;border-radius:999px;
+  padding:8px 16px 8px 12px;
+  box-shadow:0 4px 18px rgba(0,0,0,.35);
+  font-weight:800;cursor:pointer;font-size:13px;
+  animation:apShowPulse 2s infinite;
+}
+#ap-show:hover{filter:brightness(1.12);animation:none;}
+@keyframes apShowPulse{
+  0%,100%{box-shadow:0 4px 18px rgba(255,79,161,.4);}
+  50%{box-shadow:0 4px 28px rgba(255,79,161,.75);}
+}
+@media print{#ap-show{display:none!important}}
+
+
+/* v52: 題目描述/大題描述：國字 + 注音/拼音 佈局規則
+   - 只選一種（注音 or 拼音）：放右側
+   - 同時注音+拼音：注音在右側、拼音在下方
+*/
+.anno-title{display:flex;align-items:flex-start;gap:1mm;flex-wrap:wrap;position:relative;}
+.anno-main{display:flex;flex-direction:column;align-items:flex-start;gap:0.5mm;min-width:0;flex:none;}
+.anno-title[data-kind="title"] .anno-main,
+.anno-title[data-kind="sub"] .anno-main{min-width:0;flex:none;}
+.anno-zh{outline:none;font-weight:800;cursor:text;min-width:40px;}
+.anno-sub{cursor:text;}
+.anno-sub{
+  outline:none; color:#3a3a3a;
+  min-height:1.4em; display:block;
+  border-bottom:1px dashed transparent;
+}
+.anno-sub:focus{ border-bottom:1px dashed #7ab87a; }
+.anno-sub:empty:before{ content:attr(placeholder); color:#aaa; font-style:italic; font-weight:400; }
+.anno-phon-bottom{outline:none;min-height:6mm;border-bottom:1px dotted #bbb;padding:1px 2px;}
+.anno-phon-side{outline:none;min-width:14mm;max-width:18mm;min-height:12mm;border:1px dashed #7ab87a;border-radius:3px;
+  padding:1px 1.5px;text-align:center;white-space:pre-wrap;line-height:1.1;}
+.anno-phon-side:empty:before,.anno-phon-bottom:empty:before{content:attr(placeholder);color:#9bb99b;font-weight:600;}
+
+/* mode-driven visibility */
+body[data-mode="none"] .anno-phon-side,
+body[data-mode="none"] .anno-phon-bottom{display:none;}
+
+/* zh only: right=注音, bottom hidden */
+body[data-mode="zh"] .anno-phon-bottom{display:none;}
+
+/* en only(pinyin): right=拼音, bottom hidden */
+body[data-mode="en"] .anno-phon-side{display:none;}
+
+/* both: right=注音, bottom=拼音 */
+body[data-mode="both"] .anno-phon-side{display:block;}
+body[data-mode="both"] .anno-phon-bottom{display:block;}
+
+
+
+/* v52: 小題題幹/選項/連連看：國字+注音/拼音（同 v46 規則，但更緊湊） */
+.anno-line{margin:0;}
+.anno-line .anno-main{flex:1;min-width:80px;}
+.anno-line .anno-zh,.anno-line .anno-sub{font-weight:600;min-width:60px;cursor:text;}
+.anno-line .anno-phon-side{min-width:12mm;max-width:16mm;min-height:10mm;font-size:6.5pt;}
+.anno-line .anno-phon-bottom{min-height:6mm;font-size:7pt;}
+
+
+
+/* v52: 讓標題/題幹的注音拼音欄更自然（避免看起來像浮動方塊） */
+.section-hdr .sec-title.anno-title{flex:1; min-width:0;}
+.section-hdr .sec-title.anno-title .anno-main{min-width:0;}
+.section-hdr .sec-title.anno-title .anno-phon-side{min-width:16mm;}
+
+.big-hdr .big-title.anno-title{padding-right:26px;} /* 避開右上角 ▲▼✕ */
+.big-hdr .big-title.anno-title .anno-phon-side{min-width:16mm;}
+.big-hdr .big-sub.anno-title .anno-phon-side{min-width:16mm;}
+
+
+
+/* v52: 標題注音/拼音改成「文字標註」風格（不顯示框；聚焦才顯示底線/淡底） */
+.section-hdr .anno-phon-side,
+.section-hdr .anno-phon-bottom,
+.big-hdr .anno-phon-side,
+.big-hdr .anno-phon-bottom{
+  border:none !important;
+  border-bottom:1px dashed transparent !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  padding:0 1px !important;
+}
+.section-hdr .anno-phon-side:focus,
+.section-hdr .anno-phon-bottom:focus,
+.big-hdr .anno-phon-side:focus,
+.big-hdr .anno-phon-bottom:focus{
+  border-bottom-color:#3a7bd5 !important;
+  background:rgba(58,123,213,.08) !important;
+  outline:none !important;
+}
+/* placeholder 仍可看見，但更像標註 */
+.section-hdr .anno-phon-side:empty:before,
+.section-hdr .anno-phon-bottom:empty:before,
+.big-hdr .anno-phon-side:empty:before,
+.big-hdr .anno-phon-bottom:empty:before{
+  color:rgba(70,120,70,.35) !important;
+  font-weight:600;
+}
+
+
+
+/* v52: 題幹/選項/連連看 的注音/拼音也採用「標註」風格（不再是綠色虛線框） */
+.anno-line .anno-phon-side,
+.anno-line .anno-phon-bottom{
+  border:none !important;
+  border-bottom:1px dotted transparent !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  padding:0 1px !important;
+}
+.anno-line .anno-phon-side:focus,
+.anno-line .anno-phon-bottom:focus{
+  border-bottom-color:#3a7bd5 !important;
+  background:rgba(58,123,213,.08) !important;
+}
+
+
+
+/* v52: 句型雙行對照（你選的方案 2）
+   - 拼音-only：拼音在字底下（同範例圖）
+   - 注音-only：注音在右側
+   - 注音+拼音：注音右側 + 拼音底下
+*/
+body[data-mode="en"] .anno-phon-bottom{display:block;}
+body[data-mode="en"] .anno-phon-side{display:none;}
+body[data-mode="zh"] .anno-phon-bottom{display:none;}
+body[data-mode="zh"] .anno-phon-side{display:block;}
+body[data-mode="both"] .anno-phon-bottom{display:block;}
+body[data-mode="both"] .anno-phon-side{display:block;}
+body[data-mode="none"] .anno-phon-bottom,
+body[data-mode="none"] .anno-phon-side{display:none;}
+
+/* v52: 拼音行視覺更像講義範例（斜體、較小、顏色略淡） */
+.anno-phon-bottom{
+  font-style: italic;
+  font-family: "Times New Roman", "Noto Serif", serif;
+  color:#111;
+}
+.section-hdr .anno-phon-bottom,
+.big-hdr .anno-phon-bottom{
+  font-size:10.5pt;
+}
+.anno-line .anno-phon-bottom{
+  font-size:10.5pt;
+}
+
+
+
+/* v53 IME + placeholder */
+.anno-phon-side:empty:before, .anno-phon-bottom:empty:before{pointer-events:none;}
+.anno-phon-side, .anno-phon-bottom{user-select:text; cursor:text;}
+
+
+/* ===== v55: anno-phon as <input type="text"> ===== */
+.anno-phon-bottom,
+.anno-phon-side {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  box-sizing: border-box;
+  color: #1a1a2e;
+  cursor: text;
+}
+.anno-phon-bottom {
+  display: block;
+  width: 100%;
+  min-width: 60px;
+  padding: 1px 2px;
+  border-bottom: 1px dotted #bbb;
+  font-size: 7pt;
+  color: #444;
+}
+.anno-phon-side {
+  min-width: 14mm;
+  max-width: 20mm;
+  width: 16mm;
+  padding: 2px 3px;
+  border: 1px dashed #7ab87a;
+  border-radius: 3px;
+  font-size: 6.5pt;
+  color: #2a6e2a;
+  align-self: flex-start;
+}
+.anno-phon-bottom:focus {
+  border-bottom: 2px solid rgba(255,105,180,.6);
+  background: rgba(255,105,180,.06);
+}
+.anno-phon-side:focus {
+  border-color: rgba(255,105,180,.8);
+  background: rgba(255,105,180,.06);
+}
+.anno-phon-bottom::placeholder {
+  color: #bbb;
+  font-style: italic;
+}
+.anno-phon-side::placeholder {
+  color: #a8d5a8;
+  font-style: italic;
+}
+/* 根據 mode 顯示/隱藏 */
+body[data-mode="none"] .anno-phon-side,
+body[data-mode="none"] .anno-phon-bottom { display: none !important; }
+body[data-mode="zh"]   .anno-phon-bottom { display: none !important; }
+body[data-mode="zh"]   .anno-phon-side   { display: block; }
+body[data-mode="en"]   .anno-phon-side   { display: none !important; }
+body[data-mode="en"]   .anno-phon-bottom { display: block; }
+body[data-mode="both"] .anno-phon-side   { display: block; }
+body[data-mode="both"] .anno-phon-bottom { display: block; }
+@media print {
+  .anno-phon-bottom,
+  .anno-phon-side { background: transparent !important; }
+  .anno-phon-bottom { border-bottom: 1px solid #ddd !important; }
+  .anno-phon-side   { border: 1px solid #ddd !important; }
+  .anno-phon-bottom::placeholder,
+  .anno-phon-side::placeholder { color: transparent !important; }
+}
+/* section-hdr / big-hdr 的 anno input 樣式 */
+.section-hdr .anno-phon-side,
+.big-hdr .anno-phon-side { min-width: 16mm; }
+.anno-line .anno-phon-bottom { font-size: 7pt; }
+.anno-line .anno-phon-side   { font-size: 6.5pt; }
+
+/* v58: 注音聲調按鈕列 */
+.zy-tone-btns{display:flex;gap:3px;margin-top:2px;padding:2px 0;}
+.zy-tone-btn{
+  font-size:13px;padding:1px 5px;
+  border:1px solid #bbb;border-radius:3px;
+  background:#f5f5f5;cursor:pointer;
+  color:#333;line-height:1.4;
+}
+.zy-tone-btn:hover{background:#ddeeff;border-color:#88aadd;}
+
+/* ===== v60: 逐字注音格（緊密版，仿教科書 ruby 排版）===== */
+.anno-chars-row{
+  display:flex; flex-wrap:wrap; align-items:flex-end;
+  gap:0; padding:1px 0; line-height:1;
+}
+/* 每個字格：上方=(國字+注音並排)，下方=拼音 */
+.anno-char-cell{
+  display:inline-flex; flex-direction:column; align-items:center;
+  position:relative; margin:0 1px;
+}
+.anno-char-top{
+  display:flex; flex-direction:row; align-items:flex-end;
+}
+/* 國字輸入框 */
+.anno-char-inp{
+  font-size:16pt; font-weight:800;
+  width:1.05em; min-width:1.05em;
+  border:none; border-bottom:1px dashed transparent;
+  background:transparent; text-align:center; outline:none;
+  padding:0; line-height:1.15; box-sizing:content-box;
+}
+.anno-char-inp:focus{ border-bottom:1px dashed #aaa; }
+/* 注音輸入框（垂直書寫，靠字右側，超小字） */
+.anno-zy-inp{
+  font-size:7pt; line-height:1.1;
+  writing-mode:vertical-rl; text-orientation:upright;
+  width:11px; height:auto; min-height:20px; max-height:56px;
+  border:none; border-left:1px dashed #9ad49a;
+  background:transparent; outline:none;
+  padding:0; margin-bottom:2px;
+  color:#2a6a2a; overflow:visible;
+  /* 確保聲調符號不被旋轉 */
+  font-feature-settings:"vert" 0;
+}
+.anno-zy-inp::placeholder{ color:#c5e8c5; writing-mode:vertical-rl; }
+.anno-zy-inp:focus{ background:rgba(42,106,42,.07); border-left-color:#3a8a3a; }
+/* 拼音輸入框（在字下方，橫書，超小字） */
+.anno-py-inp{
+  font-size:7pt; width:100%; min-width:1.2em;
+  border:none; border-top:1px dashed #bbb;
+  background:transparent; text-align:center; outline:none;
+  padding:0; line-height:1.3; color:#555; white-space:nowrap;
+}
+.anno-py-inp::placeholder{ color:#ccc; }
+.anno-py-inp:focus{ background:rgba(0,0,160,.03); }
+/* ── hover 刪除按鈕 ── */
+.anno-char-del{
+  position:absolute; top:-7px; right:-5px; z-index:10;
+  font-size:8px; line-height:1; color:#aaa; background:#fff;
+  border:1px solid #ddd; border-radius:50%;
+  width:12px; height:12px; text-align:center; cursor:pointer;
+  display:none; padding:0;
+}
+.anno-char-cell:hover .anno-char-del{ display:block; }
+/* ── ＋字 按鈕 ── */
+.anno-add-char-btn{
+  font-size:10px; color:#aaa; background:#f8f8f8;
+  border:1px dashed #ddd; border-radius:3px;
+  padding:1px 4px; cursor:pointer; align-self:center; margin:0 2px;
+}
+.anno-add-char-btn:hover{ background:#e8f4ff; color:#336; border-color:#99c; }
+/* ── 模式顯示控制 ── */
+body[data-mode="none"] .anno-zy-inp,
+body[data-mode="none"] .anno-py-inp { display:none !important; }
+body[data-mode="zh"]   .anno-py-inp { display:none !important; }
+body[data-mode="zh"]   .anno-zy-inp { display:block; }
+body[data-mode="en"]   .anno-zy-inp { display:none !important; }
+body[data-mode="en"]   .anno-py-inp { display:block; }
+body[data-mode="both"] .anno-zy-inp,
+body[data-mode="both"] .anno-py-inp { display:block; }
+/* ── 列印 ── */
+@media print{
+  .anno-char-del, .anno-add-char-btn{ display:none !important; }
+  .anno-char-inp{ border:none !important; }
+  .anno-zy-inp{ border-left-color:transparent !important; }
+  .anno-py-inp{ border-top-color:transparent !important; }
+}
+.zy-tone-row{
+  display:flex; gap:3px; flex-wrap:wrap; padding:1px 0; align-items:center;
+}
+.zy-tone-row label{ font-size:7.5pt; color:#999; margin-right:2px; }
+
+
+/* ===== v61: Word 風格注音對話框 + ruby 渲染 ===== */
+
+/* ── 對話框遮罩 ── */
+#rubyDlgOverlay{
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.45); align-items:flex-start; justify-content:center;
+  overflow-y:auto; padding:20px 0;
+}
+#rubyDlgOverlay.open{ display:flex; }
+
+/* ── 對話框主體 ── */
+#rubyDlg{
+  background:#fff; border-radius:6px; box-shadow:0 4px 24px rgba(0,0,0,.35);
+  min-width:480px; max-width:680px; width:90vw; padding:0;
+  font-family:"新細明體","PMingLiU",serif; font-size:11pt;
+  overflow:hidden; max-height:calc(100vh - 40px);
+  display:flex; flex-direction:column; flex-shrink:0;
+}
+#rubyDlgTitle{
+  background:#2c3e50; color:#fff; padding:8px 16px;
+  font-size:12pt; font-weight:bold; letter-spacing:.05em;
+  flex-shrink:0;
+}
+#rubyDlgBody{ padding:12px 16px; overflow-y:auto; flex:1; min-height:0; }
+
+/* ── 表格：基本文字 | 注音 | 拼音 ── */
+#rubyDlgTable{
+  width:100%; border-collapse:collapse; margin-bottom:8px;
+}
+#rubyDlgTable th{
+  background:#f0f0f0; padding:4px 8px; text-align:left;
+  border:1px solid #ccc; font-size:10pt; color:#444;
+}
+#rubyDlgTable td{
+  padding:3px 6px; border:1px solid #ddd; vertical-align:middle;
+}
+.rdlg-base{ font-size:14pt; font-weight:bold; text-align:center; width:2em; }
+.rdlg-base input{
+  width:2em; font-size:14pt; font-weight:bold;
+  text-align:center; border:1px solid #bbb;
+  border-radius:2px; padding:2px 4px; outline:none;
+  font-family:inherit; color:#222;
+}
+.rdlg-base input:focus{ border-color:#3a7a3a; background:#f0fff0; }
+.rdlg-zy{ width:120px; }
+.rdlg-py{ width:120px; }
+.rdlg-zy input, .rdlg-py input{
+  width:100%; border:1px solid #bbb; border-radius:2px;
+  padding:2px 4px; font-size:10pt; outline:none;
+}
+.rdlg-zy input:focus, .rdlg-py input:focus{ border-color:#3a8a3a; }
+
+/* v247: 老師只想留注音或只想留拼音的其中一種時，可以一鍵清空整欄，
+   不用逐格手動刪除 */
+#rubyDlgColClear{
+  display:flex; align-items:center; gap:8px; margin:-2px 0 8px;
+  font-size:9pt; color:#777;
+}
+#rubyDlgColClear button{
+  padding:3px 10px; border-radius:3px; font-size:9pt; cursor:pointer;
+  border:1px solid #bbb; background:#f5f5f5; color:#444;
+}
+#rubyDlgColClear button:hover{ background:#ffe8e0; border-color:#d98; color:#a04000; }
+
+/* ── 預覽 ── */
+#rubyDlgPreview{
+  border:1px solid #ddd; border-radius:3px; padding:8px 12px;
+  min-height:48px; background:#fafafa; margin-bottom:10px;
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:0;
+
+  font-size:16pt;
+}
+#rubyDlgPreviewLabel{
+  font-size:9pt; color:#888; margin-bottom:3px;
+}
+
+/* ── 按鈕列 ── */
+#rubyDlgBtns{
+  display:flex; gap:8px; justify-content:flex-end; padding:0 0 4px;
+}
+#rubyDlgBtns button{
+  padding:5px 18px; border-radius:3px; font-size:10pt; cursor:pointer;
+  border:1px solid #aaa;
+}
+#rubyDlgOk{ background:#2c3e50; color:#fff; border-color:#2c3e50; }
+#rubyDlgOk:hover{ background:#1a2535; }
+#rubyDlgCancel{ background:#f5f5f5; }
+#rubyDlgCancel:hover{ background:#e8e8e8; }
+
+/* ── 渲染後的 ruby 字串（v69：字型繼承、緊湊排版）── */
+/* ══════════════════════════════════════════════════
+   title-ruby v69：position:absolute → 字距緊密
+   注音在字正上方（絕對定位），拼音在字正下方
+   字寬 = 漢字寬，注音/拼音不撐寬
+
+   DOM 結構：
+   .anno-zh (contenteditable, padding 留出上下空間)
+     .title-ruby-unit (inline-block, position:relative)
+       .title-ruby-zy-group (absolute, top:0)
+       .title-ruby-base     (block, 字本體)
+       .title-ruby-py       (absolute, bottom:0)
+   ══════════════════════════════════════════════════ */
+
+/* ── 整個注音標題的容器 ── */
+.anno-zh,
+.anno-sub {
+  display: block;
+  outline: none;
+  min-height: 1.2em;
+  word-break: break-all;
+}
+/* 有 ruby unit 的 anno-zh 需要上下 padding 才能顯示注音/拼音 */
+.anno-zh.has-ruby {
+  /* v80: 注音在右側不佔上空間；拼音在下保留底部空間 */
+  /* v84: 縮小預設 padding-bottom，避免大題主標題行太高 */
+  padding-top: 0;
+  padding-bottom: 0.4em;
+  line-height: var(--exam-lh, 1.4);
+  letter-spacing: var(--exam-ls, 0px);
+}
+
+/* ── 每個字的容器 ── */
+.title-ruby-unit {
+  /* v80: 注音右側 + 拼音下方，流式排版不溢出 */
+  display: inline-flex;
+  flex-direction: column;   /* 上層：[char-row]，下層：[py] */
+  align-items: flex-start;
+  vertical-align: middle;   /* 與同行文字垂直置中 */
+  margin: 0 1px;
+  cursor: text;
+  position: relative;
+}
+.title-ruby-unit:hover { outline: 1px dashed #7ab87a; border-radius: 2px; cursor: text; }
+
+/* ── 字+注音 並排（漢字左、注音右）── */
+.title-ruby-char-row {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;       /* 注音與漢字垂直置中對齊 */
+  line-height: 1.05; /* v200: 縮小內建行高留白，讓拼音跟國字貼近一點 */
+}
+
+/* ── 注音群（字的右側，垂直疊排小字）── */
+.title-ruby-zy-group {
+  display: flex;
+  flex-direction: column;    /* 注音字符由上至下疊排 */
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  margin-left: 1.5px;
+  gap: 0;
+  /* 不使用 writing-mode，改用小字垂直堆疊 */
+}
+.title-ruby-zy-body {
+  /* v202: 注音大小（tb-rubyzyscale）— 在原本 0.48em 的基礎上再乘上使用者設定的比例，
+     預設 --ruby-zy-scale:1 時跟改版前完全一樣，不影響舊考卷 */
+  font-size: calc(0.48em * var(--ruby-zy-scale, 1));
+  color: #1a5a1a;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  display: flex;
+  flex-direction: column;   /* 每個注音字符獨立一行 */
+  align-items: center;
+}
+/* 每個注音字符單獨一行（JS 拆分後每字一 span） */
+.title-ruby-zy-char {
+  display: block;
+  line-height: 1;
+  text-align: center;
+}
+.title-ruby-zy-tone {
+  font-size: calc(0.44em * var(--ruby-zy-scale, 1));
+  color: #1a5a1a;
+  line-height: 1;
+  text-align: center;
+  display: block;
+}
+
+/* ── 漢字本體 ── */
+.title-ruby-base {
+  display: inline;
+  font-size: 1em;
+  font-weight: inherit;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* ── 拼音（char-row 下方）── */
+.title-ruby-py {
+  /* v202: 拼音大小（tb-rubypyscale）＋拼音距離（tb-rubypygap，跟國字的上下間距，
+     滑桿限制在 -3px～8px 之間，不管怎麼調都不會破版，列印出來還是整齊） */
+  font-size: calc(0.52em * var(--ruby-py-scale, 1));
+  color: #555;
+  white-space: nowrap;
+  line-height: 1.05;
+  pointer-events: none;
+  text-align: center;
+  align-self: center;
+  padding-left: 0;
+  padding-top: 0;
+  margin-top: var(--ruby-py-gap, -1px);
+}
+
+/* 顯示模式控制 */
+body[data-mode="none"] .title-ruby-zy-group,
+body[data-mode="none"] .title-ruby-py { display:none !important; }
+body[data-mode="zh"]   .title-ruby-py { display:none !important; }
+body[data-mode="en"]   .title-ruby-zy-group { display:none !important; }
+/* 編輯態：注音按鈕 */
+.anno-ruby-btn{
+  font-size:8pt; color:#fff; background:#3a7a3a;
+  border:none; border-radius:3px; padding:2px 6px;
+  cursor:pointer; opacity:.7; white-space:nowrap;
+  position:relative; z-index:2;
+}
+.anno-ruby-btn-sm{ font-size:7pt; padding:1px 4px; opacity:.65; }
+.anno-ruby-btn-sm:hover{ opacity:1; }
+.anno-ruby-btn:hover{ opacity:1; background:#2a6a2a; }
+/* 段落注音按鈕浮在右上角 */
+.reading-passage-wrap{ position:relative; }
+.passage-ruby-btn{
+  position:absolute; top:2px; right:2px;
+  font-size:8pt; padding:2px 6px; margin:0;
+  background:#2a6aaa; opacity:.8;
+  z-index:5;
+}
+.passage-ruby-btn:hover{ opacity:1; background:#1a5a9a; }
+
+/* 列印：隱藏按鈕 */
+@media print{
+  .anno-ruby-btn{ display:none !important; }
+  .title-ruby-wrap{ outline:none !important; cursor:default; }
+}
+
+
+/* ── v69: ruby unit 直接嵌入 contenteditable，與文字 inline 混排 ── */
+/* anno-zh 為空時顯示 placeholder */
+.anno-zh:empty:before {
+  content: attr(placeholder);
+  color: #aaa;
+  font-weight: 400;
+  font-size: 0.85em;
+}
+
+/* v69 score CSS replaced by v70 */
+
+/* ── v77: 分數區 anno-zh part ── */
+.score-anno-part {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  outline: none;
+  cursor: text;
+  min-width: 0.5em;
+}
+.score-anno-part.has-ruby {
+  display: inline-flex;
+  align-items: flex-end;
+  /* v84: 縮小 padding-bottom 避免分數欄佔太高 */
+  padding-top: 0;
+  padding-bottom: 0.3em;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+.score-ruby-btn {
+  font-size: 9px;
+  padding: 0 3px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  background: #f5f5f5;
+  color: #555;
+  cursor: pointer;
+  margin-left: 3px;
+  line-height: 1.4;
+  user-select: none;
+}
+.score-ruby-btn:hover { background: #e0ffe0; border-color: #3a7a3a; }
+@media print { .score-ruby-btn { display: none !important; } }
+
+/* ── v70: 大題緊密排版 ── */
+.big-hdr { position: relative; transition: padding 0.15s; }
+.big-hdr.compact-layout {
+  padding: 1mm 2mm;
+  margin: 3mm 0 1.5mm 0;
+}
+.big-hdr.compact-layout .big-title .anno-zh {
+  font-size: 12pt;
+  line-height: 1.4;
+}
+.big-hdr.compact-layout .big-sub {
+  font-size: 9.5pt;
+  margin-top: 0;
+}
+.big-hdr.compact-layout .anno-zh {
+  /* v84: 注音在右側，不需要 padding-top */
+  padding-top: 0;
+  padding-bottom: 0.3em;
+}
+
+/* 緊密排版切換按鈕 */
+.compact-toggle-btn {
+  position: absolute;
+  top: 2px; right: 38px;
+  font-size: 10px;
+  padding: 1px 5px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  background: #f0f0f0;
+  color: #555;
+  cursor: pointer;
+  line-height: 1.4;
+  user-select: none;
+  z-index: 5;
+}
+.compact-toggle-btn:hover { background: #ddeeff; border-color: #88aadd; }
+.big-hdr.compact-layout .compact-toggle-btn {
+  background: #cceecc;
+  border-color: #66aa66;
+  color: #226622;
+}
+@media print { .compact-toggle-btn { display: none; } }
+
+/* ── v70: 分數欄位中英文 ── */
+.big-score-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  font-weight: 800;
+  font-size: 12pt;
+  white-space: nowrap;
+  /* v84: 不換行，overflow 可見 */
+  flex-shrink: 0;
+  overflow: visible;
+}
+.big-score-val {
+  outline: none;
+  min-width: 1.5em;
+  text-align: center;
+  border-bottom: 1px dashed #999;
+  padding: 0 2px;
+  color: #c00;
+  font-size: 1em;
+}
+.big-score-val:focus { border-bottom: 1px solid #c00; background: rgba(200,0,0,.05); }
+
+/* EN btn removed v74 */
+/* score ruby btn removed v74 */
+}
+
+
+/* ── v72: 分數區注音容器 ── */
+.score-anno-zh {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  position: relative;
+}
+.score-anno-zh.has-ruby {
+  display: inline-flex;
+  align-items: flex-end;
+  /* v84: 注音在右側不佔上空間，不需要 padding-top:1em */
+  padding-top: 0;
+  padding-bottom: 0.3em;
+  line-height: 1.15;
+}
+
+
+/* v83: 行距自訂屬性 */
+/* v236: 大題間距（.section 之間的垂直間隔）也改用 CSS 變數，讓工具列的
+   拖曳滑桿可以統一調整，包含緊湊雙欄模式在內 */
+:root { --exam-lh: 1.4; --exam-ls: 0px; --exam-section-gap: 3px; }
+
+/* ══════════════════════════════════════════
+   v113: a4.vertical 模式 — row-actions / spacing-handle 浮層化
+   讓 grid-row-wrap 高度只由 grid-line 決定，避免列間空白過大
+══════════════════════════════════════════ */
+
+/* 確保 wrap 可以讓 absolute 子元素溢出顯示 */
+.a4.vertical .grid-row-wrap {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* row-actions 完全脫離 flow，顯示在 wrap 底部外側 */
+.a4.vertical .row-actions {
+  position: absolute !important;
+  top: auto !important;
+  bottom: -34px !important;  /* v113: 避免覆蓋最後幾格，移至 wrap 下方 */
+  left: 0 !important;
+  right: auto !important;
+  z-index: 50 !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 2px !important;
+  margin: 0 !important;
+  order: unset !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.15s !important;
+  background: rgba(255,255,255,0.97) !important;
+  border: 1px solid #b8d4f8 !important;
+  border-radius: 4px !important;
+  padding: 3px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  font-size: 9px !important;
+  white-space: nowrap !important;
+}
+
+/* hover 時顯示操作按鈕 */
+.a4.vertical .grid-row-wrap:hover > .row-actions {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* row-spacing-handle 也脫離 flow，顯示在 wrap 頂部 */
+.a4.vertical .row-spacing-handle {
+  position: absolute !important;
+  top: -7px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 10px !important;
+  z-index: 60 !important;
+  opacity: 0 !important;
+  transition: opacity 0.15s !important;
+}
+
+.a4.vertical .grid-row-wrap:hover > .row-spacing-handle {
+  opacity: 0.7 !important;
+}
+
+.a4.vertical .row-spacing-handle:hover,
+.a4.vertical .row-spacing-handle.dragging {
+  opacity: 1 !important;
+}
+
+/* 確保父容器 overflow visible，讓浮層不被截斷 */
+.a4.vertical .section > div:not(.section-hdr):not(.sec-actions) {
+  overflow: visible !important;
+}
+.a4.vertical .section {
+  overflow: visible !important;
+}
+
+/* v113: 縮小大題整體間距 */
+
+
+/* ══════════════════════════════════════════
+   v113: Exam Criteria 表格 td/th 支援逐字注音
+══════════════════════════════════════════ */
+.cv-criteria td[contenteditable="true"],
+.cv-criteria th[contenteditable="true"] {
+  position: relative;
+}
+
+/* 注音按鈕：平時隱藏，hover 才顯示 */
+.cv-table-ruby-btn {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 9px;
+  line-height: 1.2;
+  padding: 0px 3px 1px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.95);
+  color: #555;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.cv-criteria td[contenteditable="true"]:hover .cv-table-ruby-btn,
+.cv-criteria th[contenteditable="true"]:hover .cv-table-ruby-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cv-table-ruby-btn:hover {
+  background: #e8f4ff;
+  border-color: #3a7bd5;
+  color: #3a7bd5;
+}
+/* 列印 / print-preview 隱藏 */
+@media print { .cv-table-ruby-btn { display: none !important; } }
+body.print-preview .cv-table-ruby-btn { display: none !important; }
+
+/* 確保 title-ruby-unit 在 td 裡也能正常顯示 */
+.cv-criteria td .title-ruby-unit,
+.cv-criteria th .title-ruby-unit {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: inherit;
+  line-height: 1.2;
+}
+.cv-criteria td .title-ruby-base,
+.cv-criteria th .title-ruby-base {
+  font-size: inherit;
+}
+.cv-criteria td .title-ruby-top,
+.cv-criteria th .title-ruby-top {
+  font-size: 7px;
+  line-height: 1;
+  color: #2a5a8a;
+  text-align: center;
+  white-space: nowrap;
+}
+
+
+/* ══════════════════════════════════════════
+   v113: 浮動格式工具列 (Floating Format Toolbar)
+   任何 contenteditable 選取文字時顯示
+══════════════════════════════════════════ */
+#ft-bar {
+  position: fixed;
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background: #1e2433;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  user-select: none;
+  white-space: nowrap;
+  /* 防止點擊工具列時失去 selection */
+  pointer-events: auto;
+}
+#ft-bar.visible { display: flex; }
+
+/* 工具列按鈕 */
+#ft-bar button {
+  border: none;
+  background: transparent;
+  color: #e8ecf0;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+  font-family: inherit;
+}
+#ft-bar button:hover { background: rgba(255,255,255,0.15); }
+#ft-bar button.ft-active { background: rgba(255,255,255,0.25); color: #fff; }
+
+/* 分隔線 */
+#ft-bar .ft-sep {
+  width: 1px;
+  height: 16px;
+  background: rgba(255,255,255,0.2);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* 字體大小顯示 */
+#ft-bar #ft-size-val {
+  color: #a8b4c0;
+  font-size: 11px;
+  min-width: 28px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* 顏色選擇器 */
+#ft-bar #ft-color-input {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 3px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  overflow: hidden;
+}
+
+/* 列印時完全隱藏 */
+@media print { #ft-bar { display: none !important; } }
+body.print-preview #ft-bar { display: none !important; }
+
+
+/* ═══ v113: 浮動緊急存檔列 ═══ */
+#float-save-bar {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+#float-save-bar button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  opacity: 0.92;
+  transition: opacity .15s, transform .1s;
+}
+#float-save-bar button:hover { opacity: 1; transform: scale(1.04); }
+#btn-float-pdf  { background: #e53935; color: #fff; }
+#btn-float-word { background: #1a6fb5; color: #fff; }
+#btn-float-json { background: #2e7d32; color: #fff; }
+#btn-float-ls   { background: #6a1b9a; color: #fff; }
+#float-save-bar .fs-label {
+  font-size: 10px; color: #888; text-align: right;
+  user-select: none;
+}
+
+/* v114: 橫向出題「並排」流動 ─ 第二題緊接第一題 */
+.grid-body.hflow {
+  display:flex;flex-wrap:wrap;flex-direction:row;
+  align-items:flex-start;column-gap:4mm;row-gap:3px;
+}
+.grid-body.hflow > .grid-row-wrap {
+  flex-shrink:0;width:auto;position:relative;
+}
+.grid-body.hflow .row-actions {
+  flex-direction:row;flex-wrap:wrap;gap:2px;margin-bottom:1px;font-size:10px;
+}
+/* 拖曳排序視覺提示 */
+.grid-row-wrap.h-drag-over-before { box-shadow:-3px 0 0 #3a7bd5; }
+.grid-row-wrap.h-drag-over-after  { box-shadow: 3px 0 0 #3a7bd5; }
+.grid-row-wrap.h-dragging         { opacity:0.4; }
+/* 橫排拖曳把手 —— 只在 hflow 模式顯示 */
+.h-drag-handle {
+  display:none;cursor:grab;padding:0 3px;font-size:12px;line-height:1;
+  color:#aaa;user-select:none;flex-shrink:0;align-self:flex-start;
+  margin-right:1px;margin-top:2px;
+}
+.grid-body.hflow .h-drag-handle { display:inline-block; }
+.h-drag-handle:hover { color:#3a7bd5; }
+@media print{.h-drag-handle{display:none!important}}
+body.print-preview .h-drag-handle{display:none!important}
+
+/* ── v123: 多頁支援 ── */
+/* 每個 .a4 都是獨立一頁 */
+.a4-page-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+/* 分頁提示線（編輯模式可見，列印不顯示） */
+.page-break-hint {
+  width: 210mm;
+  text-align: center;
+  color: #aaa;
+  font-size: 10px;
+  border-top: 1.5px dashed #ccc;
+  padding-top: 6px;
+  margin: 4px 0;
+  user-select: none;
+}
+/* 新增頁面按鈕 */
+.add-page-btn {
+  display: block;
+  margin: 8px auto 4px;
+  padding: 6px 20px;
+  background: #eef4ff;
+  border: 1.5px dashed #3a7bd5;
+  border-radius: 6px;
+  color: #3a7bd5;
+  font-size: 12px;
+  cursor: pointer;
+  width: 160mm;
+  text-align: center;
+}
+.add-page-btn:hover { background: #d8eaff; }
+/* 刪除頁面按鈕 */
+.del-page-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(200,50,50,.08);
+  border: 1px solid #e77;
+  border-radius: 4px;
+  color: #c33;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 7px;
+  z-index: 10;
+}
+.del-page-btn:hover { background: rgba(200,50,50,.18); }
+
+/* Instructions */
+.cv-instr .instr-cell{white-space:pre-wrap;line-height:1.35;min-height:15mm;resize:vertical;overflow:auto}
+/* v135: 列印時 instr-cell 不顯示 resize 手把 */
+
+/* 封面上的可編輯文字 */
+.cover-page [contenteditable="true"]{outline:none}
+.cover-page [contenteditable="true"]:focus{background:rgba(0,0,0,.05)}
+
+@media print{
+  /* v204 修正：封面內容通常不多，但以前這裡強制 page-break-after:always，
+     等於封面不管內容多短，後面一定會硬性換頁，留下一大塊列印出來的空白紙。
+     改成 auto（不再強制斷頁）＋ min-height:0（封面高度縮回跟內容一樣高，
+     不再被撐滿一整張 297mm），這樣封面內容結束後，如果這張紙還有剩餘空間，
+     第一大題會自動接著往下排、印在同一張紙的剩餘空間，不浪費紙。
+     如果封面內容本身就很長、已經超過一頁，還是會自然換頁，不受影響。 */
+  .a4-cover{
+    page-break-after:auto !important;
+    break-after:auto !important;
+    min-height:0 !important;
+  }
+}
+/* v135: 列印時強制保留所有表格邊框 */
+@media print {
+  .cv-table,
+  .cv-table th,
+  .cv-table td {
+    border: 1.5px solid #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .cv-table th {
+    background: #cfcfcf !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .cv-student th, .cv-student td {
+    border: 1.5px solid #000 !important;
+  }
+  .cv-instr th, .cv-instr td {
+    border: 1.5px solid #000 !important;
+  }
+  .student-bar {
+    border: 1.5px solid #000 !important;
+    border-top: none !important;
+  }
+  .sf {
+    border-right: 1.5px solid #000 !important;
+  }
+  .sf:last-child {
+    border-right: none !important;
+  }
+  .exam-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+/* v135: 列印預覽也強制保留表格邊框 */
+body.print-preview .cv-table th,
+body.print-preview .cv-table td {
+  border: 1.5px solid #000 !important;
+}
+body.print-preview .cv-table th {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+body.print-preview .student-bar {
+  border: 1.5px solid #000 !important;
+  border-top: none !important;
+}
+body.print-preview .sf {
+  border-right: 1.5px solid #000 !important;
+}
+body.print-preview .sf:last-child {
+  border-right: none !important;
+}
+.a4.no-pagehdr .exam-header,
+.a4.no-pagehdr .student-bar{display:none}
+
+
+
+.big-hdr{
+  border:1px solid #333;background:#f2f2f2;
+  padding:0.5mm 2mm 0.8mm;margin:2.5mm 0 1.5mm 0;
+  position:relative; overflow:visible;
+  /* v80: 手動可調整大小；v84: 縮小預設 padding */
+  resize:vertical; min-height:22px; overflow:auto;
+  box-sizing:border-box;
+}
+/* 摺疊狀態 */
+.big-hdr.collapsed .big-sub,
+.big-hdr.collapsed .big-defs,
+.big-hdr.collapsed .big-score-wrap {
+  display:none !important;
+}
+.big-hdr.collapsed { padding-bottom:1mm; min-height:0; }
+.big-hdr .big-title{display:flex;align-items:center;flex-wrap:nowrap;gap:4px;}
+.big-hdr .big-title .anno-main{flex:1;min-width:0;}
+.big-hdr .big-title{font-weight:800;font-size:12pt;line-height:1.2}
+.big-hdr .big-sub{font-size:10.5pt;color:#333;margin-top:0}
+/* v84: big-hdr 標題行注音後，不要有大量底部 padding（避免主副標題間距過大）*/
+.big-hdr .big-title .anno-zh.has-ruby {
+  padding-bottom: 0.15em !important;
+  padding-top: 0 !important;
+}
+.big-hdr .big-sub.anno-title { margin-top: 0 !important; }
+
+.big-hdr [contenteditable="true"]{outline:none}
+.big-hdr [contenteditable="true"]:focus{background:rgba(0,0,0,.06)}
+
+
+/* v52: 選擇題/閱讀/連連看 支援 國字+注音/拼音（依工具列模式顯示） */
+.ruby-line{display:flex; align-items:flex-start; gap:2mm; margin:0;}
+.ruby-line .ruby-phon{width:10mm; min-height:8mm; border:1px dashed #7ab87a; border-radius:2px; padding:1px 1.2px; font-size:6.5pt; line-height:1.15; text-align:center; white-space:pre-wrap;}
+.ruby-line .ruby-phon:empty:before{content:attr(placeholder); color:#9bb99b;}
+.ruby-line .ruby-zh{flex:1; min-height:8mm; border-bottom:1px dotted #bbb; padding:1px 2px;}
+.ruby-line .ruby-zh:empty:before{content:attr(placeholder); color:#aaa;}
+
+body[data-mode="none"] .ruby-phon{display:none;}
+body[data-mode="zh"] .ruby-pin{display:none;}
+body[data-mode="en"] .ruby-zy{display:none;}
+
+.mc-stem{display:flex; align-items:flex-start; gap:2mm; margin:1mm 0;}
+.mc-no{white-space:nowrap;}
+.mc-options .mc-opt{display:flex; gap:2mm; align-items:flex-start; margin:1mm 0;}
+
+.reading-passage{border:1px solid #bbb; border-radius:3px; padding:3mm; min-height:25mm; margin:2mm 0 3mm; width:100%; box-sizing:border-box;}
+.reading-passage:empty:before{content:attr(placeholder); color:#aaa;}
+.read-stem{display:flex; gap:2mm; align-items:flex-start; margin:1mm 0;}
+.read-no{white-space:nowrap;color:#1a3a6b;font-weight:700;}
+.read-options .read-opt{display:flex; gap:2mm; align-items:flex-start; margin:1mm 0;}
+
+.sec-defs{border:1px dashed #cfcfcf; border-radius:3px; padding:2mm; margin:2mm 0; width:100%; box-sizing:border-box; position:relative;}
+/* v159: 閱讀測驗/配對題的詞語定義欄也能隱藏/刪除，跟其他題型一致 */
+.sec-defs.defs-hidden > *:not(.sec-defs-title):not(.defs-btn-row){ display:none !important; }
+/* v83: 閱讀測驗詞語/定義欄充滿寬度 */
+.sec-defs .anno-title{ width:100%; box-sizing:border-box; }
+.sec-defs .anno-title .anno-main{ flex:1; min-width:80px; }
+.reading-passage{ cursor:text; }
+
+.sec-defs-title{font-size:10pt; color:#555; margin-bottom:1mm;}
+
+.big-defs{margin-top:2mm; border-top:1px dashed #cfcfcf; padding-top:2mm; position:relative;}
+.big-defs.defs-hidden > *:not(.big-defs-title):not(.defs-btn-row){ display:none !important; }
+/* v82: 按鈕列改用 flex 排列，放在標題右側 */
+.defs-btn-row{
+  position:absolute; right:0; top:1mm;
+  display:flex; gap:4px; align-items:center;
+}
+.defs-toggle-btn{
+  font-size:8pt; padding:1px 6px; border:1px solid #aaa;
+  background:#f9f9f9; border-radius:3px; cursor:pointer; color:#555;
+}
+.defs-toggle-btn:hover{background:#e0f0e0;}
+.defs-del-btn{
+  font-size:8pt; padding:1px 6px; border:1px solid #e88;
+  background:#fff0f0; border-radius:3px; cursor:pointer; color:#c00;
+}
+.defs-del-btn:hover{background:#ffd0d0;}
+.big-defs-title{
+  font-size:10.5pt; color:#333; margin-bottom:1.5mm;
+  font-style:italic; outline:none; min-height:1.2em;
+  border-bottom:1px dashed transparent;
+}
+.big-defs-title:focus{ border-bottom:1px dashed #7ab87a; background:rgba(0,0,0,.03); }
+.big-defs-title:empty:before{ content:attr(placeholder); color:#aaa; font-style:italic; }
+
+.match-row{display:grid; grid-template-columns: auto minmax(16mm,1fr) auto; gap:2mm; align-items:start; margin:1.5mm 0;}
+/* v264：老師反映格子（.match-left/.match-right）太寬，兩邊幾乎貼到版面邊緣，
+   中間畫連連看的線根本沒空間——原本用1fr讓兩邊格子自動撐滿剩餘寬度，格子
+   越寬、中間留給畫線的10mm固定欄位相對就越窄。改成兩邊欄位用auto（照著
+   格子本身設定的width走，見下面.match-left,.match-right的新width:55mm），
+   中間改成minmax(16mm,1fr)吃掉所有剩餘空間，兩邊格子縮小之後中間會自動
+   變寬，不用另外調整版面比例。 */
+.match-mid{text-align:center; color:#666; padding-top:2mm;}
+.match-tag{font-weight:700; color:#1f4a7a; margin-bottom:1mm;}
+.match-left,.match-right{border:1px dashed #cfcfcf; border-radius:3px; padding:2mm; min-height:10mm; width:55mm; position:relative; text-align:center;}
+/* v267：老師反映格子裡的文字（含逐字注音／💬按鈕）都靠左，希望可以置中——
+   上面的 text-align:center 只能讓「項目編號 1./A.」（.match-tag，純文字流）置中，
+   文字本體跟注音是用 .anno-title/.anno-main 的 flex 排版（不是純文字流），
+   text-align 對 flex 排版的子項沒有作用，要另外設定 justify-content/align-items
+   才會真的置中。 */
+.match-left .anno-title,.match-right .anno-title{ justify-content:center; }
+/* v267 補充：.anno-line .anno-main{flex:1} 這條規則（讓文字欄在題幹/選項等場合
+   自動撐滿剩餘空間、方便旁邊還有拼音輸入框時對齊）在連連看這裡反而是問題——
+   .anno-main 被撐滿之後，置中的 justify-content 已經沒有多餘空間可以置中了。
+   連連看這裡沒有拼音輸入框（makeAnnoLineRubyOnly 已經把它們移除），不需要撐滿，
+   所以用比 .anno-line .anno-main 更高的選擇器優先度，改回 flex:none（縮回文字本身
+   的寬度），再搭配 align-items:center 讓文字（連同下面的逐字注音按鈕）一起置中。 */
+.match-left .anno-line-ruby-only .anno-main,.match-right .anno-line-ruby-only .anno-main{ align-items:center; flex:none; min-width:0; }
+/* v263：老師反映預設格子太高，項目跟項目中間空白太多，小朋友紙本畫連連看
+   的線要繞一大段（先往下、才能橫過去），改成比較貼合實際內容高度的10mm
+   （原本18mm，跟v257拖曳把手能縮到的最小值8mm很接近，一般一行文字＋
+   逐字按鈕都放得下），拖曳把手（見下面v257/v263）還是可以再自由調整。
+
+/* v257: 連連看列拖曳把手——上下拖曳調整這一列（.match-left / .match-right
+   一起調）的格子高度，雙擊或右鍵重設回預設值。做法跟v97的行距拖曳把手
+   （.row-spacing-handle）同一套：一條細長的可拖曳橫條，平常半透明、
+   hover變實色、拖曳中變紅色，中間有個⇕圖示提示。
+   v263 補充：老師反映「連連看的框框要能縮小」，實測發現拖曳功能其實原本
+   就有效（程式邏輯沒問題），真正的問題是這條把手太細（10px高）、平常
+   透明度只有0.35，很容易被誤認成單純的分隔線、沒發現可以拖曳——加上
+   v263同時把預設格高從18mm降到10mm（見上面.match-left,.match-right），
+   把手也順便加大、加深顏色，讓老師更容易發現、抓得到。 */
+.match-row{ position:relative; }
+.match-row-resize-handle{
+  grid-column: 1 / -1;
+  display:block;
+  width:100%;
+  height:14px;
+  cursor:ns-resize;
+  user-select:none;
+  -webkit-user-select:none;
+  position:relative;
+  opacity:0.55;
+  transition:opacity .15s;
+  background:
+    linear-gradient(to bottom,
+      transparent 5px,
+      #7aabf0 5px, #7aabf0 7px,
+      transparent 7px);
+}
+.match-row-resize-handle::after{
+  content:'⇕';
+  position:absolute;
+  left:50%; transform:translateX(-50%);
+  top:0;
+  font-size:10px;
+  color:#5c8fd6;
+  line-height:14px;
+  pointer-events:none;
+}
+.match-row-resize-handle:hover{
+  opacity:1;
+  background:
+    linear-gradient(to bottom,
+      transparent 4px,
+      #3a7bd5 4px, #3a7bd5 5px,
+      transparent 5px);
+}
+.match-row-resize-handle:hover::after{ color:#3a7bd5; }
+.match-row-resize-handle.dragging{
+  opacity:1;
+  background:
+    linear-gradient(to bottom,
+      transparent 4px,
+      #e74c3c 4px, #e74c3c 5px,
+      transparent 5px);
+}
+body.print-preview .match-row-resize-handle{ display:none !important; }
+
+/* v264：格子寬度拖曳把手——放在.match-left/.match-right各自面對中間箭頭的
+   那一側，直向的細長把手，左右拖曳。視覺上跟上面高度把手（水平線+⇕）
+   對應但轉90度（垂直線+⇔），一樣平常半透明、hover變實色、拖曳中變紅色。 */
+.match-col-resize-handle{
+  position:absolute;
+  top:0; bottom:0;
+  width:10px;
+  cursor:ew-resize;
+  user-select:none;
+  -webkit-user-select:none;
+  opacity:0.45;
+  transition:opacity .15s;
+  z-index:3;
+  background:
+    linear-gradient(to right,
+      transparent 4px,
+      #7aabf0 4px, #7aabf0 6px,
+      transparent 6px);
+}
+.match-col-resize-handle.edge-right{ right:-5px; }
+.match-col-resize-handle.edge-left{ left:-5px; }
+.match-col-resize-handle::after{
+  content:'⇔';
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  font-size:8px;
+  color:#7aabf0;
+  pointer-events:none;
+}
+.match-col-resize-handle:hover{ opacity:1; }
+.match-col-resize-handle:hover::after{ color:#3a7bd5; }
+.match-col-resize-handle.dragging{ opacity:1; }
+.match-col-resize-handle.dragging::after{ color:#e74c3c; }
+body.print-preview .match-col-resize-handle{ display:none !important; }
+
+.ins-img{border:1px dashed #bbb; padding:1mm; border-radius:2px; background:#fff;}
+
+
+
+/* v52: 大題（big-hdr）操作鈕 + 置右上 */
+.big-hdr{position:relative;}
+/* v84: 大題框底部拖拉把手視覺提示 */
+.big-hdr::after {
+  content: '⋮⋮';
+  position: absolute;
+  bottom: 1px;
+  right: 5px;
+  font-size: 8pt;
+  color: #aaa;
+  letter-spacing: -2px;
+  pointer-events: none;
+  line-height: 1;
+}
+.big-hdr:hover::after { color: #777; }
+
+.big-actions{position:absolute; right:4px; top:4px; display:flex; gap:4px;}
+.big-actions .sab{font-size:11px; padding:1px 5px;}
+
+
+
+/* v52: 浮動題型面板可拖曳 + 可收合/隱藏 */
+#add-panel{touch-action:none;}
+#add-panel.hidden{display:none !important;}
+#add-panel.collapsed .ap-btn{display:none;}
+#add-panel.collapsed{padding:8px 10px;}
+.ap-head{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:move;user-select:none;}
+.ap-head-btns{display:flex;gap:6px;}
+.ap-ico{border:none;border-radius:6px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;
+  font-weight:800;line-height:1;padding:3px 8px;font-size:12px}
+.ap-ico:hover{background:rgba(255,255,255,.22)}
+/* v82: ap-show — 面板已隱藏時出現的「呼叫」按鈕，顯眼浮動 */
+/* v93: 浮動「回工具列」按鈕 */
+#btn-tb-back{
+  position:fixed;left:12px;bottom:18px;z-index:500;
+  background:#1a3a6b;color:#fff;border:none;
+  border-radius:999px;padding:7px 14px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,0,0,.35);
+  display:none;
+  transition:opacity .2s;
+}
+#btn-tb-back:hover{opacity:.85}
+#ap-show{
+  position:fixed;right:18px;bottom:18px;z-index:201;display:none;
+  background:linear-gradient(135deg,#ff4fa1,#ff7043);
+  color:#fff;border:none;border-radius:999px;
+  padding:8px 16px 8px 12px;
+  box-shadow:0 4px 18px rgba(0,0,0,.35);
+  font-weight:800;cursor:pointer;font-size:13px;
+  animation:apShowPulse 2s infinite;
+}
+#ap-show:hover{filter:brightness(1.12);animation:none;}
+@keyframes apShowPulse{
+  0%,100%{box-shadow:0 4px 18px rgba(255,79,161,.4);}
+  50%{box-shadow:0 4px 28px rgba(255,79,161,.75);}
+}
+@media print{#ap-show{display:none!important}}
+
+
+/* v52: 題目描述/大題描述：國字 + 注音/拼音 佈局規則
+   - 只選一種（注音 or 拼音）：放右側
+   - 同時注音+拼音：注音在右側、拼音在下方
+*/
+.anno-title{display:flex;align-items:flex-start;gap:1mm;flex-wrap:wrap;position:relative;}
+.anno-main{display:flex;flex-direction:column;align-items:flex-start;gap:0.5mm;min-width:0;flex:none;}
+.anno-title[data-kind="title"] .anno-main,
+.anno-title[data-kind="sub"] .anno-main{min-width:0;flex:none;}
+.anno-zh{outline:none;font-weight:800;cursor:text;min-width:40px;}
+.anno-sub{cursor:text;}
+.anno-sub{
+  outline:none; color:#3a3a3a;
+  min-height:1.4em; display:block;
+  border-bottom:1px dashed transparent;
+}
+.anno-sub:focus{ border-bottom:1px dashed #7ab87a; }
+.anno-sub:empty:before{ content:attr(placeholder); color:#aaa; font-style:italic; font-weight:400; }
+.anno-phon-bottom{outline:none;min-height:6mm;border-bottom:1px dotted #bbb;padding:1px 2px;}
+.anno-phon-side{outline:none;min-width:14mm;max-width:18mm;min-height:12mm;border:1px dashed #7ab87a;border-radius:3px;
+  padding:1px 1.5px;text-align:center;white-space:pre-wrap;line-height:1.1;}
+.anno-phon-side:empty:before,.anno-phon-bottom:empty:before{content:attr(placeholder);color:#9bb99b;font-weight:600;}
+
+/* mode-driven visibility */
+body[data-mode="none"] .anno-phon-side,
+body[data-mode="none"] .anno-phon-bottom{display:none;}
+
+/* zh only: right=注音, bottom hidden */
+body[data-mode="zh"] .anno-phon-bottom{display:none;}
+
+/* en only(pinyin): right=拼音, bottom hidden */
+body[data-mode="en"] .anno-phon-side{display:none;}
+
+/* both: right=注音, bottom=拼音 */
+body[data-mode="both"] .anno-phon-side{display:block;}
+body[data-mode="both"] .anno-phon-bottom{display:block;}
+
+
+
+/* v52: 小題題幹/選項/連連看：國字+注音/拼音（同 v46 規則，但更緊湊） */
+.anno-line{margin:0;}
+.anno-line .anno-main{flex:1;min-width:80px;}
+.anno-line .anno-zh,.anno-line .anno-sub{font-weight:600;min-width:60px;cursor:text;}
+.anno-line .anno-phon-side{min-width:12mm;max-width:16mm;min-height:10mm;font-size:6.5pt;}
+.anno-line .anno-phon-bottom{min-height:6mm;font-size:7pt;}
+
+
+
+/* v52: 讓標題/題幹的注音拼音欄更自然（避免看起來像浮動方塊） */
+.section-hdr .sec-title.anno-title{flex:1; min-width:0;}
+.section-hdr .sec-title.anno-title .anno-main{min-width:0;}
+.section-hdr .sec-title.anno-title .anno-phon-side{min-width:16mm;}
+
+.big-hdr .big-title.anno-title{padding-right:26px;} /* 避開右上角 ▲▼✕ */
+.big-hdr .big-title.anno-title .anno-phon-side{min-width:16mm;}
+.big-hdr .big-sub.anno-title .anno-phon-side{min-width:16mm;}
+
+
+
+/* v52: 標題注音/拼音改成「文字標註」風格（不顯示框；聚焦才顯示底線/淡底） */
+.section-hdr .anno-phon-side,
+.section-hdr .anno-phon-bottom,
+.big-hdr .anno-phon-side,
+.big-hdr .anno-phon-bottom{
+  border:none !important;
+  border-bottom:1px dashed transparent !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  padding:0 1px !important;
+}
+.section-hdr .anno-phon-side:focus,
+.section-hdr .anno-phon-bottom:focus,
+.big-hdr .anno-phon-side:focus,
+.big-hdr .anno-phon-bottom:focus{
+  border-bottom-color:#3a7bd5 !important;
+  background:rgba(58,123,213,.08) !important;
+  outline:none !important;
+}
+/* placeholder 仍可看見，但更像標註 */
+.section-hdr .anno-phon-side:empty:before,
+.section-hdr .anno-phon-bottom:empty:before,
+.big-hdr .anno-phon-side:empty:before,
+.big-hdr .anno-phon-bottom:empty:before{
+  color:rgba(70,120,70,.35) !important;
+  font-weight:600;
+}
+
+
+
+/* v52: 題幹/選項/連連看 的注音/拼音也採用「標註」風格（不再是綠色虛線框） */
+.anno-line .anno-phon-side,
+.anno-line .anno-phon-bottom{
+  border:none !important;
+  border-bottom:1px dotted transparent !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  padding:0 1px !important;
+}
+.anno-line .anno-phon-side:focus,
+.anno-line .anno-phon-bottom:focus{
+  border-bottom-color:#3a7bd5 !important;
+  background:rgba(58,123,213,.08) !important;
+}
+
+
+
+/* v52: 句型雙行對照（你選的方案 2）
+   - 拼音-only：拼音在字底下（同範例圖）
+   - 注音-only：注音在右側
+   - 注音+拼音：注音右側 + 拼音底下
+*/
+body[data-mode="en"] .anno-phon-bottom{display:block;}
+body[data-mode="en"] .anno-phon-side{display:none;}
+body[data-mode="zh"] .anno-phon-bottom{display:none;}
+body[data-mode="zh"] .anno-phon-side{display:block;}
+body[data-mode="both"] .anno-phon-bottom{display:block;}
+body[data-mode="both"] .anno-phon-side{display:block;}
+body[data-mode="none"] .anno-phon-bottom,
+body[data-mode="none"] .anno-phon-side{display:none;}
+
+/* v52: 拼音行視覺更像講義範例（斜體、較小、顏色略淡） */
+.anno-phon-bottom{
+  font-style: italic;
+  font-family: "Times New Roman", "Noto Serif", serif;
+  color:#111;
+}
+.section-hdr .anno-phon-bottom,
+.big-hdr .anno-phon-bottom{
+  font-size:10.5pt;
+}
+.anno-line .anno-phon-bottom{
+  font-size:10.5pt;
+}
+
+
+
+/* v53 IME + placeholder */
+.anno-phon-side:empty:before, .anno-phon-bottom:empty:before{pointer-events:none;}
+.anno-phon-side, .anno-phon-bottom{user-select:text; cursor:text;}
+
+
+/* ===== v55: anno-phon as <input type="text"> ===== */
+.anno-phon-bottom,
+.anno-phon-side {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  box-sizing: border-box;
+  color: #1a1a2e;
+  cursor: text;
+}
+.anno-phon-bottom {
+  display: block;
+  width: 100%;
+  min-width: 60px;
+  padding: 1px 2px;
+  border-bottom: 1px dotted #bbb;
+  font-size: 7pt;
+  color: #444;
+}
+.anno-phon-side {
+  min-width: 14mm;
+  max-width: 20mm;
+  width: 16mm;
+  padding: 2px 3px;
+  border: 1px dashed #7ab87a;
+  border-radius: 3px;
+  font-size: 6.5pt;
+  color: #2a6e2a;
+  align-self: flex-start;
+}
+.anno-phon-bottom:focus {
+  border-bottom: 2px solid rgba(255,105,180,.6);
+  background: rgba(255,105,180,.06);
+}
+.anno-phon-side:focus {
+  border-color: rgba(255,105,180,.8);
+  background: rgba(255,105,180,.06);
+}
+.anno-phon-bottom::placeholder {
+  color: #bbb;
+  font-style: italic;
+}
+.anno-phon-side::placeholder {
+  color: #a8d5a8;
+  font-style: italic;
+}
+/* 根據 mode 顯示/隱藏 */
+body[data-mode="none"] .anno-phon-side,
+body[data-mode="none"] .anno-phon-bottom { display: none !important; }
+body[data-mode="zh"]   .anno-phon-bottom { display: none !important; }
+body[data-mode="zh"]   .anno-phon-side   { display: block; }
+body[data-mode="en"]   .anno-phon-side   { display: none !important; }
+body[data-mode="en"]   .anno-phon-bottom { display: block; }
+body[data-mode="both"] .anno-phon-side   { display: block; }
+body[data-mode="both"] .anno-phon-bottom { display: block; }
+@media print {
+  .anno-phon-bottom,
+  .anno-phon-side { background: transparent !important; }
+  .anno-phon-bottom { border-bottom: 1px solid #ddd !important; }
+  .anno-phon-side   { border: 1px solid #ddd !important; }
+  .anno-phon-bottom::placeholder,
+  .anno-phon-side::placeholder { color: transparent !important; }
+}
+/* section-hdr / big-hdr 的 anno input 樣式 */
+.section-hdr .anno-phon-side,
+.big-hdr .anno-phon-side { min-width: 16mm; }
+.anno-line .anno-phon-bottom { font-size: 7pt; }
+.anno-line .anno-phon-side   { font-size: 6.5pt; }
+
+/* v58: 注音聲調按鈕列 */
+.zy-tone-btns{display:flex;gap:3px;margin-top:2px;padding:2px 0;}
+.zy-tone-btn{
+  font-size:13px;padding:1px 5px;
+  border:1px solid #bbb;border-radius:3px;
+  background:#f5f5f5;cursor:pointer;
+  color:#333;line-height:1.4;
+}
+.zy-tone-btn:hover{background:#ddeeff;border-color:#88aadd;}
+
+/* ===== v60: 逐字注音格（緊密版，仿教科書 ruby 排版）===== */
+.anno-chars-row{
+  display:flex; flex-wrap:wrap; align-items:flex-end;
+  gap:0; padding:1px 0; line-height:1;
+}
+/* 每個字格：上方=(國字+注音並排)，下方=拼音 */
+.anno-char-cell{
+  display:inline-flex; flex-direction:column; align-items:center;
+  position:relative; margin:0 1px;
+}
+.anno-char-top{
+  display:flex; flex-direction:row; align-items:flex-end;
+}
+/* 國字輸入框 */
+.anno-char-inp{
+  font-size:16pt; font-weight:800;
+  width:1.05em; min-width:1.05em;
+  border:none; border-bottom:1px dashed transparent;
+  background:transparent; text-align:center; outline:none;
+  padding:0; line-height:1.15; box-sizing:content-box;
+}
+.anno-char-inp:focus{ border-bottom:1px dashed #aaa; }
+/* 注音輸入框（垂直書寫，靠字右側，超小字） */
+.anno-zy-inp{
+  font-size:7pt; line-height:1.1;
+  writing-mode:vertical-rl; text-orientation:upright;
+  width:11px; height:auto; min-height:20px; max-height:56px;
+  border:none; border-left:1px dashed #9ad49a;
+  background:transparent; outline:none;
+  padding:0; margin-bottom:2px;
+  color:#2a6a2a; overflow:visible;
+  /* 確保聲調符號不被旋轉 */
+  font-feature-settings:"vert" 0;
+}
+.anno-zy-inp::placeholder{ color:#c5e8c5; writing-mode:vertical-rl; }
+.anno-zy-inp:focus{ background:rgba(42,106,42,.07); border-left-color:#3a8a3a; }
+/* 拼音輸入框（在字下方，橫書，超小字） */
+.anno-py-inp{
+  font-size:7pt; width:100%; min-width:1.2em;
+  border:none; border-top:1px dashed #bbb;
+  background:transparent; text-align:center; outline:none;
+  padding:0; line-height:1.3; color:#555; white-space:nowrap;
+}
+.anno-py-inp::placeholder{ color:#ccc; }
+.anno-py-inp:focus{ background:rgba(0,0,160,.03); }
+/* ── hover 刪除按鈕 ── */
+.anno-char-del{
+  position:absolute; top:-7px; right:-5px; z-index:10;
+  font-size:8px; line-height:1; color:#aaa; background:#fff;
+  border:1px solid #ddd; border-radius:50%;
+  width:12px; height:12px; text-align:center; cursor:pointer;
+  display:none; padding:0;
+}
+.anno-char-cell:hover .anno-char-del{ display:block; }
+/* ── ＋字 按鈕 ── */
+.anno-add-char-btn{
+  font-size:10px; color:#aaa; background:#f8f8f8;
+  border:1px dashed #ddd; border-radius:3px;
+  padding:1px 4px; cursor:pointer; align-self:center; margin:0 2px;
+}
+.anno-add-char-btn:hover{ background:#e8f4ff; color:#336; border-color:#99c; }
+/* ── 模式顯示控制 ── */
+body[data-mode="none"] .anno-zy-inp,
+body[data-mode="none"] .anno-py-inp { display:none !important; }
+body[data-mode="zh"]   .anno-py-inp { display:none !important; }
+body[data-mode="zh"]   .anno-zy-inp { display:block; }
+body[data-mode="en"]   .anno-zy-inp { display:none !important; }
+body[data-mode="en"]   .anno-py-inp { display:block; }
+body[data-mode="both"] .anno-zy-inp,
+body[data-mode="both"] .anno-py-inp { display:block; }
+/* ── 列印 ── */
+@media print{
+  .anno-char-del, .anno-add-char-btn{ display:none !important; }
+  .anno-char-inp{ border:none !important; }
+  .anno-zy-inp{ border-left-color:transparent !important; }
+  .anno-py-inp{ border-top-color:transparent !important; }
+}
+.zy-tone-row{
+  display:flex; gap:3px; flex-wrap:wrap; padding:1px 0; align-items:center;
+}
+.zy-tone-row label{ font-size:7.5pt; color:#999; margin-right:2px; }
+
+
+/* ===== v61: Word 風格注音對話框 + ruby 渲染 ===== */
+
+/* ── 對話框遮罩 ── */
+#rubyDlgOverlay{
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.45); align-items:flex-start; justify-content:center;
+  overflow-y:auto; padding:20px 0;
+}
+#rubyDlgOverlay.open{ display:flex; }
+
+/* ── 對話框主體 ── */
+#rubyDlg{
+  background:#fff; border-radius:6px; box-shadow:0 4px 24px rgba(0,0,0,.35);
+  min-width:480px; max-width:680px; width:90vw; padding:0;
+  font-family:"新細明體","PMingLiU",serif; font-size:11pt;
+  overflow:hidden; max-height:calc(100vh - 40px);
+  display:flex; flex-direction:column; flex-shrink:0;
+}
+#rubyDlgTitle{
+  background:#2c3e50; color:#fff; padding:8px 16px;
+  font-size:12pt; font-weight:bold; letter-spacing:.05em;
+  flex-shrink:0;
+}
+#rubyDlgBody{ padding:12px 16px; overflow-y:auto; flex:1; min-height:0; }
+
+/* ── 表格：基本文字 | 注音 | 拼音 ── */
+#rubyDlgTable{
+  width:100%; border-collapse:collapse; margin-bottom:8px;
+}
+#rubyDlgTable th{
+  background:#f0f0f0; padding:4px 8px; text-align:left;
+  border:1px solid #ccc; font-size:10pt; color:#444;
+}
+#rubyDlgTable td{
+  padding:3px 6px; border:1px solid #ddd; vertical-align:middle;
+}
+.rdlg-base{ font-size:14pt; font-weight:bold; text-align:center; width:2em; }
+.rdlg-base input{
+  width:2em; font-size:14pt; font-weight:bold;
+  text-align:center; border:1px solid #bbb;
+  border-radius:2px; padding:2px 4px; outline:none;
+  font-family:inherit; color:#222;
+}
+.rdlg-base input:focus{ border-color:#3a7a3a; background:#f0fff0; }
+.rdlg-zy{ width:120px; }
+.rdlg-py{ width:120px; }
+.rdlg-zy input, .rdlg-py input{
+  width:100%; border:1px solid #bbb; border-radius:2px;
+  padding:2px 4px; font-size:10pt; outline:none;
+}
+.rdlg-zy input:focus, .rdlg-py input:focus{ border-color:#3a8a3a; }
+
+/* v247: 老師只想留注音或只想留拼音的其中一種時，可以一鍵清空整欄，
+   不用逐格手動刪除 */
+#rubyDlgColClear{
+  display:flex; align-items:center; gap:8px; margin:-2px 0 8px;
+  font-size:9pt; color:#777;
+}
+#rubyDlgColClear button{
+  padding:3px 10px; border-radius:3px; font-size:9pt; cursor:pointer;
+  border:1px solid #bbb; background:#f5f5f5; color:#444;
+}
+#rubyDlgColClear button:hover{ background:#ffe8e0; border-color:#d98; color:#a04000; }
+
+/* ── 預覽 ── */
+#rubyDlgPreview{
+  border:1px solid #ddd; border-radius:3px; padding:8px 12px;
+  min-height:48px; background:#fafafa; margin-bottom:10px;
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:0;
+
+  font-size:16pt;
+}
+#rubyDlgPreviewLabel{
+  font-size:9pt; color:#888; margin-bottom:3px;
+}
+
+/* ── 按鈕列 ── */
+#rubyDlgBtns{
+  display:flex; gap:8px; justify-content:flex-end; padding:0 0 4px;
+}
+#rubyDlgBtns button{
+  padding:5px 18px; border-radius:3px; font-size:10pt; cursor:pointer;
+  border:1px solid #aaa;
+}
+#rubyDlgOk{ background:#2c3e50; color:#fff; border-color:#2c3e50; }
+#rubyDlgOk:hover{ background:#1a2535; }
+#rubyDlgCancel{ background:#f5f5f5; }
+#rubyDlgCancel:hover{ background:#e8e8e8; }
+
+/* ── 渲染後的 ruby 字串（v69：字型繼承、緊湊排版）── */
+/* ══════════════════════════════════════════════════
+   title-ruby v69：position:absolute → 字距緊密
+   注音在字正上方（絕對定位），拼音在字正下方
+   字寬 = 漢字寬，注音/拼音不撐寬
+
+   DOM 結構：
+   .anno-zh (contenteditable, padding 留出上下空間)
+     .title-ruby-unit (inline-block, position:relative)
+       .title-ruby-zy-group (absolute, top:0)
+       .title-ruby-base     (block, 字本體)
+       .title-ruby-py       (absolute, bottom:0)
+   ══════════════════════════════════════════════════ */
+
+/* ── 整個注音標題的容器 ── */
+.anno-zh,
+.anno-sub {
+  display: block;
+  outline: none;
+  min-height: 1.2em;
+  word-break: break-all;
+}
+/* 有 ruby unit 的 anno-zh 需要上下 padding 才能顯示注音/拼音 */
+.anno-zh.has-ruby {
+  /* v80: 注音在右側不佔上空間；拼音在下保留底部空間 */
+  /* v84: 縮小預設 padding-bottom，避免大題主標題行太高 */
+  padding-top: 0;
+  padding-bottom: 0.4em;
+  line-height: var(--exam-lh, 1.4);
+  letter-spacing: var(--exam-ls, 0px);
+}
+
+/* ── 每個字的容器 ── */
+.title-ruby-unit {
+  /* v80: 注音右側 + 拼音下方，流式排版不溢出 */
+  display: inline-flex;
+  flex-direction: column;   /* 上層：[char-row]，下層：[py] */
+  align-items: flex-start;
+  vertical-align: middle;   /* 與同行文字垂直置中 */
+  margin: 0 1px;
+  cursor: text;
+  position: relative;
+}
+.title-ruby-unit:hover { outline: 1px dashed #7ab87a; border-radius: 2px; cursor: text; }
+
+/* ── 字+注音 並排（漢字左、注音右）── */
+.title-ruby-char-row {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;       /* 注音與漢字垂直置中對齊 */
+  line-height: 1.05; /* v200: 縮小內建行高留白，讓拼音跟國字貼近一點 */
+}
+
+/* ── 注音群（字的右側，垂直疊排小字）── */
+.title-ruby-zy-group {
+  display: flex;
+  flex-direction: column;    /* 注音字符由上至下疊排 */
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  margin-left: 1.5px;
+  gap: 0;
+  /* 不使用 writing-mode，改用小字垂直堆疊 */
+}
+.title-ruby-zy-body {
+  /* v202: 注音大小（tb-rubyzyscale）— 在原本 0.48em 的基礎上再乘上使用者設定的比例，
+     預設 --ruby-zy-scale:1 時跟改版前完全一樣，不影響舊考卷 */
+  font-size: calc(0.48em * var(--ruby-zy-scale, 1));
+  color: #1a5a1a;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  display: flex;
+  flex-direction: column;   /* 每個注音字符獨立一行 */
+  align-items: center;
+}
+/* 每個注音字符單獨一行（JS 拆分後每字一 span） */
+.title-ruby-zy-char {
+  display: block;
+  line-height: 1;
+  text-align: center;
+}
+.title-ruby-zy-tone {
+  font-size: calc(0.44em * var(--ruby-zy-scale, 1));
+  color: #1a5a1a;
+  line-height: 1;
+  text-align: center;
+  display: block;
+}
+
+/* ── 漢字本體 ── */
+.title-ruby-base {
+  display: inline;
+  font-size: 1em;
+  font-weight: inherit;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* ── 拼音（char-row 下方）── */
+.title-ruby-py {
+  /* v202: 拼音大小（tb-rubypyscale）＋拼音距離（tb-rubypygap，跟國字的上下間距，
+     滑桿限制在 -3px～8px 之間，不管怎麼調都不會破版，列印出來還是整齊） */
+  font-size: calc(0.52em * var(--ruby-py-scale, 1));
+  color: #555;
+  white-space: nowrap;
+  line-height: 1.05;
+  pointer-events: none;
+  text-align: center;
+  align-self: center;
+  padding-left: 0;
+  padding-top: 0;
+  margin-top: var(--ruby-py-gap, -1px);
+}
+
+/* 顯示模式控制 */
+body[data-mode="none"] .title-ruby-zy-group,
+body[data-mode="none"] .title-ruby-py { display:none !important; }
+body[data-mode="zh"]   .title-ruby-py { display:none !important; }
+body[data-mode="en"]   .title-ruby-zy-group { display:none !important; }
+/* 編輯態：注音按鈕 */
+.anno-ruby-btn{
+  font-size:8pt; color:#fff; background:#3a7a3a;
+  border:none; border-radius:3px; padding:2px 6px;
+  cursor:pointer; opacity:.7; white-space:nowrap;
+  position:relative; z-index:2;
+}
+.anno-ruby-btn-sm{ font-size:7pt; padding:1px 4px; opacity:.65; }
+.anno-ruby-btn-sm:hover{ opacity:1; }
+.anno-ruby-btn:hover{ opacity:1; background:#2a6a2a; }
+/* 段落注音按鈕浮在右上角 */
+.reading-passage-wrap{ position:relative; }
+.passage-ruby-btn{
+  position:absolute; top:2px; right:2px;
+  font-size:8pt; padding:2px 6px; margin:0;
+  background:#2a6aaa; opacity:.8;
+  z-index:5;
+}
+.passage-ruby-btn:hover{ opacity:1; background:#1a5a9a; }
+
+/* 列印：隱藏按鈕 */
+@media print{
+  .anno-ruby-btn{ display:none !important; }
+  .title-ruby-wrap{ outline:none !important; cursor:default; }
+}
+
+
+/* ── v69: ruby unit 直接嵌入 contenteditable，與文字 inline 混排 ── */
+/* anno-zh 為空時顯示 placeholder */
+.anno-zh:empty:before {
+  content: attr(placeholder);
+  color: #aaa;
+  font-weight: 400;
+  font-size: 0.85em;
+}
+
+/* v69 score CSS replaced by v70 */
+
+/* ── v77: 分數區 anno-zh part ── */
+.score-anno-part {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  outline: none;
+  cursor: text;
+  min-width: 0.5em;
+}
+.score-anno-part.has-ruby {
+  display: inline-flex;
+  align-items: flex-end;
+  /* v84: 縮小 padding-bottom 避免分數欄佔太高 */
+  padding-top: 0;
+  padding-bottom: 0.3em;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+.score-ruby-btn {
+  font-size: 9px;
+  padding: 0 3px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  background: #f5f5f5;
+  color: #555;
+  cursor: pointer;
+  margin-left: 3px;
+  line-height: 1.4;
+  user-select: none;
+}
+.score-ruby-btn:hover { background: #e0ffe0; border-color: #3a7a3a; }
+@media print { .score-ruby-btn { display: none !important; } }
+
+/* ── v70: 大題緊密排版 ── */
+.big-hdr { position: relative; transition: padding 0.15s; }
+.big-hdr.compact-layout {
+  padding: 1mm 2mm;
+  margin: 3mm 0 1.5mm 0;
+}
+.big-hdr.compact-layout .big-title .anno-zh {
+  font-size: 12pt;
+  line-height: 1.4;
+}
+.big-hdr.compact-layout .big-sub {
+  font-size: 9.5pt;
+  margin-top: 0;
+}
+.big-hdr.compact-layout .anno-zh {
+  /* v84: 注音在右側，不需要 padding-top */
+  padding-top: 0;
+  padding-bottom: 0.3em;
+}
+
+/* 緊密排版切換按鈕 */
+.compact-toggle-btn {
+  position: absolute;
+  top: 2px; right: 38px;
+  font-size: 10px;
+  padding: 1px 5px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  background: #f0f0f0;
+  color: #555;
+  cursor: pointer;
+  line-height: 1.4;
+  user-select: none;
+  z-index: 5;
+}
+.compact-toggle-btn:hover { background: #ddeeff; border-color: #88aadd; }
+.big-hdr.compact-layout .compact-toggle-btn {
+  background: #cceecc;
+  border-color: #66aa66;
+  color: #226622;
+}
+@media print { .compact-toggle-btn { display: none; } }
+
+/* ── v70: 分數欄位中英文 ── */
+.big-score-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  font-weight: 800;
+  font-size: 12pt;
+  white-space: nowrap;
+  /* v84: 不換行，overflow 可見 */
+  flex-shrink: 0;
+  overflow: visible;
+}
+.big-score-val {
+  outline: none;
+  min-width: 1.5em;
+  text-align: center;
+  border-bottom: 1px dashed #999;
+  padding: 0 2px;
+  color: #c00;
+  font-size: 1em;
+}
+.big-score-val:focus { border-bottom: 1px solid #c00; background: rgba(200,0,0,.05); }
+
+/* EN btn removed v74 */
+/* score ruby btn removed v74 */
+}
+
+
+/* ── v72: 分數區注音容器 ── */
+.score-anno-zh {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  position: relative;
+}
+.score-anno-zh.has-ruby {
+  display: inline-flex;
+  align-items: flex-end;
+  /* v84: 注音在右側不佔上空間，不需要 padding-top:1em */
+  padding-top: 0;
+  padding-bottom: 0.3em;
+  line-height: 1.15;
+}
+
+
+/* v83: 行距自訂屬性 */
+/* v236: 大題間距（.section 之間的垂直間隔）也改用 CSS 變數，讓工具列的
+   拖曳滑桿可以統一調整，包含緊湊雙欄模式在內 */
+:root { --exam-lh: 1.4; --exam-ls: 0px; --exam-section-gap: 3px; }
+
+/* ══════════════════════════════════════════
+   v113: a4.vertical 模式 — row-actions / spacing-handle 浮層化
+   讓 grid-row-wrap 高度只由 grid-line 決定，避免列間空白過大
+══════════════════════════════════════════ */
+
+/* 確保 wrap 可以讓 absolute 子元素溢出顯示 */
+.a4.vertical .grid-row-wrap {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* row-actions 完全脫離 flow，顯示在 wrap 底部外側 */
+.a4.vertical .row-actions {
+  position: absolute !important;
+  top: auto !important;
+  bottom: -34px !important;  /* v113: 避免覆蓋最後幾格，移至 wrap 下方 */
+  left: 0 !important;
+  right: auto !important;
+  z-index: 50 !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 2px !important;
+  margin: 0 !important;
+  order: unset !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.15s !important;
+  background: rgba(255,255,255,0.97) !important;
+  border: 1px solid #b8d4f8 !important;
+  border-radius: 4px !important;
+  padding: 3px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  font-size: 9px !important;
+  white-space: nowrap !important;
+}
+
+/* hover 時顯示操作按鈕 */
+.a4.vertical .grid-row-wrap:hover > .row-actions {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* row-spacing-handle 也脫離 flow，顯示在 wrap 頂部 */
+.a4.vertical .row-spacing-handle {
+  position: absolute !important;
+  top: -7px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 10px !important;
+  z-index: 60 !important;
+  opacity: 0 !important;
+  transition: opacity 0.15s !important;
+}
+
+.a4.vertical .grid-row-wrap:hover > .row-spacing-handle {
+  opacity: 0.7 !important;
+}
+
+.a4.vertical .row-spacing-handle:hover,
+.a4.vertical .row-spacing-handle.dragging {
+  opacity: 1 !important;
+}
+
+/* 確保父容器 overflow visible，讓浮層不被截斷 */
+.a4.vertical .section > div:not(.section-hdr):not(.sec-actions) {
+  overflow: visible !important;
+}
+.a4.vertical .section {
+  overflow: visible !important;
+}
+
+/* v113: 縮小大題整體間距 */
+
+
+/* ══════════════════════════════════════════
+   v113: Exam Criteria 表格 td/th 支援逐字注音
+══════════════════════════════════════════ */
+.cv-criteria td[contenteditable="true"],
+.cv-criteria th[contenteditable="true"] {
+  position: relative;
+}
+
+/* 注音按鈕：平時隱藏，hover 才顯示 */
+.cv-table-ruby-btn {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 9px;
+  line-height: 1.2;
+  padding: 0px 3px 1px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.95);
+  color: #555;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.cv-criteria td[contenteditable="true"]:hover .cv-table-ruby-btn,
+.cv-criteria th[contenteditable="true"]:hover .cv-table-ruby-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cv-table-ruby-btn:hover {
+  background: #e8f4ff;
+  border-color: #3a7bd5;
+  color: #3a7bd5;
+}
+/* 列印 / print-preview 隱藏 */
+@media print { .cv-table-ruby-btn { display: none !important; } }
+body.print-preview .cv-table-ruby-btn { display: none !important; }
+
+/* 確保 title-ruby-unit 在 td 裡也能正常顯示 */
+.cv-criteria td .title-ruby-unit,
+.cv-criteria th .title-ruby-unit {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: inherit;
+  line-height: 1.2;
+}
+.cv-criteria td .title-ruby-base,
+.cv-criteria th .title-ruby-base {
+  font-size: inherit;
+}
+.cv-criteria td .title-ruby-top,
+.cv-criteria th .title-ruby-top {
+  font-size: 7px;
+  line-height: 1;
+  color: #2a5a8a;
+  text-align: center;
+  white-space: nowrap;
+}
+
+
+/* ══════════════════════════════════════════
+   v113: 浮動格式工具列 (Floating Format Toolbar)
+   任何 contenteditable 選取文字時顯示
+══════════════════════════════════════════ */
+#ft-bar {
+  position: fixed;
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background: #1e2433;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  user-select: none;
+  white-space: nowrap;
+  /* 防止點擊工具列時失去 selection */
+  pointer-events: auto;
+}
+#ft-bar.visible { display: flex; }
+
+/* 工具列按鈕 */
+#ft-bar button {
+  border: none;
+  background: transparent;
+  color: #e8ecf0;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+  font-family: inherit;
+}
+#ft-bar button:hover { background: rgba(255,255,255,0.15); }
+#ft-bar button.ft-active { background: rgba(255,255,255,0.25); color: #fff; }
+
+/* 分隔線 */
+#ft-bar .ft-sep {
+  width: 1px;
+  height: 16px;
+  background: rgba(255,255,255,0.2);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* 字體大小顯示 */
+#ft-bar #ft-size-val {
+  color: #a8b4c0;
+  font-size: 11px;
+  min-width: 28px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* 顏色選擇器 */
+#ft-bar #ft-color-input {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 3px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  overflow: hidden;
+}
+
+/* 列印時完全隱藏 */
+@media print { #ft-bar { display: none !important; } }
+body.print-preview #ft-bar { display: none !important; }
+
+
+/* ═══ v113: 浮動緊急存檔列 ═══ */
+#float-save-bar {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+#float-save-bar button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  opacity: 0.92;
+  transition: opacity .15s, transform .1s;
+}
+#float-save-bar button:hover { opacity: 1; transform: scale(1.04); }
+#btn-float-pdf  { background: #e53935; color: #fff; }
+#btn-float-word { background: #1a6fb5; color: #fff; }
+#btn-float-json { background: #2e7d32; color: #fff; }
+#btn-float-ls   { background: #6a1b9a; color: #fff; }
+#float-save-bar .fs-label {
+  font-size: 10px; color: #888; text-align: right;
+  user-select: none;
+}
+
+/* v114: 橫向出題「並排」流動 ─ 第二題緊接第一題 */
+.grid-body.hflow {
+  display:flex;flex-wrap:wrap;flex-direction:row;
+  align-items:flex-start;column-gap:4mm;row-gap:3px;
+}
+.grid-body.hflow > .grid-row-wrap {
+  flex-shrink:0;width:auto;position:relative;
+}
+.grid-body.hflow .row-actions {
+  flex-direction:row;flex-wrap:wrap;gap:2px;margin-bottom:1px;font-size:10px;
+}
+/* 拖曳排序視覺提示 */
+.grid-row-wrap.h-drag-over-before { box-shadow:-3px 0 0 #3a7bd5; }
+.grid-row-wrap.h-drag-over-after  { box-shadow: 3px 0 0 #3a7bd5; }
+.grid-row-wrap.h-dragging         { opacity:0.4; }
+/* 橫排拖曳把手 —— 只在 hflow 模式顯示 */
+.h-drag-handle {
+  display:none;cursor:grab;padding:0 3px;font-size:12px;line-height:1;
+  color:#aaa;user-select:none;flex-shrink:0;align-self:flex-start;
+  margin-right:1px;margin-top:2px;
+}
+.grid-body.hflow .h-drag-handle { display:inline-block; }
+.h-drag-handle:hover { color:#3a7bd5; }
+@media print{.h-drag-handle{display:none!important}}
+body.print-preview .h-drag-handle{display:none!important}
+
+/* ── v119: 多頁支援 ── */
+.page-break-hint {
+  width: 210mm;
+  text-align: center;
+  color: #aaa;
+  font-size: 10px;
+  border-top: 1.5px dashed #ccc;
+  padding-top: 6px;
+  margin: 4px 0;
+  user-select: none;
+}
+.add-page-btn {
+  display: block;
+  margin: 8px auto 4px;
+  padding: 6px 20px;
+  background: #eef4ff;
+  border: 1.5px dashed #3a7bd5;
+  border-radius: 6px;
+  color: #3a7bd5;
+  font-size: 12px;
+  cursor: pointer;
+  width: 160mm;
+  text-align: center;
+}
+.add-page-btn:hover { background: #d8eaff; }
+.del-page-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(200,50,50,.08);
+  border: 1px solid #e77;
+  border-radius: 4px;
+  color: #c33;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 7px;
+  z-index: 10;
+}
+.del-page-btn:hover { background: rgba(200,50,50,.18); }
+@media print {
+  .page-break-hint, .add-page-btn, .del-page-btn { display: none !important; }
+}
+
+
+/* ── v123: cv-criteria row height resize ── */
+.cv-row-resize-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 6px;
+  cursor: row-resize;
+  background: transparent;
+  z-index: 10;
+}
+.cv-row-resize-handle:hover,
+.cv-row-resize-handle.dragging {
+  background: rgba(58, 123, 213, 0.35);
+}
+body.print-preview .cv-row-resize-handle { display: none !important; }
+
+
+/* ── v124: cv-criteria 欄寬/列高拖曳控制桿 ── */
+.cv-col-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 20;
+  user-select: none;
+  touch-action: none;
+  /* v134: permanent thin blue line so handle is discoverable */
+  border-right: 2px solid rgba(58, 123, 213, 0.35);
+}
+.cv-col-resize-handle:hover {
+  background: rgba(58, 123, 213, 0.25);
+  border-right-color: rgba(58, 123, 213, 0.9);
+}
+.cv-col-resize-handle.dragging {
+  background: rgba(58, 123, 213, 0.4);
+  border-right-color: #3a7bd5;
+}
+/* v132: left-handle for col-score */
+.cv-col-resize-handle.left-handle {
+  right: auto;
+  left: -6px;
+  width: 20px;
+  z-index: 9999;
+  border-right: none;
+  border-left: 2px solid rgba(58, 123, 213, 0.35);
+}
+.cv-col-resize-handle.left-handle:hover {
+  background: rgba(58, 123, 213, 0.25);
+  border-left-color: rgba(58, 123, 213, 0.9);
+}
+.cv-col-resize-handle.left-handle.dragging {
+  background: rgba(58, 123, 213, 0.4);
+  border-left-color: #3a7bd5;
+}
+/* th 需要 position:relative 和 overflow:visible */
+.cv-criteria tr.subhead th {
+  position: relative !important;
+  overflow: visible !important;
+}
+.cv-row-resize-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  cursor: row-resize;
+  background: transparent;
+  z-index: 20;
+  user-select: none;
+  touch-action: none;
+}
+.cv-row-resize-handle:hover {
+  background: rgba(58, 123, 213, 0.4);
+}
+.cv-row-resize-handle.dragging {
+  background: rgba(58, 123, 213, 0.6);
+}
+/* td anchor cell 需要 position:relative */
+.cv-criteria tr:not(.subhead):not(:first-child) td:first-child {
+  position: relative !important;
+  overflow: visible !important;
+}
+body.print-preview .cv-col-resize-handle,
+body.print-preview .cv-row-resize-handle { display: none !important; }
+
+/* v124: big-hdr resize tip */
+.big-hdr-resize-tip {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 7pt;
+  color: #bbb;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+body.print-preview .big-hdr-resize-tip { display: none !important; }
+
+
+  /* ── v132: 欄寬邊緣偵測拖曳 ── */
+  #cv-criteria-tbl tr.subhead th {
+    position: relative !important;
+    overflow: visible !important;
+  }
+  #cv-criteria-tbl tr.subhead th.cv-th-resizing {
+    background: rgba(58,123,213,0.08) !important;
+  }
+  body.print-preview #cv-criteria-tbl tr.subhead th {
+    cursor: default !important;
+    pointer-events: none;
+  }
+
+/* v143: 圖片外框 + 拖曳調整大小的把手（取代原本點圖片跳出輸入mm的視窗） */
+/* v147: 圖片改成靠左浮動（float），縮小圖片後文字可以自動接到圖片旁邊，
+   不會像整行區塊那樣在圖片右側留下一大片空白 */
+.ins-img-wrap{position:relative; float:left; margin:0 4mm 3mm 0; max-width:100%; clear:none;}
+.ins-img-wrap .ins-img{display:block;}
+
+/* v151: 圖片文字環繞開關 —— 可切換「文繞圖（靠左浮動，文字接在旁邊）」
+   跟「獨立一行（滿版，不環繞）」兩種模式，類似 Word 的文繞圖功能 */
+.ins-img-wrap.no-wrap{
+  float: none !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 2mm 0 3mm 0 !important;
+  clear: both !important;
+}
+.ins-img-wrap-toggle{
+  position:absolute; top:-13px; left:-2px;
+  width:auto; height:auto; padding:2px 8px;
+  display:inline-flex; align-items:center; justify-content:center;
+  white-space:nowrap;
+  background:#333; color:#fff; border:2px solid #fff; border-radius:10px;
+  font-size:10px; line-height:1.5; cursor:pointer; user-select:none;
+  box-shadow:0 1px 4px rgba(0,0,0,.35); z-index:5;
+}
+.ins-img-wrap-toggle:hover{ background:#3a7bd5; }
+@media print{ .ins-img-wrap-toggle{display:none !important;} }
+body.print-preview .ins-img-wrap-toggle{display:none !important;}
+
+/* v152: 圖片刪除鍵 —— 不用再靠選取+按 Delete 鍵，直接點 ✕ 即可刪除 */
+.ins-img-wrap-del{
+  position:absolute; top:-11px; right:-11px;
+  width:20px; height:20px;
+  display:flex; align-items:center; justify-content:center;
+  background:#e05a5a; color:#fff; border:2px solid #fff; border-radius:50%;
+  font-size:11px; line-height:1; cursor:pointer; user-select:none;
+  box-shadow:0 1px 4px rgba(0,0,0,.35); z-index:5;
+}
+.ins-img-wrap-del:hover{ background:#c0392b; }
+@media print{ .ins-img-wrap-del{display:none !important;} }
+body.print-preview .ins-img-wrap-del{display:none !important;}
+/* 段落/文章框結尾要清除浮動，避免下一個元件被擠歪或圖片跑出框外 */
+.reading-passage:after,
+.free-edit-area:after,
+.anno-zh:after,
+.section:after,
+.sw-page:after{content:"";display:block;clear:both;}
+
+/* v148: 強制重設──閱讀測驗/詞語定義框無論受到前面元件（例如還沒清乾淨的浮動圖片）
+   影響，一律靠左、滿版寬度，不受任何殘留的 float/margin 干擾 */
+.reading-passage-wrap,
+.sec-defs,
+.reading-passage,
+.big-defs{
+  clear: both !important;
+  float: none !important;
+  margin-left: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.ins-img-resize-handle{
+  position:absolute; right:-5px; bottom:-5px;
+  width:14px; height:14px;
+  background:#3a7bd5; border:2px solid #fff; border-radius:50%;
+  cursor:nwse-resize; box-shadow:0 1px 4px rgba(0,0,0,.35);
+  touch-action:none; z-index:5;
+}
+.ins-img-resize-handle:hover{background:#2a5ba0;}
+@media print{ .ins-img-resize-handle{display:none !important;} }
+body.print-preview .ins-img-resize-handle{display:none !important;}
+
+/* v146: 圖片被選取時顯示藍色外框，提示可以按 Delete 刪除 */
+.ins-img-wrap.img-selected .ins-img{outline:2px solid #3a7bd5; outline-offset:2px;}
+@media print{ .ins-img-wrap.img-selected .ins-img{outline:none !important;} }
+body.print-preview .ins-img-wrap.img-selected .ins-img{outline:none !important;}
+
+/* v157: 部首查詢小工具 */
+#radical-tool-modal{
+  position:fixed; inset:0; z-index:4800;
+  background:rgba(20,30,50,.55);
+  display:flex; align-items:center; justify-content:center;
+  font-family:"Microsoft JhengHei","蘋方-繁",Arial,sans-serif;
+  padding:16px;
+}
+@media print{ #radical-tool-modal{ display:none !important; } }
+body.print-preview #radical-tool-modal{ display:none !important; }
+#radical-tool-box{
+  position:relative;
+  background:#fff; border-radius:12px; padding:26px 24px;
+  width:380px; max-width:100%; max-height:85vh; overflow-y:auto;
+  box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+#radical-tool-box h2{ font-size:16px; color:#1a3a6b; margin:0 0 6px; }
+.rt-sub{ font-size:12px; color:#888; margin:0 0 14px; line-height:1.5; }
+#radical-tool-close{
+  position:absolute; top:12px; right:12px;
+  width:24px; height:24px; border-radius:50%;
+  border:none; background:#eee; color:#666; cursor:pointer; font-size:12px;
+}
+#radical-tool-close:hover{ background:#ddd; }
+#radical-tool-input{
+  width:100%; box-sizing:border-box; padding:10px 12px;
+  border:1px solid #ccc; border-radius:6px; font-size:20px; text-align:center;
+  margin-bottom:14px;
+}
+.rt-card{ background:#f7f9fc; border-radius:8px; padding:14px; display:flex; gap:14px; align-items:flex-start; }
+.rt-char{ font-size:42px; line-height:1; color:#1a3a6b; font-weight:700; flex:0 0 auto; }
+.rt-info p{ margin:0 0 6px; font-size:13px; color:#333; line-height:1.5; }
+.rt-info p:last-child{ margin-bottom:0; }
+.rt-note{ color:#888 !important; font-size:12px !important; }
+.rt-error{ color:#c0392b; font-size:13px; margin:0; }
+.rt-loading{ color:#888; font-size:13px; margin:0; }
+
+/* v163: 讀音查詢小工具（結構沿用部首查詢的 modal 樣式） */
+#pronounce-tool-modal{
+  position:fixed; inset:0; z-index:4800;
+  background:rgba(20,30,50,.55);
+  display:flex; align-items:center; justify-content:center;
+  font-family:"Microsoft JhengHei","蘋方-繁",Arial,sans-serif;
+  padding:16px;
+}
+@media print{ #pronounce-tool-modal{ display:none !important; } }
+body.print-preview #pronounce-tool-modal{ display:none !important; }
+#pronounce-tool-box{
+  position:relative;
+  background:#fff; border-radius:12px; padding:26px 24px;
+  width:420px; max-width:100%; max-height:85vh; overflow-y:auto;
+  box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+#pronounce-tool-box h2{ font-size:16px; color:#1a3a6b; margin:0 0 6px; }
+#pronounce-tool-close{
+  position:absolute; top:12px; right:12px;
+  width:24px; height:24px; border-radius:50%;
+  border:none; background:#eee; color:#666; cursor:pointer; font-size:12px;
+}
+#pronounce-tool-close:hover{ background:#ddd; }
+#pronounce-tool-input{
+  width:100%; box-sizing:border-box; padding:10px 12px;
+  border:1px solid #ccc; border-radius:6px; font-size:18px; text-align:center;
+}
+.pt-card{ background:#f7f9fc; border-radius:8px; padding:12px 14px; margin-top:12px; }
+.pt-word{ font-size:28px; color:#1a3a6b; font-weight:700; margin-bottom:8px; }
+.pt-hetero{ border-top:1px dashed #ddd; padding:8px 0; }
+.pt-hetero:first-of-type{ border-top:none; padding-top:0; }
+.pt-reading{ font-size:15px; color:#1a3a6b; font-weight:700; margin-bottom:2px; }
+.pt-def{ font-size:12px; color:#555; line-height:1.5; }
+
+/* v161: 開新考卷模板選擇 */
+#new-exam-modal{
+  position:fixed; inset:0; z-index:4800;
+  background:rgba(20,30,50,.55);
+  display:flex; align-items:center; justify-content:center;
+  font-family:"Microsoft JhengHei","蘋方-繁",Arial,sans-serif;
+  padding:16px;
+}
+@media print{ #new-exam-modal{ display:none !important; } }
+body.print-preview #new-exam-modal{ display:none !important; }
+#new-exam-box{
+  position:relative;
+  background:#fff; border-radius:12px; padding:26px 24px;
+  width:520px; max-width:100%; max-height:85vh; overflow-y:auto;
+  box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+#new-exam-box h2{ font-size:16px; color:#1a3a6b; margin:0 0 6px; }
+.ne-sub{ font-size:12px; color:#888; margin:0 0 16px; line-height:1.6; }
+#new-exam-close{
+  position:absolute; top:12px; right:12px;
+  width:24px; height:24px; border-radius:50%;
+  border:none; background:#eee; color:#666; cursor:pointer; font-size:12px;
+}
+#new-exam-close:hover{ background:#ddd; }
+.ne-cards{ display:flex; flex-direction:column; gap:10px; }
+.ne-card{
+  text-align:left; border:1.5px solid #ccc; border-radius:8px; padding:12px 14px;
+  background:#f9fafc; cursor:pointer; transition:all .15s;
+  display:flex; align-items:center; gap:12px; width:100%;
+}
+.ne-card:hover{ border-color:#3a7bd5; background:#eef4fd; }
+.ne-card-disabled{ opacity:.55; cursor:not-allowed; pointer-events:none; }
+.ne-card-disabled:hover{ border-color:#ccc !important; background:#f9fafc !important; }
+.ne-card-title{ font-size:14px; font-weight:700; color:#1a3a6b; margin-bottom:4px; }
+.ne-card-desc{ font-size:12px; color:#555; line-height:1.6; }
+.ne-thumb{ flex:0 0 auto; width:44px; height:58px; border-radius:3px; box-shadow:0 1px 4px rgba(0,0,0,.15); }
+.ne-card-text{ flex:1; min-width:0; }
+
+/* v186: AI 出題彈窗 */
+#ai-gen-modal{
+  position:fixed; inset:0; z-index:4800;
+  background:rgba(20,30,50,.55);
+  display:flex; align-items:center; justify-content:center;
+  font-family:"Microsoft JhengHei","蘋方-繁",Arial,sans-serif;
+  padding:16px;
+}
+@media print{ #ai-gen-modal{ display:none !important; } }
+body.print-preview #ai-gen-modal{ display:none !important; }
+#ai-gen-box{
+  position:relative;
+  background:#fff; border-radius:12px; padding:26px 24px;
+  width:560px; max-width:100%; max-height:88vh; overflow-y:auto;
+  box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+#ai-gen-box h2{ font-size:16px; color:#1a3a6b; margin:0 0 6px; }
+#ai-gen-close{
+  position:absolute; top:12px; right:12px;
+  width:24px; height:24px; border-radius:50%;
+  border:none; background:#eee; color:#666; cursor:pointer; font-size:12px;
+}
+#ai-gen-close:hover{ background:#ddd; }
+.ai-gen-label{ display:block; font-size:12px; color:#555; font-weight:700; margin:12px 0 4px; }
+#ai-gen-material{
+  width:100%; box-sizing:border-box; min-height:120px; resize:vertical;
+  padding:10px 12px; border:1px solid #ccc; border-radius:6px;
+  font-size:13px; line-height:1.6; font-family:inherit;
+}
+.ai-gen-more-label{ font-size:12px; color:#555; font-weight:700; margin:16px 0 0; padding-top:10px; border-top:1px dashed #ddd; }
+.ai-gen-more-row .ai-gen-field{ min-width:110px; }
+.ai-gen-row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+.ai-gen-field{ flex:1; min-width:140px; margin-top:10px; }
+.ai-gen-row .ai-gen-field{ margin-top:0; }
+.ai-gen-field label{ display:block; font-size:12px; color:#555; font-weight:700; margin-bottom:4px; }
+.ai-gen-field input, .ai-gen-field select{
+  width:100%; box-sizing:border-box; padding:7px 9px;
+  border:1px solid #ccc; border-radius:6px; font-size:13px;
+}
+#ai-gen-status{ margin-top:10px; font-size:12.5px; line-height:1.6; }
+#ai-gen-status .ai-gen-loading{ color:#5c6ac4; margin:0; }
+#ai-gen-status .ai-gen-error{ color:#c0392b; margin:0; }
+#ai-gen-status .ai-gen-success{ color:#1a8c70; margin:0; font-weight:700; }
+#ai-gen-images{
+  width:100%; box-sizing:border-box; padding:7px 9px;
+  border:1px dashed #ccc; border-radius:6px; font-size:12.5px; background:#fafafa;
+}
+#ai-gen-image-preview{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.ai-gen-thumb{ position:relative; width:64px; height:64px; border-radius:6px; overflow:hidden; border:1px solid #ccc; }
+.ai-gen-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.ai-gen-thumb-del{
+  position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%;
+  border:none; background:rgba(0,0,0,.6); color:#fff; font-size:10px; line-height:18px;
+  text-align:center; cursor:pointer; padding:0;
+}
+.ai-gen-thumb-del:hover{ background:rgba(192,57,43,.9); }
+
+/* v240：老師合夥人反映「新增一題」按鈕應該置右（不是置左），造句/造詞/改錯字
+   練習共用這個外框——包住按鈕、讓它靠右對齊，取代原本直接貼在body最後面
+   （預設靠左）的樣子。 */
+.sec-add-btn-wrap{ text-align: right; }
+/* v240：造句/造詞/改錯字練習「刪除這一題」按鈕——小小的紅色✕，跟其他編輯用
+   按鈕一樣只在編輯畫面看得到，列印/預覽時會自動隱藏（跟著 .rab 的規則走）。 */
+.row-del-btn{ color:#c00; font-weight:700; flex:0 0 auto; }
+
+/* v162: 造句練習 */
+.sentence-row{ margin-bottom:5mm; }
+.sentence-prompt{ display:flex; align-items:baseline; gap:4px; margin-bottom:1mm; font-weight:600; }
+.sentence-no{ flex:0 0 auto; }
+.sentence-word-wrap{ flex:0 0 auto; min-width:20mm; }
+.sentence-colon{ flex:0 0 auto; }
+
+/* v162: 造詞練習 */
+.wordform-row{ display:flex; align-items:center; gap:6px; margin-bottom:4mm; flex-wrap:wrap; }
+.wordform-no{ flex:0 0 auto; }
+.wordform-char-wrap{ flex:0 0 auto; min-width:14mm; }
+.wordform-blanks{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.wordform-blank{ display:inline-block; width:20mm; height:1px; border-bottom:1px solid #3a7bd5; margin-top:6mm; }
+.wordform-add-blank{
+  border:1px dashed #aaa; background:#f5f5f5; color:#666; border-radius:4px;
+  font-size:10px; padding:1px 5px; cursor:pointer; align-self:flex-end;
+}
+.wordform-add-blank:hover{ background:#e8f0ff; border-color:#3a7bd5; color:#3a7bd5; }
+@media print{ .wordform-add-blank{ display:none !important; } }
+body.print-preview .wordform-add-blank{ display:none !important; }
+
+/* v164: 改錯字練習 */
+.wrongchar-row{ display:flex; align-items:center; gap:8px; margin-bottom:5mm; flex-wrap:wrap; }
+.wrongchar-no{ flex:0 0 auto; }
+.wrongchar-phrase-wrap{ flex:0 0 auto; font-size:13pt; }
+.wrongchar-circled{
+  display:inline-block; border:1.5px solid #c00; border-radius:50%;
+  padding:0 3px; line-height:1.5;
+}
+.wrongchar-circle-btn{
+  font-size:10px; padding:2px 6px; border:1px dashed #aaa; background:#f5f5f5;
+  color:#666; border-radius:4px; cursor:pointer; flex:0 0 auto;
+}
+.wrongchar-circle-btn:hover{ background:#e8f0ff; border-color:#3a7bd5; color:#3a7bd5; }
+@media print{ .wrongchar-circle-btn{ display:none !important; } }
+body.print-preview .wrongchar-circle-btn{ display:none !important; }
+/* v201: 列印/預覽時不能把圈起來的紅圈印出來，不然等於直接告訴學生哪個字是錯的，
+   失去「自己找出錯字」的練習意義；圈選標記只在編輯畫面留給老師自己看方便對照。 */
+@media print{
+  .wrongchar-circled{ display:inline !important; border:none !important; padding:0 !important; line-height:inherit !important; }
+}
+body.print-preview .wrongchar-circled{ display:inline !important; border:none !important; padding:0 !important; line-height:inherit !important; }
+/* v206：提醒老師「紅圈列印會消失」的小提示，只在編輯畫面顯示，列印/預覽時隱藏 */
+.wrongchar-teacher-hint{ font-size:9pt; color:#888; margin-bottom:2mm; }
+@media print{ .wrongchar-teacher-hint{ display:none !important; } }
+body.print-preview .wrongchar-teacher-hint{ display:none !important; }
+.wrongchar-ans-label{ flex:0 0 auto; font-size:11pt; color:#555; }
+.wrongchar-answer{ display:inline-block; width:16mm; height:1px; border-bottom:1px solid #3a7bd5; margin-top:6mm; }
+
+/* v165: 選擇題（密集版）— 模組1傳統國小樣式 */
+.circlemc-passage-wrap{ position:relative; }
+.circlemc-passage{
+  border:1px solid #bbb; border-radius:3px; padding:3mm; min-height:30mm;
+  margin:2mm 0 3mm; width:100%; box-sizing:border-box;
+  font-size:12pt; line-height:2.1; cursor:text;
+}
+/* v265: 這個欄位右上角已經有「＋插入挖空選項」按鈕，通用的 .passage-ruby-btn
+   預設也是貼右上角，兩顆按鈕會疊在一起——改把加注音按鈕放到左上角，避免互相遮住 */
+.circlemc-passage-wrap .passage-ruby-btn{ top:2px; right:auto; left:2px; }
+.circlemc-passage:empty:before{ content:attr(placeholder); color:#aaa; font-size:10pt; }
+.cmc-insert-btn{
+  position:absolute; top:2px; right:2px; z-index:5;
+  font-size:8pt; padding:2px 6px; margin:0;
+  background:#2a6aaa; color:#fff; border:none; border-radius:3px;
+  cursor:pointer; opacity:.8;
+}
+.cmc-insert-btn:hover{ opacity:1; background:#1a5a9a; }
+@media print{ .cmc-insert-btn{ display:none !important; } }
+body.print-preview .cmc-insert-btn{ display:none !important; }
+
+.cmc-widget{
+  display:inline-flex; align-items:center; gap:2px;
+  margin:0 2px; padding:1px 3px 1px 1px;
+  border:1px dashed #ccc; border-radius:4px;
+  vertical-align:middle; white-space:nowrap;
+}
+.cmc-blank{
+  display:inline-block; width:7mm; height:7mm; line-height:7mm;
+  border:1px solid #333; text-align:center; font-size:10pt;
+  vertical-align:middle;
+}
+.cmc-no{ font-size:10pt; color:#333; margin:0 2px; }
+.cmc-opts{ display:inline-flex; align-items:center; gap:3px; }
+.cmc-opt{ display:inline-flex; align-items:center; }
+.cmc-circle{
+  display:inline-block; width:4.5mm; height:4.5mm; line-height:4.5mm;
+  text-align:center; font-size:10pt; color:#333;
+}
+.cmc-opt-text{
+  display:inline-block; min-width:6mm; font-size:11pt; text-align:center;
+  outline:none;
+}
+.cmc-opt-text:empty:before{ content:'\00a0\00a0'; }
+.cmc-del-btn{
+  font-size:8pt; line-height:1; padding:1px 3px; margin-left:2px;
+  border:none; background:#f5f5f5; color:#999; border-radius:3px; cursor:pointer;
+}
+.cmc-del-btn:hover{ background:#fde0e0; color:#c00; }
+@media print{ .cmc-del-btn{ display:none !important; } .cmc-widget{ border:none; } }
+body.print-preview .cmc-del-btn{ display:none !important; }
+body.print-preview .cmc-widget{ border:none; }
+
+/* ══════════════════════════════════════════
+   v166: 版面密度 — 緊湊模式（雙欄，模組1傳統密集版用）
+   放在檔案最後：用「多一層 class」確保優先權蓋過前面同名規則，
+   不用去改動每種題型原本各自的字體/間距設定。
+══════════════════════════════════════════ */
+body.compact-density #sw{
+  column-count:2;
+  column-gap:8mm;
+  column-rule:1px solid #ddd;
+  position: relative; /* v229: 讓 .col-split-line 這個絕對定位的拖曳線用它當基準 */
+  /* v244: 老師反映「姓名/班級/座號列跟雙欄虛線不應該有任何連帶關係、虛線應該固定在中間」——不再區分「自動預設」跟「老師手動拖曳」兩種狀態，兩者現在都用同一套機制：--col-split-h 決定高度、column-fill:auto 依高度依序把內容排進兩欄（右欄排滿了才換左欄，不是瀏覽器自動平衡）。--col-split-h 的預設值改由 editor.js 的 updateColSplitLineDefaultPos() 用「紙張的實際物理高度（來自紙張大小/方向設定）的一半」去算，只有紙張大小/方向改變才會變動，完全不會被姓名/班級/座號列（浮動元素）多長、或老師目前出了幾題影響到——這就是這次要修的「姓名列跟分欄線不應該有任何連帶關係」。老師手動拖曳分欄線之後，會改成用拖曳決定的高度（.col-split-manual 這個 class 只用來告訴 JS「老師已經自己決定過，不要再自動覆蓋」，不影響這裡的 CSS 生效方式，這條規則本來就一直生效）。 */
+  height: var(--col-split-h, auto);
+  column-fill: auto;
+}
+/* v169: 直書模式（模組1）下，雙欄要先填「右邊」那一欄，符合台灣傳統考卷由右至左的習慣。
+   CSS 多欄排版預設一律先填左欄（跟 writing-mode 無關，要靠 direction:rtl 才能反過來）。 */
+.a4.vertical #sw{
+  direction: rtl;
+}
+.a4.vertical #sw > *{
+  direction: ltr; /* 欄位順序用 rtl 反過來就好，裡面的內容還是正常排列，不會被 rtl 影響 */
+}
+
+/* ══════════════════════════════════════════
+   v229 新增：模組1（緊湊雙欄）可拖曳水平分欄線
+   ─────────────────────────────────────
+   老師拿真實傳統考卷照片（橫線分隔上下兩塊）解釋：緊湊雙欄模式底下，兩欄該從
+   哪裡分界，應該是老師自己決定，不是瀏覽器自動平衡（CSS column-count 預設的
+   column-fill:balance 行為）決定。這裡加一條可以用滑鼠上下拖曳的水平參考線
+   （.col-split-line），代表「第一欄到這裡結束、第二欄從這裡開始」。
+
+   做法：.col-split-line 用 position:absolute; bottom:0，還沒拖曳前跟著 #sw
+   目前算出來的高度自動貼底（此時視覺上就是瀏覽器目前自動平衡的分界點，不會
+   一開始就跳到奇怪的位置）。
+   v241修正：這個「自動貼底」的預設位置其實是「較高那一欄」的底部，不是真正
+   的分界點，老師反映「這條線的位置跟兩欄看起來的分界對不起來」。改成
+   editor.js 的 updateColSplitLineDefaultPos() 在還沒手動拖曳前，用 JS 量出
+   「第一欄」實際內容的真實底部，蓋掉這裡的 bottom:0（用 inline top 代替），
+   老師開始拖曳後才會清掉 inline top、換回這條 bottom:0 規則接手。
+   老師開始拖曳後，JS 會把 #sw 設定一個固定高度
+   （CSS 變數 --col-split-h）並加上 .col-split-manual class，此時下面這條規則
+   生效，換成 column-fill:auto（依高度依序填欄，不再自動平衡），分界點就固定
+   在老師拖曳決定的高度，直到雙擊/右鍵重設回自動平衡為止。 */
+/* v244: 上面 body.compact-density #sw 那條規則現在已經一律包含 height/column-fill，這條專門給 .col-split-manual 的規則不再需要（保留注釋避免之後忘記為什麼拿掉）。 */
+.col-split-line{
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 0;
+  border-top: 2px dashed #3a7bd5;
+  cursor: ns-resize;
+  z-index: 40;
+  user-select: none;
+}
+.col-split-line:hover,
+.col-split-line.dragging{
+  border-top-color: #ff6a00;
+  border-top-width: 3px;
+}
+.col-split-handle-label{
+  position: absolute;
+  right: 2mm; top: -18px;
+  font-size: 8px;
+  line-height: 1;
+  background: #3a7bd5;
+  color: #fff;
+  padding: 3px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.col-split-line:hover .col-split-handle-label,
+.col-split-line.dragging .col-split-handle-label{
+  opacity: 1;
+}
+@media print{
+  .col-split-line{ display:none !important; }
+}
+body.print-preview .col-split-line{ display:none !important; }
+body.compact-density .section{
+  break-inside:avoid-column;
+  margin-bottom:var(--exam-section-gap,2px);
+}
+/* v218：老師反映模組1（緊湊雙欄＋直書）的字格題排版「一直重複同樣的問題」——
+   實測發現根因是 body.compact-density #sw 開了 CSS 多欄排版（column-count:2），
+   把每個大題塞進「半欄寬」（A4版面扣掉邊距後的一半多一點，約8~9cm）裡，方便
+   選擇題、連連看等短題目左右對半排列。但字格題的格子本身在直書模式下，就是
+   靠 .grid-row-wrap 一路往下延伸疊成一直行（v177~179 的既有設計，避免字數一多
+   就亂排），塞進半欄寬雖然不會重疊壞掉，但看起來會是「格子擠在版面最右邊一小條，
+   左邊留一大片空白」，教起來很奇怪。這裡讓字格題直接跨兩欄（column-span:all），
+   佔滿整個版面寬度，其他短題型不受影響，維持原本雙欄排列。 */
+/* v222 修正：老師反映「沒有誰家的考卷長這樣」——字數少（例如預設2個字）時，
+   字格題大題硬是撐滿整個版面寬度（column-span:all 造成的），標題+格子只窩在
+   最右邊一小塊，左邊留一整片空白，比例很奇怪、跟真實考卷不像。
+   改法：加上 width:fit-content，讓大題的寬度「跟著內容走」——字數少就窄、
+   字數多到需要換欄時才會自動撐開到 max-width:100%（也就是原本 column-span:all
+   給的滿版寬度），觸發 v220 那套多欄換行。已用 Claude in Chrome 實測驗證：
+   2 個字時大題寬度從 676px 縮到 129px（剛好貼合格子本身寬度，不再留白）；
+   21 個字時大題自動撐回 676px 滿版寬、正確排成 5 欄，跟改之前一模一樣，
+   不影響原本的多欄換行效果。 */
+body.compact-density .section[data-qtype="grid"]{
+  column-span: all;
+  width: fit-content;
+  max-width: 100%;
+}
+body.compact-density .section-hdr{
+  font-size:8pt;
+  padding:2px 5px;
+  margin-bottom:1px;
+}
+body.compact-density .anno-zh{ font-size:11pt; }
+body.compact-density .anno-phon-side{
+  min-width:10mm; max-width:12mm; min-height:9mm; font-size:5.5pt;
+}
+body.compact-density .anno-phon-bottom{ min-height:4.5mm; font-size:6pt; }
+body.compact-density .anno-line .anno-phon-side{ font-size:5.5pt; min-width:9mm; max-width:11mm; min-height:8mm; }
+body.compact-density .anno-line .anno-phon-bottom{ font-size:5.5pt; min-height:4mm; }
+
+body.compact-density .mc-question{ margin-bottom:2mm; }
+body.compact-density .mc-stem{ font-size:9.5pt; }
+body.compact-density .mc-opt{ font-size:9pt; }
+body.compact-density .read-options .read-opt{ font-size:9pt; }
+body.compact-density .match-row{ margin-bottom:1.5mm; }
+body.compact-density .match-body{ font-size:9.5pt; }
+
+body.compact-density .sentence-row{ margin-bottom:2mm; }
+body.compact-density .sentence-prompt{ font-size:9.5pt; }
+body.compact-density .wordform-row{ margin-bottom:2mm; }
+body.compact-density .wordform-char-wrap{ font-size:9.5pt; }
+body.compact-density .wrongchar-row{ margin-bottom:2mm; }
+body.compact-density .wrongchar-phrase-wrap{ font-size:9.5pt; }
+body.compact-density .wrongchar-answer{ width:12mm; }
+
+body.compact-density .circlemc-passage{
+  font-size:9.5pt; line-height:1.8; padding:2mm; min-height:auto;
+}
+body.compact-density .cmc-blank{ width:5.5mm; height:5.5mm; line-height:5.5mm; font-size:8pt; }
+body.compact-density .cmc-circle{ width:3.8mm; height:3.8mm; line-height:3.8mm; font-size:8pt; }
+body.compact-density .cmc-opt-text{ font-size:9pt; min-width:5mm; }
+body.compact-density .cmc-no{ font-size:8pt; }
+
+body.compact-density .reading-passage{
+  font-size:9.5pt; line-height:1.7; padding:2mm; min-height:15mm;
+}
+body.compact-density .reading-qs .read-q{ margin-bottom:2mm; }
+
+body.compact-density .exam-header{ padding:3px 8px 2px; }
+body.compact-density .hd-title{ font-size:10pt; }
+body.compact-density .student-bar{ margin-bottom:4px; }
+body.compact-density .exam-compact-hdr{ font-size:10pt; padding:3px 8px 2px; margin-bottom:3px; }
+
+@media print{
+  body.compact-density #sw{ column-count:2; column-gap:8mm; }
+}
+
+/* v166: 分組配對（大括號）Matching */
+.mg-hint{ font-size:9pt; color:#888; margin-bottom:2mm; }
+.mg-group{
+  display:flex; align-items:stretch; gap:6px; margin-bottom:4mm;
+  padding:2px 0 2px 12px; position:relative;
+  flex-wrap:wrap; /* v269：讓 .mg-legend 對照表可以用 flex-basis:100% 頂到自己單獨一行 */
+}
+.mg-group:before{
+  content:''; position:absolute; left:0; top:2px; bottom:2px; width:8px;
+  border-left:2px solid #8e44ad; border-top:2px solid #8e44ad; border-bottom:2px solid #8e44ad;
+  border-radius:8px 0 0 8px; opacity:.6;
+}
+.mg-head{
+  flex:0 0 auto; align-self:center; min-width:12mm; text-align:center;
+  font-size:14pt; font-weight:800; outline:none; cursor:text;
+  border-bottom:1px solid #999; padding:2px 4px;
+}
+.mg-head:empty:before{ content:attr(placeholder); color:#aaa; font-weight:400; font-size:10pt; }
+.mg-list{ display:flex; flex-direction:column; gap:2mm; justify-content:center; }
+.mg-item{ display:flex; align-items:center; gap:6px; }
+.mg-item-read{ flex:0 0 auto; }
+/* v269：答案欄（讀音/解釋）——只有老師編輯畫面看得到，列印/預覽時自動隱藏，
+   學生看不到；用虛線框＋淺黃底跟旁邊「學生看得到」的詞語欄做出明顯區隔，
+   提醒老師這欄是專門拿來產生上面①②③…對照表用的，不是給學生看的。 */
+.mg-item-key{
+  flex:1 1 auto; min-width:30mm; font-size:9pt; color:#8a6d00;
+  border:1px dashed #e0c250; border-radius:3px; background:#fffceb;
+  padding:2px 5px; outline:none; cursor:text;
+}
+.mg-item-key:empty:before{ content:attr(placeholder); color:#c2ad66; }
+.mg-item-blank{ font-size:10pt; color:#555; white-space:nowrap; }
+.mg-item-del{
+  font-size:8pt; line-height:1; padding:1px 3px; border:none; background:#f5f5f5;
+  color:#999; border-radius:3px; cursor:pointer;
+}
+.mg-item-del:hover{ background:#fde0e0; color:#c00; }
+.mg-add-item-btn, .mg-del-group-btn, .mg-shuffle-btn{
+  align-self:center; font-size:9px; padding:2px 5px; border:1px dashed #aaa;
+  background:#f5f5f5; color:#666; border-radius:4px; cursor:pointer; white-space:nowrap;
+}
+.mg-add-item-btn:hover, .mg-del-group-btn:hover{ background:#e8f0ff; border-color:#3a7bd5; color:#3a7bd5; }
+.mg-shuffle-btn:hover{ background:#f3e8fc; border-color:#8e44ad; color:#8e44ad; }
+/* v269：自動產生的①②③…答案代號對照表——印在每一組最上面，學生看得到，
+   拿來跟下面每個詞語旁邊「（　）」填的代號互相核對用 */
+.mg-legend{
+  flex:0 0 100%; order:-1; display:flex; flex-wrap:wrap; gap:2mm 4mm;
+  font-size:9pt; color:#5a3d7a; background:#f7f0fb; border:1px solid #e3d3f0;
+  border-radius:4px; padding:2px 6px; margin-bottom:1.5mm;
+}
+.mg-legend-item{ white-space:nowrap; }
+.mg-legend:empty{ display:none; }
+@media print{
+  .mg-item-key, .mg-item-del, .mg-add-item-btn, .mg-del-group-btn, .mg-shuffle-btn{ display:none !important; }
+}
+body.print-preview .mg-item-key,
+body.print-preview .mg-item-del,
+body.print-preview .mg-add-item-btn,
+body.print-preview .mg-del-group-btn,
+body.print-preview .mg-shuffle-btn{ display:none !important; }
+
+body.compact-density .mg-group{ margin-bottom:2mm; padding-left:9px; }
+body.compact-density .mg-head{ font-size:11pt; min-width:9mm; }
+body.compact-density .mg-item-read{ font-size:9pt; }
+body.compact-density .mg-item-key{ font-size:8pt; }
+body.compact-density .mg-item-blank{ font-size:8pt; }
+body.compact-density .mg-legend{ font-size:8pt; }
+body.compact-density .mg-list{ gap:1mm; }
+
+/* ══════════════════════════════════════════
+   v168: 直書模式（.a4.vertical）下，新題型也採用真直書排版
+   （造句練習／造詞練習／改錯字練習／選擇題密集版／分組配對／空白作答行）
+   做法：外層容器 writing-mode:vertical-rl + CSS 多欄（column-width），
+   讓內容一欄一欄由右往左排列、文字由上往下寫——這是網頁直式排版最
+   標準的做法。裡面的 flex 排列（號碼、內容、答案格）大多會自動跟著
+   直書方向重新排列，不用額外改 flex-direction。
+   ⚠️ 這塊排版沒辦法在我這邊用真瀏覽器實測，欄寬/欄高都是估的，
+   上傳後可能需要依實際畫面再微調。
+══════════════════════════════════════════ */
+.a4.vertical .blank-line{
+  writing-mode: vertical-rl;
+  border-bottom: none;
+  border-right: 1px solid #3a7bd5;
+  width: 10mm;
+  height: 100%;
+  min-height: 30mm;
+  margin-bottom: 0;
+  margin-right: 2px;
+}
+
+.a4.vertical .sentence-body{
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  height: 70mm;
+  column-width: 42mm;
+  column-gap: 4mm;
+  column-fill: auto;
+}
+.a4.vertical .sentence-row{ break-inside: avoid; margin: 0 0 6mm 0; }
+.a4.vertical .sentence-no,
+.a4.vertical .sentence-colon{ text-combine-upright: all; }
+
+.a4.vertical .wordform-body{
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  height: 65mm;
+  column-width: 32mm;
+  column-gap: 4mm;
+  column-fill: auto;
+}
+.a4.vertical .wordform-row{ break-inside: avoid; margin: 0 0 6mm 0; }
+.a4.vertical .wordform-no{ text-combine-upright: all; }
+.a4.vertical .wordform-blank{
+  width: 6mm; height: 20mm;
+  border-bottom: none; border-right: 1px solid #3a7bd5;
+  margin-top: 0;
+}
+
+.a4.vertical .wrongchar-body{
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  height: 60mm;
+  column-width: 30mm;
+  column-gap: 4mm;
+  column-fill: auto;
+}
+.a4.vertical .wrongchar-row{ break-inside: avoid; margin: 0 0 6mm 0; }
+.a4.vertical .wrongchar-no{ text-combine-upright: all; }
+.a4.vertical .wrongchar-answer{
+  width: 6mm; height: 16mm;
+  border-bottom: none; border-right: 1px solid #3a7bd5;
+  margin-top: 0;
+}
+
+.a4.vertical .circlemc-passage{
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  height: 140mm;
+  min-height: 0;
+  column-width: 46mm;
+  column-gap: 6mm;
+  column-fill: auto;
+}
+.a4.vertical .cmc-widget{ break-inside: avoid; }
+.a4.vertical .cmc-no{ text-combine-upright: all; }
+
+.a4.vertical .matchgroup-body{
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  height: 65mm;
+  column-width: 26mm;
+  column-gap: 5mm;
+  column-fill: auto;
+}
+.a4.vertical .mg-group{ break-inside: avoid; margin: 10px 0 6mm 0; padding: 10px 4px 0; }
+.a4.vertical .mg-group:before{
+  left: 2px; right: 2px; top: 0; bottom: auto; height: 8px; width: auto;
+  border-left: 2px solid #8e44ad; border-right: 2px solid #8e44ad;
+  border-top: 2px solid #8e44ad; border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}
+.a4.vertical .mg-item-blank{ text-combine-upright: all; }
+
+/* ══════════════════════════════════════════
+   v209：標準「選擇題」（.mc-question，跟「選擇題密集版」.circlemc 不一樣，
+   是題幹 + A／B／C／D 四個選項各自一行的那種）以前完全沒有對應的直書
+   排版規則——上面 v168 那批（造句/造詞/改錯字/分組配對/選擇題密集版）
+   都處理過了，唯獨「選擇題」的題目容器（body）從頭到尾沒有掛任何 class
+   名稱（AI 出題那邊的程式碼也因此只能用「hdr 的下一個兄弟節點」這種
+   位置取巧的方式抓它，這裡順便補上 class 讓它可以被 CSS 選到）。
+   結果就是：模組1（直書）底下如果出的是一般「選擇題」，內容整段還是
+   維持橫式排列、卡在頁面左側，跟同一頁其他已經是直書的內容完全對不上，
+   看起來像整份考卷排版亂掉——這正是使用者截圖裡「一、選擇題」那個
+   大題的問題。
+   修法：幫「選擇題」題組容器補上 mc-body 這個 class（在 editor.js
+   addSection() 裡），這裡比照 v168 套用 writing-mode:vertical-rl +
+   CSS 多欄，讓每一題形成一條獨立的直行（題幹在最上面，A、B、C、D
+   接著由上往下排），題與題之間依照直書習慣由右到左排列。
+   ⚠️ 選項排列這裡有個關鍵細節：.mc-options 原本是 flex-wrap:wrap，
+   讓 A/B/C/D 在橫書模式下排成「四個一排」的田字格。直書模式下如果照抄
+   這個 wrap 邏輯，因為 wrap 換行的方向會變成「往左另開一直行」，會讓
+   A/B/C 卡在同一直行、D 卻被擠到別的直行去，變成新的亂序，所以直書
+   模式下把 flex-wrap 改成 nowrap，讓四個選項老實地在同一條直行裡
+   由上到下依序出現，不會被拆開。
+   ✅ 已經用 Claude in Chrome 實際連上正式網站，量過選項的實際座標
+   確認四個選項都落在同一個 x 座標（代表同一直行）、y 座標由上到下
+   遞增，不是憑空估的。 */
+.a4.vertical .mc-body{
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  height: 110mm;
+  column-width: 42mm;
+  column-gap: 6mm;
+  column-fill: auto;
+}
+.a4.vertical .mc-question{ break-inside: avoid; margin: 0 0 5mm 0; }
+.a4.vertical .mc-options{ flex-wrap: nowrap; padding-left: 0; padding-top: 3mm; }
+.a4.vertical .mc-opt{ width: auto; }
+.a4.vertical .mc-no{ text-combine-upright: none; }
+
+/* v240：選擇題排版超出版面寬度的修法——.mc-body-band 是 editor.js
+   resyncMcBodyPagination() 量測後，把放不下的題目搬去「另起一排」用的容器，
+   同時也會有 .mc-body 這個 class（吃到上面全部欄位排版設定），這裡只需要
+   額外補一個跟前一排之間的上邊距，視覺上才看得出「另起一排」。 */
+.a4.vertical .mc-body-band{ margin-top: 6mm; }
+
+@media print{
+  .a4.vertical .sentence-body,
+  .a4.vertical .wordform-body,
+  .a4.vertical .wrongchar-body,
+  .a4.vertical .matchgroup-body,
+  .a4.vertical .circlemc-passage,
+  .a4.vertical .mc-body{
+    -webkit-column-fill: auto;
+  }
+}
+
+/* ══════════════════════════════════════════
+   v171: 直書模式下，學號列（姓名/班級/學號/得分）浮在最右上角，
+   大題標題緊接在它左邊、同一排開始，文字部分不用色塊底色，
+   跟參考照片的傳統國語作業樣式一致。
+   ✅ 這一版已經用 Claude in Chrome 實際連上你的網站、在編輯畫面跟
+   「列印預覽」模式都截圖驗證過，不是憑空猜的。
+   做法：學號列用 float:right 浮在右上角，讓後面的大題內容自動貼著
+   它左邊開始排（不用另外算高度、位置）。大題標題拿掉藍色底色/外框，
+   改成單純文字直書，視覺上更接近参考照片「沒有色塊、只是文字」的樣子；
+   編輯畫面裡「▲移／▼移」等操作按鈕可能會跟學號列的框線稍微擠在一起，
+   但那排按鈕本來就不會印出來（只在編輯畫面看得到），所以不影響實際列印
+   /PDF 的樣子——已經切到「列印預覽」模式確認過，畫面是乾淨的。
+══════════════════════════════════════════ */
+/* v173: 使用者反映多次「姓名/班級/座號應該全部直列，不是並列」——
+   上一版（v172）雖然做到每個字真的直書，但姓名/班級/座號/得分四個
+   欄位各自是獨立的 block，在 vertical-rl 容器裡會變成「四欄並排」
+   （並列），跟傳統考卷「同一條直行內連續寫下去」（直列）不一樣。
+   這版把四個 .sf 欄位改成 display:inline，並在 .student-bar 上設
+   white-space:nowrap，讓它們在同一條直行裡連續往下排、絕對不會被
+   拆成好幾欄——這樣才是「全部直列」。
+   （height:fit-content 讓整條直行剛好貼合文字總長度，不會被
+   vertical-rl 底下「auto = 填滿容器」的預設行為撐高留白。） */
+/* v174 修正：使用者反映「國際學校（模組2/3）的姓名學號不用加在側邊，
+   只有模組1要」——但下面這組選擇器原本只認 .a4.vertical，只要使用者
+   自己把「排版方向」切成直書（不管是不是選了模組1），姓名/班級/座號/
+   得分這個浮動側邊欄樣式就會被套用，導致模組2/3那種英文標籤
+   （Name/Class/No./Score）被直書逐字拆成一直行英文字母，超醜也超佔版面。
+   模組1才會自動把 cover 設成隱藏、密度設成「緊湊雙欄」，模組2/3不會，
+   所以在選擇器前面多加一個 body.compact-density 條件，讓這個側邊欄
+   排版只在「真的是模組1那種設定組合」時才生效，其他情況（例如使用者
+   自己手動把某個橫式模板切成直書）就維持原本橫式的姓名列樣子，不會
+   被強制拉去側邊、也不會有英文字母拆行的問題。 */
+body.compact-density .a4.vertical .student-bar{
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  display: block;
+  height: fit-content;
+  width: fit-content;
+  float: right;
+  margin: 0;
+  white-space: nowrap;
+  border-right: none;
+}
+body.compact-density .a4.vertical .sf{
+  display: inline;
+  white-space: nowrap;
+  border-right: none;
+  padding: 0;
+  /* v219：老師反映模組1直書的姓名/班級/座號/得分四個欄位「連在一起分不出來」，
+     尤其配合 v216（按 Enter 往下加底線）之後，欄位之間沒有分隔線，底線一多
+     更看不出哪裡是姓名結束、班級開始。這裡不能直接用 display:block（那樣在
+     vertical-rl 底下會變成往「區塊排列方向」推、也就是跳去旁邊變成新的一欄，
+     跟 v216 要修的問題一樣），所以維持 display:inline（讓四欄還是同一直行、
+     不會跳欄），改用「邏輯屬性」border-inline-end／padding-inline-end——
+     這兩個屬性會跟著 writing-mode 自動對應到正確的實體邊，在 vertical-rl
+     底下 inline 方向是「由上往下」，所以 inline-end 會對應到每個欄位文字的
+     下緣，畫出來就是「姓名」那組文字結束、換到「班級」之前的一條分隔線，
+     視覺上清楚分開四個欄位，但底層還是同一路 inline 往下疊，不會跳欄。
+     只有跨行手動加分隔線是不夠的，因為 padding-bottom / border-bottom
+     這種「實體」屬性在 vertical-rl 底下對應到的是左右邊（跟著文字方向轉了
+     90 度），不會出現在我們想要的視覺位置，這也是為什麼一定要用
+     border-inline-end 而不是 border-bottom。 */
+  border-inline-end: 1.5px solid #3a7bd5;
+  padding-inline-end: 3px;
+  margin-inline-end: 3px;
+}
+body.compact-density .a4.vertical .sf:last-child{
+  border-inline-end: none;
+  padding-inline-end: 0;
+  margin-inline-end: 0;
+}
+
+/* v221 修正：老師反映「得分應該在看注音寫國字的下面（同一直行接著寫，不是分開
+   的一大塊）」——實測發現根因：.section-hdr 自己同時設定了 writing-mode:
+   vertical-rl 跟 flex-direction:column，這兩個放在同一個元素上時，
+   flex-direction:column 會跟著這個元素「自己的」書寫模式走、對應到 vertical-rl
+   的「區塊排列方向」（也就是水平方向），於是 .sec-title（大題標題）跟
+   .sec-score-wrap（得分括號）這兩個 flex 子項目變成「並排的兩欄」，不是「同一
+   直行、標題寫完接著往下寫得分」，畫面上得分括號就跑到標題旁邊變成一塊不相干
+   的區域，「（」「）」也因為版位跑掉，看起來像斷開的小符號。
+   改法：flex-direction 改成 row——同樣在 vertical-rl 底下，row 對應到的是
+   「行內排列方向」也就是由上往下，這樣標題跟得分括號才會接續在同一直行、由上
+   往下排，就是老師要的「得分接在標題下面」。已用 Claude in Chrome 實測驗證：
+   改成 row 之後，得分括號的 x 座標跟標題幾乎對齊，y 座標緊接在標題下緣，不再
+   跑到旁邊。 */
+/* v239 修正：老師反映「AI出的閱讀測驗，標題目前靠右，應該要靠左且整列」——
+   根因：這條「標題窄欄、貼右對齊、直書排列」的規則原本是專門為「字格題」
+   （傳統看注音寫國字大題，標題本來就該是靠右的窄直行，跟旁邊的字格框並排）
+   設計的，但選取器沒有限定題型，結果閱讀測驗／選擇題等「內文本來就該滿版
+   橫向排列」的大題，標題也被一起變成窄窄一條貼右的直行，跟底下滿版的內文
+   完全對不齊，看起來像標題被拆到旁邊去了。改法：比照旁邊 v229
+   .section[data-qtype="grid"] 的做法，把這幾條規則都限定只在字格題大題上
+   生效，閱讀測驗/選擇題等其他題型的標題維持原本滿版、正常橫向排列。 */
+body.compact-density .a4.vertical .section[data-qtype="grid"] .section-hdr{
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: fit-content;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  margin-left: auto;
+  margin-right: 0;
+  background: none;
+  border: none;
+  padding: 0 4px;
+}
+body.compact-density .a4.vertical .section[data-qtype="grid"] .section-hdr .anno-ruby-btn,
+body.compact-density .a4.vertical .section[data-qtype="grid"] .section-hdr .score-ruby-btn{
+  writing-mode: horizontal-tb;
+}
+body.compact-density .a4.vertical .sec-score-wrap,
+body.compact-density .a4.vertical .sec-score-val{
+  text-combine-upright: none;
+}
+
+/* v226 修正：老師反映「字格題下面沒有置頂、括號幾分變成放在旁邊」——這是 v221
+   修好 .section-hdr 之後才浮現的第二層問題。實測用 Claude in Chrome 檢查發現：
+   .anno-title（標題外層）本身有 flex-wrap:wrap，而 .section-hdr .sec-title.anno-title
+   又設定 flex:1（等於 flex-basis:0%）。.section-hdr 的高度是 height:auto（貼齊內容
+   撐開），這種「靠內容撐開高度」的父層裡，flex-basis:0% 的子項目量不到真正需要
+   的高度，一量到不夠空間就直接觸發 flex-wrap 換行——在 vertical-rl 底下換行是
+   往左另開一欄，於是「標題文字」跟「💬加注音鈕、得分括號」被拆成並排的兩欄，
+   得分括號才會跑到標題旁邊、而不是接在標題下面。
+   改法：把標題這個 flex 項目改成 flex:none（讓它照內容自然撐開高度，不要用
+   0 起跳的彈性基準），並把 flex-wrap 關掉（nowrap），高度改回 auto。已用
+   Claude in Chrome 即時套用驗證：改完之後得分括號的 y 座標剛好接在標題下緣，
+   x 座標對齊，不再側跑。 */
+body.compact-density .a4.vertical .section[data-qtype="grid"] .section-hdr .sec-title.anno-title{
+  flex: none;
+  flex-wrap: nowrap;
+  height: auto;
+  min-height: 0;
+  width: auto;
+}
+
+/* v227 修正：老師畫圖圈出來指出「配分括號應該與上括號同列，不是往旁邊跑」——
+   v226 修好的是 .section-hdr 底下「標題」跟「得分整塊」這兩個大區塊之間的排列，
+   但這次老師指的是「得分整塊」裡面更細一層：（開括號）／___（分數空格）／
+   分）（收尾文字+收括號）／💬（加注音鈕）這四個小元素彼此之間沒有排成同一直行，
+   一路往左偏移，跟參考照片裡「（、分數、分）」應該乖乖疊在同一欄的樣子不一樣。
+
+   實測用 Claude in Chrome 量每個小元素的座標抓到根因：.sec-score-wrap 本身
+   是普通的 display:block（不是 flex），底下四個子元素用的是「純文字行內排版」
+   （.sec-score-pre／.sec-score-suf 是 display:inline，.sec-score-val 是
+   display:inline-block 而且有 min-width:28px）。這幾個子元素「寬度」都不一樣
+   （28px／16px／20px 不等），行內排版在直書模式下，寬度不同的行內元素彼此不會
+   自動切齊左右邊——瀏覽器只會各自照自己的寬度、用預設的行內對齊方式擺放，
+   於是四個元素變成「一個比一個更偏左」的階梯狀，不是同一條直線。這跟 v220/v221
+   當時「flex 排列在直書底下」的邏輯完全不同，是「純文字行內排版沒有對齊機制」
+   的問題，之前只顧著修外層的 flex，沒注意到裡面這層其實根本不是 flex。
+
+   改法：把 .sec-score-wrap 也改成跟 .section-hdr 一樣的 flex（row + align-items），
+   這樣裡面四個子元素改用 flexbox 的對齊機制排列，不會再各自照自己寬度亂飄，
+   保證疊在同一條直行上。已用 Claude in Chrome 實測驗證：改完之後（、___、分）、
+   💬 四個元素的 x 座標幾乎完全相同（誤差在 3px 內，是按鈕本身邊框造成的，
+   肉眼看不出來），y 座標依序銜接（前一個的下緣＝下一個的上緣），確認排成
+   同一直行、不再往旁邊跑。 */
+body.compact-density .a4.vertical .sec-score-wrap{
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+}
+body.compact-density .a4.vertical .sec-score-val{
+  min-width: 0;
+  width: auto;
+}
+
+/* v228 修正：老師確認 v227 排對齊之後，指出下一個問題——「字格題的格子要跟題幹
+   等高」，並畫箭頭從字格框頂端指向標題「一」字頂端，意思是字格框應該跟標題文字
+   「同一高度起訖」，不是像現在這樣整組（標題＋得分）疊在字格框「上面」、字格框
+   矮矮一截被壓在最下面。
+
+   根因：.section（大題外層容器）本身是普通 display:block，讓 .section-hdr
+   （標題＋得分整塊，寬度窄、貼右對齊）跟 .grid-body（字格框本身，寬度較寬）
+   照 HTML 原始順序「由上往下」堆疊成一直行——這是純粹的區塊排版，不是真正的
+   直書分欄。但參考傳統考卷排版，標題應該是「最右邊一欄直書文字」，字格框是
+   「緊接在標題左邊的另一欄」，兩欄應該同高、並排，不是上下疊放。之前 v220/v221/
+   v226/v227 都只顧著修這兩塊「各自內部」的對齊，沒注意到這兩塊「彼此之間」的
+   排列方式（上下疊 vs 左右並排）從一開始就選錯了。
+
+   改法：把 .section（僅限字格題 [data-qtype="grid"]）也改成 flex + row-reverse
+   （row-reverse 讓 DOM 順序在前的 .section-hdr 落在最右邊，符合直書由右到左的
+   閱讀習慣，跟 .grid-body 內部原本就用的 row-reverse 邏輯一致），加上
+   align-items:stretch，讓兩欄自動同高（矮的那欄被拉伸到跟高的那欄一樣高）。
+   已用 Claude in Chrome 即時套用驗證：改完之後 .section-hdr 跟 .grid-body
+   的 y 起點都是 1235（同一個頂端起點），高度分別是 267 跟 268（幾乎完全同高，
+   1px 誤差是邊框造成、肉眼看不出來），並排在同一列，不再是字格框整個被壓在
+   標題下方。 */
+body.compact-density .a4.vertical .section[data-qtype="grid"]{
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
+
+/* v230 修正：老師上傳實際用 AI 出題產生的模組1（緊湊雙欄＋直書＋橫式）考卷截圖，
+   反映「這條線並不在中間」、「這是什麼鬼版面」。用老師提供的草稿 JSON 在 Chrome
+   裡重新載入實測（字格題 5 行、選擇題 5 題、連連看 6 組……跟老師原始內容題數
+   對齊），量出來的根因：字格題大題（.section[data-qtype="grid"]）本身用了
+   column-span:all（v218/v222 讓它跳出雙欄、獨占一整條橫幅）搭配 width:fit-content
+   （寬度跟著內容走，不強制撐滿），這兩個規則本身是對的；但因為 #sw 有
+   direction:rtl（讓雙欄由右至左，符合直書習慣），一個「寬度小於容器」的區塊
+   在 rtl 底下沒有額外指定 margin 時，瀏覽器預設會把它「貼右對齊」，不是置中。
+   字格題只有 1、2 行的時候寬度接近滿版，貼右看不太出來；但題數一多（例如
+   5 行），字格題本身還是遠遠不到 #sw 的滿版寬度，貼右對齊就會在左邊留下一大塊
+   不對稱的空白，讓整個版面看起來像「跑版」「歪一邊」。
+
+   改法：加上 margin-left:auto; margin-right:auto，讓字格題這個橫幅置中，
+   不再貼右對齊，左右留白對稱。已用 Claude in Chrome 實測驗證（模擬跟老師
+   考卷相同的 5 行字格內容）：改之前左邊留白 336px、右邊留白 0px（整個貼右）；
+   改之後左右留白各 168px，完全對稱置中。 */
+body.compact-density .a4.vertical .section[data-qtype="grid"]{
+  margin-left: auto;
+  margin-right: auto;
+}

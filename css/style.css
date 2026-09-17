@@ -696,11 +696,20 @@ h2.section-title {
 
 .tinted { background: var(--bg-alt); }
 
+/* Standardized illustration system: all "featured scene" corner accents
+   share one size, one offset, and one shadow treatment so they read as
+   one consistent decorative language instead of ad-hoc per-section
+   sizing. Width/position can still be overridden inline for a genuine
+   exception, but the default below is the site standard. */
 .corner-illustration {
   position: absolute;
+  width: 200px;
+  top: -18px;
+  right: 0;
   height: auto;
   z-index: 1;
   pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
 }
 @media (max-width: 860px) {
   .corner-illustration { display: none; }
@@ -710,11 +719,16 @@ h2.section-title {
   .wildlife-lead { padding-left: 150px; }
 }
 
+/* Secondary/supporting accents (one-off closing signs, small critters
+   placed in normal flow rather than the top-right corner). Same shadow
+   language as .corner-illustration for cohesion; width stays per-instance
+   since these vary in role, but should stay in the 110-180px range. */
 .corner-illustration-static {
   display: block;
   height: auto;
   pointer-events: none;
   margin: 28px 0 0 auto;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
 }
 @media (max-width: 860px) {
   .corner-illustration-static { display: none; }
@@ -724,6 +738,7 @@ h2.section-title {
   display: block;
   height: auto;
   pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
 }
 @media (max-width: 860px) {
   .deco-inline { display: none; }
