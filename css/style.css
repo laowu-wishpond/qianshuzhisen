@@ -1063,87 +1063,35 @@ form.contact-form input, form.contact-form textarea {
   gap: 20px;
 }
 
-/* 入住須知／森林公約整塊背景：跟其他區塊一樣鋪一張森林照片打底，
-   避免文字+卡片之間留白太多、顯得比其他插畫區塊單薄。 */
-.covenant-backdrop {
-  position: relative;
-  border-radius: 14px;
-  overflow: hidden;
-  padding: 52px 24px 60px;
-  margin-bottom: 32px;
-  background-image: linear-gradient(180deg, rgba(8, 16, 11, 0.74) 0%, rgba(8, 16, 11, 0.88) 100%), url('images/hero-wildlife.jpg');
-  background-size: cover;
-  background-position: center;
+/* 入住須知／森林公約：自然閱讀節奏——標題區與封面圖都在同一個素色背景上
+   （跟全站其他一般區塊一致），不再用單獨的深色相片方框把內容裝起來，
+   避免「黑色大盒子裡放一張海報」的斷裂感。 */
+.covenant-container {
+  max-width: 1000px;
 }
-.covenant-backdrop .section-label,
-.covenant-backdrop h2.section-title,
-.covenant-backdrop .lead {
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 0, 0, 0.45);
+.covenant-intro {
+  max-width: 640px;
+  margin: 0 auto;
 }
 
-/* 森林公約：森林痕跡裝飾——刻意跟全站的 .critter / .page-deco 卡通系統分開，
-   scope 在這個 section 裡，不影響其他頁面。細線條、低對比、不對稱、數量少，
-   目的是「這裡有森林走過的痕跡」而不是「這裡貼了插畫」。 */
-.covenant-natural {
-  position: relative;
-}
-.covenant-natural-decor {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  height: auto;
-}
-.covenant-natural-decor.cnd-fern {
-  width: 52px;
-  opacity: 0.24;
-  color: #7f9271;
-}
-.covenant-natural-decor.cnd-twig {
-  width: 92px;
-  opacity: 0.26;
-  color: #a68a5b;
-  transform: rotate(-4deg);
-}
-.covenant-natural-decor.cnd-leaf {
-  width: 22px;
-  opacity: 0.2;
-  color: #8a9a7c;
-  transform: rotate(12deg);
-}
-@media (max-width: 1024px) {
-  .covenant-natural-decor.cnd-twig { opacity: 0.16; }
-  .covenant-natural-decor.cnd-fern { opacity: 0.18; }
-}
-@media (max-width: 860px) {
-  .covenant-natural-decor { display: none; }
-}
-
-/* 森林公約封面：放大成主視覺卡片，維持乾淨（不再疊小鳥木牌／松鼠貼紙） */
+/* 森林公約封面：合理縮小，讓它是內容的一部分，而不是整個 section 的焦點 */
 .covenant-featured-wrap {
   display: flex;
   justify-content: center;
-  margin: 8px 0 0;
+  margin: 8px 0 56px;
 }
 .covenant-featured {
   position: relative;
   width: 100%;
-  max-width: 460px;
+  max-width: 560px;
 }
 .covenant-featured img:first-child {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 12px;
-  border: 1px solid var(--border-strong);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
 }
-.covenant-featured-deco {
-  position: absolute;
-  height: auto;
-  pointer-events: none;
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
-}
-
 /* 森林公約設計圖 */
 .covenant-gallery {
   display: grid;
