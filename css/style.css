@@ -1138,7 +1138,9 @@ form.contact-form input, form.contact-form textarea {
 .linwuqing-cinema {
   position: relative;
   overflow: hidden;
-  background: var(--bg-deep);
+  background:
+    linear-gradient(180deg, rgba(8, 16, 11, 0.6) 0%, rgba(8, 16, 11, 0.42) 45%, rgba(8, 16, 11, 0.68) 100%),
+    var(--bg-deep) url('../images/hero-wildlife.jpg') center / cover no-repeat;
   padding: 80px 24px;
 }
 
@@ -1336,6 +1338,11 @@ form.contact-form input, form.contact-form textarea {
 
 .linwuqing-cinema-text { max-width: 420px; }
 .linwuqing-cinema-text .lead { margin: 14px 0 22px; }
+.linwuqing-cinema-text .section-label,
+.linwuqing-cinema-text h2.section-title,
+.linwuqing-cinema-text .lead {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 0, 0, 0.45);
+}
 .linwuqing-cinema-play { border: none; cursor: pointer; }
 
 @media (max-width: 700px) {
