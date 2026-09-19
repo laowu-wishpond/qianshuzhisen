@@ -833,7 +833,7 @@ h2.section-title {
   border: 4px solid var(--gold-strong);
   background: var(--bg-card);
   box-shadow: inset 0 0 0 4px var(--bg), 0 4px 14px rgba(0,0,0,0.25);
-  font-size: 68px;
+  font-size: 50px;
   font-weight: 900;
   line-height: 1;
   color: var(--gold-strong);
@@ -842,7 +842,7 @@ h2.section-title {
 }
 
 .facts .fact-num-sm {
-  font-size: 46px;
+  font-size: 34px;
 }
 
 .facts .fact-label {
@@ -1082,8 +1082,13 @@ form.contact-form input, form.contact-form textarea {
 }
 .covenant-featured {
   position: relative;
+  display: block;
   width: 100%;
   max-width: 560px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
 }
 .covenant-featured img:first-child {
   display: block;
@@ -1092,10 +1097,11 @@ form.contact-form input, form.contact-form textarea {
   border-radius: 10px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
 }
-/* 森林公約設計圖 */
+/* 森林公約設計圖：封面已經在上面大圖呈現過，這裡只放其餘三頁（歡迎頁／章節／簽署頁），
+   避免封面圖重複出現兩次 */
 .covenant-gallery {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 
