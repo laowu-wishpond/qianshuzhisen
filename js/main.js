@@ -346,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function () {
       covenantLightbox.hidden = true;
       covenantLightboxImg.src = "";
     }
-    document.querySelectorAll(".covenant-page, .covenant-featured[data-full]").forEach(function (btn) {
+    document.querySelectorAll(".covenant-page").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var img = btn.querySelector("img");
         openCovenantLightbox(btn.dataset.full, img ? img.alt : "");

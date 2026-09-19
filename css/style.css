@@ -1074,7 +1074,7 @@ form.contact-form input, form.contact-form textarea {
   margin: 0 auto;
 }
 
-/* 森林公約封面：合理縮小，讓它是內容的一部分，而不是整個 section 的焦點 */
+/* 森林公約主視覺：橫幅森林照片＋品牌標誌，寬度跟著內容欄走，不再是直式海報 */
 .covenant-featured-wrap {
   display: flex;
   justify-content: center;
@@ -1082,13 +1082,7 @@ form.contact-form input, form.contact-form textarea {
 }
 .covenant-featured {
   position: relative;
-  display: block;
   width: 100%;
-  max-width: 560px;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: zoom-in;
 }
 .covenant-featured img:first-child {
   display: block;
@@ -1097,11 +1091,10 @@ form.contact-form input, form.contact-form textarea {
   border-radius: 10px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
 }
-/* 森林公約設計圖：封面已經在上面大圖呈現過，這裡只放其餘三頁（歡迎頁／章節／簽署頁），
-   避免封面圖重複出現兩次 */
+/* 森林公約設計圖：四張公約書頁縮圖，點擊可放大檢視 */
 .covenant-gallery {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
 
