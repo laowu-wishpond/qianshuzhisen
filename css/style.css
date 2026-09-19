@@ -1081,7 +1081,44 @@ form.contact-form input, form.contact-form textarea {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 0, 0, 0.45);
 }
 
-/* 森林公約封面：放大成主視覺卡片，角落疊上小鳥木牌／松鼠裝飾，避免版面太空 */
+/* 森林公約：森林痕跡裝飾——刻意跟全站的 .critter / .page-deco 卡通系統分開，
+   scope 在這個 section 裡，不影響其他頁面。細線條、低對比、不對稱、數量少，
+   目的是「這裡有森林走過的痕跡」而不是「這裡貼了插畫」。 */
+.covenant-natural {
+  position: relative;
+}
+.covenant-natural-decor {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  height: auto;
+}
+.covenant-natural-decor.cnd-fern {
+  width: 52px;
+  opacity: 0.24;
+  color: #7f9271;
+}
+.covenant-natural-decor.cnd-twig {
+  width: 92px;
+  opacity: 0.26;
+  color: #a68a5b;
+  transform: rotate(-4deg);
+}
+.covenant-natural-decor.cnd-leaf {
+  width: 22px;
+  opacity: 0.2;
+  color: #8a9a7c;
+  transform: rotate(12deg);
+}
+@media (max-width: 1024px) {
+  .covenant-natural-decor.cnd-twig { opacity: 0.16; }
+  .covenant-natural-decor.cnd-fern { opacity: 0.18; }
+}
+@media (max-width: 860px) {
+  .covenant-natural-decor { display: none; }
+}
+
+/* 森林公約封面：放大成主視覺卡片，維持乾淨（不再疊小鳥木牌／松鼠貼紙） */
 .covenant-featured-wrap {
   display: flex;
   justify-content: center;
