@@ -1144,6 +1144,29 @@ form.contact-form input, form.contact-form textarea {
   padding: 80px 24px;
 }
 
+/* 音樂 MV 區塊四角的葉片裝飾：讓影片卡片周邊也有植栽包圍的層次感，不再是空景 */
+.cinema-leaves {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  height: auto;
+  opacity: 0.92;
+}
+.cinema-leaves-tl { left: -18px; top: -14px; width: 300px; }
+.cinema-leaves-tr { right: -18px; top: -14px; width: 260px; transform: scaleX(-1); }
+.cinema-leaves-bl { left: -14px; bottom: -20px; width: 260px; transform: scaleY(-1); }
+.cinema-leaves-br { right: -14px; bottom: -20px; width: 300px; transform: scale(-1, -1); }
+
+@media (max-width: 900px) {
+  .cinema-leaves-tl, .cinema-leaves-br { width: 220px; }
+  .cinema-leaves-tr, .cinema-leaves-bl { width: 190px; }
+}
+
+@media (max-width: 560px) {
+  .cinema-leaves-tl, .cinema-leaves-br { width: 150px; }
+  .cinema-leaves-tr, .cinema-leaves-bl { width: 130px; }
+}
+
 .linwuqing-cinema-inner {
   position: relative;
   z-index: 1;
