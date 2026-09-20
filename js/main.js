@@ -363,6 +363,55 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // 生態紀事區塊：食蛇龜影片／照片 lightbox，index.html 專用，其他頁面沒有相關元素就直接跳過
+  var ecoLightbox = document.getElementById("ecoLightbox");
+  var ecoLightboxVideo = document.getElementById("ecoLightboxVideo");
+  var ecoLightboxImg = document.getElementById("ecoLightboxImg");
+  var ecoLightboxClose = document.getElementById("ecoLightboxClose");
+  if (ecoLightbox && (ecoLightboxVideo || ecoLightboxImg)) {
+    function closeEcoLightbox() {
+      ecoLightbox.hidden = true;
+      if (ecoLightboxVideo) {
+        ecoLightboxVideo.pause();
+        ecoLightboxVideo.removeAttribute("src");
+        ecoLightboxVideo.load();
+        ecoLightboxVideo.hidden = true;
+      }
+      if (ecoLightboxImg) {
+        ecoLightboxImg.src = "";
+        ecoLightboxImg.hidden = true;
+      }
+    }
+    document.querySelectorAll(".eco-clip").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var video = btn.dataset.video;
+        var image = btn.dataset.image;
+        var img = btn.querySelector("img");
+        if (video && ecoLightboxVideo) {
+          if (ecoLightboxImg) ecoLightboxImg.hidden = true;
+          ecoLightboxVideo.hidden = false;
+          ecoLightboxVideo.src = video;
+          ecoLightboxVideo.play().catch(function () {});
+        } else if (image && ecoLightboxImg) {
+          ecoLightboxVideo.hidden = true;
+          ecoLightboxImg.hidden = false;
+          ecoLightboxImg.src = image;
+          ecoLightboxImg.alt = img ? img.alt : "";
+        }
+        ecoLightbox.hidden = false;
+      });
+    });
+    if (ecoLightboxClose) {
+      ecoLightboxClose.addEventListener("click", closeEcoLightbox);
+    }
+    ecoLightbox.addEventListener("click", function (e) {
+      if (e.target === ecoLightbox) closeEcoLightbox();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !ecoLightbox.hidden) closeEcoLightbox();
+    });
+  }
+
   // 留言表單：contact.html 專用，其他頁面沒有 #contactForm 就直接跳過
   var contactForm = document.getElementById("contactForm");
   if (contactForm) {
