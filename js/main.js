@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", function () {
   if (toggle && nav) {
     toggle.addEventListener("click", function () {
       nav.classList.toggle("nav-open");
+      var isOpen = nav.classList.contains("nav-open");
+      toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      toggle.setAttribute("aria-label", isOpen ? "關閉選單" : "開啟選單");
       // 手機版選單打開時，順手把音樂選單收起來，避免兩個下拉選單疊在一起互相遮擋
       var openMusicPanel = document.getElementById("musicPlaylist");
       var openMusicBtn = document.querySelector(".music-toggle");
@@ -15,6 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
     nav.querySelectorAll("a").forEach(function (link) {
       link.addEventListener("click", function () {
         nav.classList.remove("nav-open");
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "開啟選單");
       });
     });
   }
@@ -34,6 +39,10 @@ document.addEventListener("DOMContentLoaded", function () {
         target.scrollIntoView({ behavior: "smooth", block: "start" });
         try { history.pushState(null, "", "#" + hash); } catch (err) {}
         if (nav) nav.classList.remove("nav-open");
+        if (toggle) {
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.setAttribute("aria-label", "開啟選單");
+        }
       }
     });
   });
@@ -215,6 +224,10 @@ document.addEventListener("DOMContentLoaded", function () {
       musicBtn.setAttribute("aria-expanded", "true");
       // 打開歌單選單時，也把手機版導覽選單收起來，兩個下拉選單不要同時開著
       if (nav) nav.classList.remove("nav-open");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "開啟選單");
+      }
       refreshTrackUI();
     }
     function closePanel() {
@@ -484,11 +497,13 @@ document.addEventListener("DOMContentLoaded", function () {
       } catch (e) {}
       setTimeout(function () {
         curtain.classList.add("curtain-removed");
+        curtain.setAttribute("aria-hidden", "true");
       }, 1000);
     }
 
     if (reducedMotion || alreadyShown) {
       curtain.classList.add("curtain-removed");
+      curtain.setAttribute("aria-hidden", "true");
     } else {
       try {
         sessionStorage.setItem("curtainShown", "1");
