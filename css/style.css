@@ -1147,7 +1147,7 @@ form.contact-form input, form.contact-form textarea {
 .linwuqing-cinema-inner {
   position: relative;
   z-index: 2;
-  max-width: 560px;
+  max-width: 780px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1263,7 +1263,8 @@ form.contact-form input, form.contact-form textarea {
 }
 
 .linwuqing-cinema-video {
-  width: 320px;
+  width: 100%;
+  max-width: 660px;
   flex-shrink: 0;
   border-radius: 22px;
   overflow: hidden;
@@ -1272,12 +1273,16 @@ form.contact-form input, form.contact-form textarea {
   background: var(--bg-deep);
 }
 
+@media (max-width: 1100px) {
+  .linwuqing-cinema-video { max-width: 520px; }
+}
+
 @media (max-width: 900px) {
-  .linwuqing-cinema-video { width: 260px; }
+  .linwuqing-cinema-video { max-width: 320px; }
 }
 
 @media (max-width: 560px) {
-  .linwuqing-cinema-video { width: 210px; }
+  .linwuqing-cinema-video { max-width: 100%; }
 }
 
 /* 首頁各區塊留白處的小樹／螢火蟲／瓢蟲裝飾，只在夠寬的螢幕上顯示（避免跟內容打架） */
@@ -1333,7 +1338,7 @@ form.contact-form input, form.contact-form textarea {
 .linwuqing-cinema-video video {
   width: 100%;
   display: block;
-  aspect-ratio: 0.7;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
 }
 
