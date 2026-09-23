@@ -382,6 +382,24 @@ document.addEventListener("DOMContentLoaded", function () {
   var ecoLightboxImg = document.getElementById("ecoLightboxImg");
   var ecoLightboxClose = document.getElementById("ecoLightboxClose");
   if (ecoLightbox && (ecoLightboxVideo || ecoLightboxImg)) {
+    var ecoClipStart = 0;
+    var ecoClipEnd = null;
+
+    function playEcoVideoSegment() {
+      if (!ecoLightboxVideo) return;
+      ecoLightboxVideo.currentTime = ecoClipStart;
+      ecoLightboxVideo.play().catch(function () {});
+    }
+
+    if (ecoLightboxVideo) {
+      ecoLightboxVideo.addEventListener("timeupdate", function () {
+        if (ecoClipEnd !== null && ecoLightboxVideo.currentTime >= ecoClipEnd) {
+          ecoLightboxVideo.pause();
+          ecoLightboxVideo.currentTime = ecoClipStart;
+        }
+      });
+    }
+
     function closeEcoLightbox() {
       ecoLightbox.hidden = true;
       if (ecoLightboxVideo) {
@@ -389,7 +407,10 @@ document.addEventListener("DOMContentLoaded", function () {
         ecoLightboxVideo.removeAttribute("src");
         ecoLightboxVideo.load();
         ecoLightboxVideo.hidden = true;
+        ecoLightboxVideo.muted = false;
       }
+      ecoClipStart = 0;
+      ecoClipEnd = null;
       if (ecoLightboxImg) {
         ecoLightboxImg.src = "";
         ecoLightboxImg.hidden = true;
@@ -401,10 +422,18 @@ document.addEventListener("DOMContentLoaded", function () {
         var image = btn.dataset.image;
         var img = btn.querySelector("img");
         if (video && ecoLightboxVideo) {
+          ecoClipStart = Number.parseFloat(btn.dataset.start || "0") || 0;
+          var parsedEnd = Number.parseFloat(btn.dataset.end || "");
+          ecoClipEnd = Number.isFinite(parsedEnd) ? parsedEnd : null;
           if (ecoLightboxImg) ecoLightboxImg.hidden = true;
           ecoLightboxVideo.hidden = false;
+          ecoLightboxVideo.muted = btn.dataset.muted === "true";
           ecoLightboxVideo.src = video;
-          ecoLightboxVideo.play().catch(function () {});
+          if (ecoLightboxVideo.readyState >= 1) {
+            playEcoVideoSegment();
+          } else {
+            ecoLightboxVideo.addEventListener("loadedmetadata", playEcoVideoSegment, { once: true });
+          }
         } else if (image && ecoLightboxImg) {
           ecoLightboxVideo.hidden = true;
           ecoLightboxImg.hidden = false;
