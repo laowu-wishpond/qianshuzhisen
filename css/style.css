@@ -802,6 +802,63 @@ h2.section-title {
   }
 }
 
+/* ===== 森林生態區塊：老樹插畫上的真實蝴蝶影片小窗
+   疊在插畫原本畫松鼠的位置，用實拍畫面取代比例偏大的插畫松鼠。
+   位置用百分比對齊 .illustrated-hero-media-wrap（＝圖片本身的框），
+   這樣圖片不管縮放到多寬，小窗都會跟著等比例移動、不跑版。 */
+.illustrated-hero-media-wrap {
+  position: relative;
+  display: block;
+}
+.illustrated-hero-media-wrap .illustrated-hero-media {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ecology-clip-overlay {
+  position: absolute;
+  left: 2%;
+  top: 64.3%;
+  width: 70%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 4px solid var(--ink);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+  z-index: 3;
+}
+.ecology-clip-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #1a2e1f;
+}
+.ecology-clip-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(8, 16, 11, 0.6);
+  color: var(--ink);
+  white-space: nowrap;
+}
+@media (max-width: 520px) {
+  .ecology-clip-overlay {
+    left: 5%;
+    width: 58%;
+    border-width: 3px;
+    border-radius: 8px;
+  }
+  .ecology-clip-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+  }
+}
+
 .tinted-dark {
   background: var(--bg-deep);
   color: var(--white);
