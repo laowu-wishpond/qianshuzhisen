@@ -816,8 +816,8 @@ h2.section-title {
   }
 }
 
-/* ===== 森林生態區塊：老樹插畫上的真實蝴蝶影片小窗
-   疊在插畫原本畫松鼠的位置，用實拍畫面取代比例偏大的插畫松鼠。
+/* ===== 森林生態區塊：香樟夫妻樹實拍照片上的蝴蝶影片小窗 + 樹種標籤
+   小窗疊在照片左下角的草叢區域（避開樹幹本體）。
    位置用百分比對齊 .illustrated-hero-media-wrap（＝圖片本身的框），
    這樣圖片不管縮放到多寬，小窗都會跟著等比例移動、不跑版。 */
 .illustrated-hero-media-wrap {
@@ -831,9 +831,9 @@ h2.section-title {
 }
 .ecology-clip-overlay {
   position: absolute;
-  left: 2%;
-  top: 64.3%;
-  width: 70%;
+  left: 3%;
+  top: 70%;
+  width: 42%;
   aspect-ratio: 16 / 9;
   border-radius: 10px;
   overflow: hidden;
@@ -860,14 +860,31 @@ h2.section-title {
   color: var(--ink);
   white-space: nowrap;
 }
+.ecology-tree-badge {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+  z-index: 3;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(8, 16, 11, 0.6);
+  color: var(--ink);
+  white-space: nowrap;
+}
 @media (max-width: 520px) {
   .ecology-clip-overlay {
     left: 5%;
-    width: 58%;
+    width: 38%;
     border-width: 3px;
     border-radius: 8px;
   }
   .ecology-clip-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+  }
+  .ecology-tree-badge {
     font-size: 9px;
     padding: 2px 7px;
   }
