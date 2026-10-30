@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function calc() {
     var tents = Math.max(1, parseInt(tentsInput.value, 10) || 1);
     var people = Math.max(1, parseInt(peopleInput.value, 10) || 1);
-    var perTent = 1200 + Math.max(0, people - 2) * 300;
+    var perTent = 1600 + Math.max(0, people - 2) * 300;
     var total = perTent * tents;
     perTentOut.textContent = "NT$" + perTent.toLocaleString();
     totalOut.textContent = "NT$" + total.toLocaleString();
