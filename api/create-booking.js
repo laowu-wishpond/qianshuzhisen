@@ -6,6 +6,7 @@
 //    如果是「銀行匯款」，直接回傳金額，前端顯示既有的匯款須知
 
 import { getSupabaseAdmin } from "../lib/supabase.js";
+import { BOOKING_OPEN } from "../lib/siteStatus.js";
 import { quoteStay, getSite, addDays, isValidISODate } from "../lib/pricing.js";
 import {
   genCheckMacValue,
@@ -23,6 +24,11 @@ function todayInTaipei() {
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // 網站尚未正式開放：一律拒絕新訂單（開關在 lib/siteStatus.js）
+  if (!BOOKING_OPEN) {
+    return res.status(503).json({ error: "目前尚未開放線上訂位，開放時間將另行公告。" });
   }
 
   const { name, phone, email, siteId, checkIn, checkOut, earlyArrival, tents, people, paymentMethod, notes } =

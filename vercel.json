@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/:path((?!admin\\.html|api/|maintenance\\.html|images/|css/|js/|lib/|favicon|robots\\.txt).*)",
+      "destination": "/maintenance.html",
+      "permanent": false
+    }
+  ]
+}
