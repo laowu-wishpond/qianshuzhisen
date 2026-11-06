@@ -68,19 +68,25 @@ document.addEventListener("DOMContentLoaded", function () {
   function renderBookings(bookings) {
     bookingsBody.innerHTML = "";
     if (!bookings.length) {
-      bookingsBody.innerHTML = '<tr><td colspan="9">目前沒有符合條件的訂單</td></tr>';
+      bookingsBody.innerHTML = '<tr><td colspan="11">目前沒有符合條件的訂單</td></tr>';
       return;
     }
     bookings.forEach(function (b) {
       var tr = document.createElement("tr");
+      // 新訂單：入住～退房＋營位；舊訂單（改成依營位計價之前建立的）只有單一日期，沒有營位
+      var dateText = b.check_in
+        ? b.check_in + " ～ " + b.check_out + "（" + (b.nights_count || "") + "晚）"
+        : b.booking_date;
       tr.innerHTML =
-        "<td>" + escapeHtml(b.booking_date) + "</td>" +
+        "<td>" + escapeHtml(dateText) + "</td>" +
+        "<td>" + escapeHtml(b.site_id || "—") + "</td>" +
+        "<td>" + (b.early_arrival ? "有（前一晚）" : "—") + "</td>" +
         "<td>" + escapeHtml(b.customer_name) + "</td>" +
         "<td>" + escapeHtml(b.customer_phone) + "</td>" +
         "<td>" + escapeHtml(b.tents_count) + "</td>" +
         "<td>" + escapeHtml(b.people_per_tent) + "</td>" +
         "<td>NT$" + Number(b.total_amount || 0).toLocaleString() + "</td>" +
-        "<td>" + (b.payment_method === "ecpay" ? "線上刷卡" : "銀行匯款") + "</td>" +
+        "<td>" + (b.payment_method === "ecpay" ? "線上刷卡" : b.payment_method === "linepay" ? "LINE Pay" : "銀行匯款") + "</td>" +
         '<td><span class="status-badge status-' + b.payment_status + '">' +
         (statusLabels[b.payment_status] || b.payment_status) +
         "</span></td>";
@@ -112,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function loadBookings() {
     dashError.textContent = "";
-    bookingsBody.innerHTML = '<tr><td colspan="9">載入中…</td></tr>';
+    bookingsBody.innerHTML = '<tr><td colspan="11">載入中…</td></tr>';
 
     var params = new URLSearchParams();
     if (filterFrom.value) params.set("from", filterFrom.value);

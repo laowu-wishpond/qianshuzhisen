@@ -1,12 +1,12 @@
 // POST /api/create-booking
 // booking.html 表單送出時呼叫這支。負責：
-// 1. 伺服器端重新計算金額（不信任前端傳來的金額，避免被竄改）
-// 2. 寫入 Supabase 的 bookings 表
+// 1. 依營位／日期在伺服器端重新計算金額（不信任前端傳來的金額，避免被竄改）
+// 2. 寫入 Supabase 的 bookings 表與 booking_nights 表（每個營位×每一晚佔一列，防止重複預約）
 // 3. 如果付款方式是「線上刷卡」，回傳綠界 AioCheckOut 所需的參數，讓前端組表單自動送到綠界收銀台
 //    如果是「銀行匯款」，直接回傳金額，前端顯示既有的匯款須知
 
 import { getSupabaseAdmin } from "../lib/supabase.js";
-import { calcTentPrice } from "../lib/pricing.js";
+import { quoteStay, getSite, addDays, isValidISODate } from "../lib/pricing.js";
 import {
   genCheckMacValue,
   formatMerchantTradeDate,
@@ -15,30 +15,78 @@ import {
 } from "../lib/ecpay.js";
 import { linePayFetch, LINEPAY_SANDBOX_CREDENTIALS } from "../lib/linepay.js";
 
+// 台灣今天的日期（YYYY-MM-DD）。伺服器在 UTC 時區，不能直接用 new Date().toISOString()
+function todayInTaipei() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { name, phone, email, bookingDate, tents, people, paymentMethod, notes } =
+  const { name, phone, email, siteId, checkIn, checkOut, earlyArrival, tents, people, paymentMethod, notes } =
     req.body || {};
 
-  if (!name || !phone || !bookingDate || !tents || !people) {
-    return res.status(400).json({ error: "缺少必要欄位（姓名、電話、日期、帳篷數、人數）" });
+  if (!name || !phone || !siteId || !checkIn || !checkOut || !tents || !people) {
+    return res.status(400).json({ error: "缺少必要欄位（姓名、電話、營位、入住／退房日期、帳篷數、人數）" });
   }
-
-  // 簡單擋一下日期格式，booking.js 會傳 YYYY-MM-DD
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) {
+  if (!isValidISODate(checkIn) || !isValidISODate(checkOut)) {
     return res.status(400).json({ error: "日期格式錯誤" });
   }
 
-  const { tents: tentsCount, people: peopleCount, perTent, total } = calcTentPrice(
-    tents,
-    people
-  );
+  const site = getSite(siteId);
+  if (!site) {
+    return res.status(400).json({ error: "找不到這個營位" });
+  }
+
+  const tentsCount = parseInt(tents, 10);
+  const peopleCount = parseInt(people, 10);
+  if (!(tentsCount >= 1) || tentsCount > site.maxTents) {
+    return res.status(400).json({ error: `${site.id} 營位最多可搭 ${site.maxTents} 帳` });
+  }
+  if (!(peopleCount >= 1) || peopleCount > 60) {
+    return res.status(400).json({ error: "人數請填 1～60 之間的數字" });
+  }
+
+  const today = todayInTaipei();
+  if (checkIn > addDays(today, 730)) {
+    return res.status(400).json({ error: "只開放預訂兩年內的日期" });
+  }
+
+  // 伺服器端重新計價，不信任前端傳來的任何金額
+  const early = earlyArrival === true || earlyArrival === "true";
+  const quote = quoteStay({ siteId, checkIn, checkOut, earlyArrival: early, today });
+  if (!quote.ok) {
+    return res.status(400).json({ error: quote.error });
+  }
+  const total = quote.total;
+  const nightsCount = quote.nights.length;
   const method = paymentMethod === "ecpay" || paymentMethod === "linepay" ? paymentMethod : "bank_transfer";
 
   const supabase = getSupabaseAdmin();
+
+  // 先檢查這個營位在這幾晚（含夜衝那一晚）有沒有人佔用。
+  // 真正防止重複預約的是資料庫的唯一索引（見 migration），這裡先擋是為了給客人清楚的提示。
+  const wantedDates = quote.nights.map((n) => n.date);
+  if (quote.early) wantedDates.push(quote.early.date);
+
+  const { data: taken, error: takenError } = await supabase
+    .from("booking_nights")
+    .select("night_date")
+    .eq("site_id", siteId)
+    .eq("is_active", true)
+    .in("night_date", wantedDates);
+
+  if (takenError) {
+    console.error("create-booking availability check error:", takenError);
+    return res.status(500).json({ error: "查詢空位失敗，請稍後再試或直接致電營主" });
+  }
+  if (taken && taken.length) {
+    return res.status(409).json({
+      error: `${siteId} 營位在 ${taken.map((t) => t.night_date).sort().join("、")} 已被預訂，請改選其他營位或日期`,
+    });
+  }
 
   const { data: booking, error } = await supabase
     .from("bookings")
@@ -46,10 +94,15 @@ export default async function handler(req, res) {
       customer_name: String(name).trim(),
       customer_phone: String(phone).trim(),
       customer_email: email ? String(email).trim() : null,
-      booking_date: bookingDate,
+      booking_date: checkIn,
+      site_id: siteId,
+      check_in: checkIn,
+      check_out: checkOut,
+      nights_count: nightsCount,
+      early_arrival: !!quote.early,
       tents_count: tentsCount,
       people_per_tent: peopleCount,
-      per_tent_price: perTent,
+      per_tent_price: null,
       total_amount: total,
       payment_method: method,
       payment_status: "pending",
@@ -62,6 +115,38 @@ export default async function handler(req, res) {
     console.error("create-booking insert error:", error);
     return res.status(500).json({ error: "訂單建立失敗，請稍後再試或直接致電營主" });
   }
+
+  const nightRows = quote.nights.map((n) => ({
+    booking_id: booking.id,
+    site_id: siteId,
+    night_date: n.date,
+    kind: "regular",
+    day_type: n.type,
+    price: n.price,
+  }));
+  if (quote.early) {
+    nightRows.push({
+      booking_id: booking.id,
+      site_id: siteId,
+      night_date: quote.early.date,
+      kind: "early",
+      day_type: "early",
+      price: quote.early.price,
+    });
+  }
+
+  const { error: nightsError } = await supabase.from("booking_nights").insert(nightRows);
+  if (nightsError) {
+    // 訂單沒辦法佔到營位（例如兩個人同時搶同一晚，後送出的被資料庫唯一索引擋下），整筆撤銷
+    await supabase.from("bookings").delete().eq("id", booking.id);
+    if (nightsError.code === "23505") {
+      return res.status(409).json({ error: `${siteId} 營位剛剛被別人預訂了，請改選其他營位或日期` });
+    }
+    console.error("create-booking nights insert error:", nightsError);
+    return res.status(500).json({ error: "訂單建立失敗，請稍後再試或直接致電營主" });
+  }
+
+  const itemName = `露營營位 ${siteId}（${nightsCount}晚${quote.early ? "＋夜衝" : ""}）`;
 
   if (method === "bank_transfer") {
     return res.status(200).json({
@@ -84,9 +169,7 @@ export default async function handler(req, res) {
       channelSecret: process.env.LINEPAY_CHANNEL_SECRET || LINEPAY_SANDBOX_CREDENTIALS.channelSecret,
     };
 
-    const itemName = `露營帳篷 x${tentsCount}（每帳${peopleCount}人）`;
-
-    const { ok, data } = await linePayFetch(linepayEnv, credentials, "/v3/payments/request", {
+        const { ok, data } = await linePayFetch(linepayEnv, credentials, "/v3/payments/request", {
       amount: total,
       currency: "TWD",
       orderId: booking.id,
@@ -142,7 +225,7 @@ export default async function handler(req, res) {
     PaymentType: "aio",
     TotalAmount: total,
     TradeDesc: "水松千樹之森露營區訂位",
-    ItemName: `露營帳篷 x${tentsCount}（每帳${peopleCount}人）`,
+    ItemName: itemName,
     ReturnURL: `${siteUrl}/api/ecpay-notify`,
     ClientBackURL: `${siteUrl}/booking.html?status=return`,
     ChoosePayment: "Credit",

@@ -1990,3 +1990,149 @@ html { scroll-behavior: smooth; }
   .panorama-reveal { height: 70vh; }
   .covenant-chapters { grid-template-columns: 1fr; }
 }
+
+/* 營位配置圖與尺寸表 */
+.site-maps {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 36px;
+}
+.site-maps figure { margin: 0; }
+.site-maps .eco-clip {
+  aspect-ratio: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+}
+.site-maps .eco-clip img {
+  height: auto;
+  object-fit: contain;
+}
+.site-maps figcaption {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+.site-maps figcaption strong {
+  display: block;
+  color: var(--gold-strong);
+  font-size: 14px;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+@media (max-width: 760px) {
+  .site-maps { grid-template-columns: 1fr; }
+}
+.site-pricing { margin-top: 48px; }
+.site-pricing-title { margin: 6px 0 8px; font-size: 22px; }
+.site-pricing-lead { font-size: 14px; color: var(--ink-soft); max-width: 640px; margin: 0; }
+.site-price-feature { margin: 24px 0 0; }
+.site-price-feature .eco-clip { aspect-ratio: auto; background: transparent; border: 1px solid var(--border); }
+.site-price-feature .eco-clip img { height: auto; object-fit: contain; }
+
+/* ===== 依營位預約（選入住／退房日 + 點地圖選營位）===== */
+.cal-day { position: relative; }
+.cal-day .hd-badge {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 9px;
+  line-height: 1;
+}
+.hd-badge {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--bg-deep);
+  background: var(--gold);
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin-right: 5px;
+}
+.cal-day.in-range { background: rgba(224, 176, 70, 0.28); border-color: var(--gold); }
+.cal-day.selected-out { background: var(--gold-strong, var(--gold)); color: var(--bg-deep); border-color: var(--gold); }
+.cal-day.selected .hd-badge,
+.cal-day.selected-out .hd-badge { background: var(--bg-deep); color: var(--gold); }
+.cal-hint { font-size: 12px; color: var(--ink-soft); margin-top: 4px; line-height: 1.6; }
+
+.site-picker { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 22px; }
+.site-picker h3 { margin: 0 0 12px; font-size: 18px; }
+.site-map { border-radius: 8px; overflow-x: auto; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+.site-map-inner { position: relative; }
+.site-map img { display: block; width: 100%; height: auto; }
+.site-pins { position: absolute; inset: 0; }
+.site-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 28px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 11px;
+  border: 2px solid #fff;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+.site-pin.zone-A { background: #c99a00; }
+.site-pin.zone-B { background: #c2307f; }
+.site-pin.zone-C { background: #1f6fc4; }
+.site-pin.zone-D { background: #2a8a3e; }
+.site-pin:hover { z-index: 2; transform: translate(-50%, -50%) scale(1.15); }
+.site-pin.unavailable { background: #6b6b6b; border-color: #bbb; color: #ddd; cursor: not-allowed; text-decoration: line-through; opacity: 0.85; }
+.site-pin.unavailable:hover { transform: translate(-50%, -50%); }
+.site-pin.selected { z-index: 3; transform: translate(-50%, -50%) scale(1.3); border-color: #fff; outline: 3px solid var(--gold); }
+.site-map-hint { font-size: 12px; color: var(--ink-soft); margin: 8px 0 0; }
+.site-select-label { display: block; margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
+.site-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-size: 14px;
+  background: var(--bg-alt);
+  color: var(--ink);
+  margin-top: 6px;
+}
+.calc-card select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-size: 15px;
+  background: var(--bg-alt);
+  color: var(--ink);
+}
+.site-info {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.site-info strong { color: var(--gold-strong, var(--gold)); font-size: 15px; }
+
+.quote-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+.quote-box .quote-title { color: var(--ink); font-weight: 700; margin-bottom: 4px; }
+.quote-box .quote-row { display: flex; justify-content: space-between; gap: 12px; }
+.quote-box .quote-warn { color: #f2c766; margin-top: 6px; }
+.quote-box .quote-err { color: #f29a9a; margin-top: 6px; }
+.quote-box .tag-holiday { color: var(--gold); }
+.early-label { display: flex !important; gap: 8px; align-items: flex-start; line-height: 1.5; }
+.early-label small { display: block; color: var(--ink-muted); font-size: 12px; margin-top: 2px; }
+
+@media (max-width: 560px) {
+  .site-map-inner { min-width: 600px; }
+}

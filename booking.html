@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260923a">
+<link rel="stylesheet" href="css/style.css?v=20261106e">
 </head>
 <body>
 
@@ -181,39 +181,68 @@
             <strong id="calMonthLabel"></strong>
             <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="下個月 / Next month">›</button>
           </div>
-          <span style="font-size:13px;color:var(--gray);"><span class="lang-zh">總容量 60 帳／晚</span><span class="lang-en" hidden>60 sites / night capacity</span></span>
+          <span style="font-size:13px;color:var(--gray);"><span class="lang-zh">共 35 個營位，各營位價格不同</span><span class="lang-en" hidden>35 campsites, each priced individually</span></span>
         </div>
         <div class="cal-grid" id="calGrid"></div>
         <div class="legend">
           <span><span class="dot low"></span><span class="lang-zh">尚有空位</span><span class="lang-en" hidden>Available</span></span>
           <span><span class="dot mid"></span><span class="lang-zh">快滿</span><span class="lang-en" hidden>Almost full</span></span>
           <span><span class="dot full"></span><span class="lang-zh">已滿</span><span class="lang-en" hidden>Full</span></span>
+          <span><span class="hd-badge">假</span><span class="lang-zh">假日價（週五、週六、國定假日）</span><span class="lang-en" hidden>Holiday rate (Fri, Sat, public holidays)</span></span>
         </div>
         <p id="selectedDateLabel" style="margin-top:16px;font-weight:700;">
-          <span class="lang-zh">請點選上方日期</span><span class="lang-en" hidden>Select a date above</span>
+          <span class="lang-zh">請點選入住日</span><span class="lang-en" hidden>Select your check-in date</span>
         </p>
+        <p class="cal-hint">
+          <span class="lang-zh">先點入住日，再點退房日。退房日當天早上離場，不算住一晚；連住不打折，每晚依平日或假日價計算。</span>
+          <span class="lang-en" hidden>Tap your check-in date, then your check-out date. You leave on the morning of check-out, so that night isn't charged. No discount for longer stays; each night is priced as weekday or holiday.</span>
+        </p>
+
+        <div class="site-picker" id="sitePicker">
+          <h3><span class="lang-zh">選擇營位</span><span class="lang-en" hidden>Choose a campsite</span></h3>
+          <div class="site-map" id="siteMap">
+            <div class="site-map-inner">
+              <img src="images/site-map.jpg" alt="露營區配置圖，可點選營位編號 / Campsite layout map, tap a site number" loading="lazy">
+              <div class="site-pins" id="sitePins"></div>
+            </div>
+          </div>
+          <p class="site-map-hint">
+            <span class="lang-zh">點地圖上的營位編號即可選擇；灰色代表所選日期已被預訂。手機上地圖可左右滑動。</span>
+            <span class="lang-en" hidden>Tap a site number on the map. Grey means it is already booked for your dates. On phones, swipe the map sideways.</span>
+          </p>
+          <label for="siteSelect" class="site-select-label"><span class="lang-zh">或從清單選擇營位</span><span class="lang-en" hidden>Or choose from the list</span></label>
+          <select id="siteSelect" class="site-select"></select>
+          <div class="site-info" id="siteInfo"></div>
+        </div>
       </div>
 
       <div class="calc-card">
-        <h3 style="margin-bottom:6px;"><span class="lang-zh">帳篷計價</span><span class="lang-en" hidden>Tent pricing</span></h3>
+        <h3 style="margin-bottom:6px;"><span class="lang-zh">預約明細</span><span class="lang-en" hidden>Booking summary</span></h3>
         <p style="font-size:13px;color:var(--gray);">
-          <span class="lang-zh">一帳（2人）NT$1,600，超過 2 人每加 1 人 +NT$300</span>
-          <span class="lang-en" hidden>NT$1,600 per tent (2 people), +NT$300 per extra person</span>
+          <span class="lang-zh">營位整塊出租，同一營位同一晚價格固定，不論帳篷數與人數。</span>
+          <span class="lang-en" hidden>Each campsite is rented as a whole plot. The price is fixed per site per night, regardless of tents or guests.</span>
         </p>
 
-        <label for="tents"><span class="lang-zh">帳篷數量</span><span class="lang-en" hidden>Number of tents</span></label>
-        <input type="number" id="tents" value="1" min="1" max="60">
+        <div class="quote-box" id="quoteBox"></div>
 
-        <label for="people"><span class="lang-zh">每帳人數</span><span class="lang-en" hidden>People per tent</span></label>
-        <input type="number" id="people" value="2" min="1" max="6">
+        <label for="tents"><span class="lang-zh">帳篷數量（依營位而定）</span><span class="lang-en" hidden>Number of tents (depends on the site)</span></label>
+        <select id="tents"><option value="1">1</option></select>
 
-        <div class="calc-row">
-          <span><span class="lang-zh">每帳費用</span><span class="lang-en" hidden>Per tent</span></span>
-          <span id="perTentOut">NT$1,600</span>
-        </div>
+        <label for="people"><span class="lang-zh">總人數（僅供營地準備，不影響價格）</span><span class="lang-en" hidden>Total guests (for our preparation only; doesn't affect price)</span></label>
+        <input type="number" id="people" value="2" min="1" max="60">
+
+        <label class="early-label" for="earlyArrival">
+          <input type="checkbox" id="earlyArrival" disabled>
+          <span>
+            <span class="lang-zh">加訂夜衝（前一晚 18:00～22:00 進場）</span>
+            <span class="lang-en" hidden>Add early arrival (check in the evening before, 18:00–22:00)</span>
+            <small id="earlyNote"></small>
+          </span>
+        </label>
+
         <div class="calc-total">
           <span><span class="lang-zh">預估總金額</span><span class="lang-en" hidden>Estimated total</span></span>
-          <span class="amount" id="totalOut">NT$1,600</span>
+          <span class="amount" id="totalOut">NT$0</span>
         </div>
 
         <form id="bookingForm" style="margin-top:24px;">
@@ -301,6 +330,6 @@
 </footer>
 
 <script src="js/main.js?v=20260923a"></script>
-<script src="js/booking.js?v=20261030a"></script>
+<script src="js/booking.js?v=20261106a"></script>
 </body>
 </html>
