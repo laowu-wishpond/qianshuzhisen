@@ -2136,3 +2136,6 @@ html { scroll-behavior: smooth; }
 @media (max-width: 560px) {
   .site-map-inner { min-width: 600px; }
 }
+.cal-reset-btn { background: transparent; border: 1px solid var(--border-strong); color: var(--gold-strong, var(--gold)); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; margin-top: 6px; font-family: inherit; }
+.cal-reset-btn:hover { background: var(--bg-alt); }
+.cal-reset-btn[hidden] { display: none; }

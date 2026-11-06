@@ -57,6 +57,18 @@ document.addEventListener("DOMContentLoaded", function () {
   var dowsZh = ["日", "一", "二", "三", "四", "五", "六"];
   var dowsEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+  // 「重新選擇日期」按鈕（用程式建立，放在日期說明文字旁）
+  var resetBtn = document.createElement("button");
+  resetBtn.type = "button";
+  resetBtn.className = "cal-reset-btn";
+  resetBtn.hidden = true;
+  selectedLabel.insertAdjacentElement("afterend", resetBtn);
+  resetBtn.addEventListener("click", function () {
+    checkIn = null;
+    checkOut = null;
+    updateAll();
+  });
+
   var P = null; // lib/pricing.js（動態載入，前後端共用）
   var today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
   var minYear = parseInt(today.slice(0, 4), 10);
@@ -174,8 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var firstDow = new Date(year, month - 1, 1).getDay();
     var daysInMonth = new Date(year, month, 0).getDate();
     var total = P.SITES.length;
-    var picking = checkIn && !checkOut; // 已選入住日，正在選退房日
-    var lastCheckoutAllowed = picking ? P.addDays(checkIn, P.MAX_NIGHTS) : null;
+    var lastCheckoutAllowed = checkIn ? P.addDays(checkIn, P.MAX_NIGHTS) : null;
 
     for (var i = 0; i < firstDow; i++) calGrid.appendChild(document.createElement("div"));
 
@@ -188,11 +199,11 @@ document.addEventListener("DOMContentLoaded", function () {
       var level = isFull ? "full" : ratio < 0.5 ? "low" : "mid";
 
       var disabled = iso < today;
-      if (picking) {
-        // 選退房日：當天早上就離場，客滿也沒關係；但不能超過最長連住晚數
+      if (checkIn && iso > checkIn) {
+        // 這天會當成「退房日」：當天早上就離場，客滿也沒關係；但不能超過最長連住晚數
         if (iso > lastCheckoutAllowed) disabled = true;
       } else if (isFull) {
-        disabled = true; // 入住日當晚整個營區客滿
+        disabled = true; // 這天會當成「入住日」：當晚整個營區客滿就不能選
       }
 
       var cls = "cal-day " + level;
@@ -237,15 +248,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // 點日期的規則：
+  // - 還沒選過：這天是入住日，先預設住一晚（價格馬上算出來）
+  // - 已選入住日後，點更晚的日期：改成退房日（連住多晚）
+  // - 點入住日當天或更早的日期：重新以這天當入住日（預設住一晚）
+  // - 想把入住日改到更晚，按「重新選擇日期」
   function pickDate(iso) {
-    if (!checkIn || (checkIn && checkOut)) {
+    if (!checkIn) {
       checkIn = iso;
-      checkOut = null;
+      checkOut = P.addDays(iso, 1);
     } else if (iso > checkIn) {
       checkOut = iso;
     } else {
       checkIn = iso;
-      checkOut = null;
+      checkOut = P.addDays(iso, 1);
     }
     updateAll();
   }
@@ -376,6 +392,10 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     }
     selectedLabel.textContent = text;
+    if (resetBtn) {
+      resetBtn.hidden = !checkIn;
+      resetBtn.textContent = t("重新選擇日期", "Reset dates");
+    }
   }
 
   function currentQuote() {
@@ -418,7 +438,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var blocked = false;
 
     if (!s) {
-      html = t("請先在左邊選擇日期與營位，這裡會顯示每晚的價格。", "Pick your dates and a campsite on the left to see the nightly prices here.");
+      html = t("請先在左邊選擇日期與營位，這裡會自動算出每晚的價格與總金額。", "Pick your dates and a campsite on the left; nightly prices and the total will appear here automatically.");
     } else if (!checkIn || !checkOut) {
       html =
         '<div class="quote-title">' + s.id + t("　營位價格", " rates") + "</div>" +
@@ -456,7 +476,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     quoteBox.innerHTML = html;
-    totalOut.textContent = money(total);
+    totalOut.textContent = total > 0 ? money(total) : "—";
     quoteBox.dataset.blocked = blocked ? "1" : "";
   }
 
