@@ -2139,3 +2139,14 @@ html { scroll-behavior: smooth; }
 .cal-reset-btn { background: transparent; border: 1px solid var(--border-strong); color: var(--gold-strong, var(--gold)); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; margin-top: 6px; font-family: inherit; }
 .cal-reset-btn:hover { background: var(--bg-alt); }
 .cal-reset-btn[hidden] { display: none; }
+.cal-instruction {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold-strong, var(--gold));
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  background: rgba(224, 176, 70, 0.12);
+  line-height: 1.5;
+}
