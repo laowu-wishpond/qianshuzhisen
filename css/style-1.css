@@ -1,0 +1,2227 @@
+:root {
+  --bg: #22402a;
+  --bg-alt: #2d5437;
+  --bg-card: #34603e;
+  --bg-deep: #1a3120;
+  --ink: #f2ede0;
+  --ink-soft: #b9c2b2;
+  --ink-muted: #8a9686;
+  --gold: #c9a86a;
+  --gold-strong: #e0c690;
+  --gold-yellow: #e0ab3d;
+  --border: rgba(201, 168, 106, 0.22);
+  --border-strong: rgba(201, 168, 106, 0.4);
+  --white: #ffffff;
+
+  /* legacy aliases kept so any missed rule still resolves sensibly */
+  --green-dark: var(--ink);
+  --green-mid: var(--gold);
+  --green-light: var(--bg-alt);
+  --gray: var(--ink-soft);
+  --cream: var(--bg);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+body {
+  font-family: "Noto Sans TC", "PingFang TC", "微軟正黑體", sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.75;
+}
+
+a { color: inherit; text-decoration: none; }
+
+img { max-width: 100%; display: block; }
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+h1, h2, h3, .brand, nav.main-nav a, .lang-toggle {
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+}
+
+/* 首頁開場動畫：由 CapCut 製作的森林動畫影片全螢幕播放，
+   播放中可隨時按「跳過動畫」，或等影片快結束時按「進入森林」進入網站 */
+.page-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: var(--bg-deep);
+  pointer-events: none;
+}
+.curtain-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* 影片是直式構圖，寬螢幕桌機用 cover 會裁掉太多畫面內容（如貓頭鷹、山羌），
+     改用 contain 確保完整內容一定看得到，兩側留白用森林深色背景填滿 */
+  object-fit: contain;
+  object-position: center;
+  background: var(--bg-deep);
+}
+
+/* 星空帳揭曉畫面：按「跳過動畫」或影片播完後，淡入取代森林影片，
+   用真正的網頁元素疊在上面（不是烤進影片畫面裡），位置永遠不會跟按鈕打架 */
+.curtain-stardome-reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.4s ease;
+  overflow: hidden;
+}
+.page-curtain.curtain-stardome-show .curtain-stardome-reveal {
+  opacity: 1;
+}
+.page-curtain.curtain-stardome-show .curtain-video {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.curtain-stardome-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.04);
+}
+.curtain-stardome-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(224, 198, 144, 0.28) 0%, rgba(224, 198, 144, 0.08) 38%, transparent 65%);
+}
+.curtain-stardome-caption {
+  position: absolute;
+  left: 50%;
+  top: 7%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.curtain-stardome-caption .title {
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-size: 34px;
+  letter-spacing: 8px;
+  color: var(--gold-strong);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6), 0 0 30px rgba(224, 198, 144, 0.35);
+}
+.curtain-stardome-caption .sub {
+  margin-top: 8px;
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: var(--ink-soft);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.curtain-btn-group {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 2;
+}
+
+.curtain-enter-btn {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px);
+  background: var(--gold);
+  color: var(--bg-deep);
+  border: none;
+  padding: 14px 40px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+  transition: opacity 1.2s ease, transform 1.2s ease;
+}
+.page-curtain.curtain-show-btn .curtain-enter-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.curtain-skip-btn {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ink-soft);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 10px 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+  transition: opacity 0.8s ease, transform 0.8s ease, background 0.2s ease;
+}
+.curtain-skip-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--ink);
+}
+.page-curtain.curtain-show-skip .curtain-skip-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+/* 到了星空帳揭曉畫面就不用再顯示「跳過動畫」了 */
+.page-curtain.curtain-stardome-show .curtain-skip-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.page-curtain.curtain-dismissed {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.page-curtain.curtain-removed { display: none; }
+
+/* Header */
+header.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.nav-inner .brand { margin-right: auto; }
+
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.brand span { color: var(--gold); }
+
+.brand img {
+  height: 48px;
+  width: 48px;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+}
+
+.brand .brand-text { display: none; }
+
+@media (min-width: 480px) {
+  .brand .brand-text { display: inline; }
+}
+
+nav.main-nav ul {
+  display: flex;
+  gap: 26px;
+  list-style: none;
+}
+
+nav.main-nav a {
+  font-size: 15px;
+  padding: 4px 2px;
+  border-bottom: 1px solid transparent;
+  letter-spacing: 0.5px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+nav.main-nav a:hover,
+nav.main-nav a.active {
+  border-bottom-color: var(--gold);
+  color: var(--gold-strong);
+}
+
+.nav-toggle { display: none; background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); margin-left: 12px; }
+
+.lang-toggle {
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--gold-strong);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 16px;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+.lang-toggle:hover { background: var(--bg-card); }
+
+.music-widget {
+  position: relative;
+  margin-left: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.music-toggle {
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--gold-strong);
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.music-toggle-icon { font-size: 14px; }
+.music-toggle-caret { font-size: 9px; opacity: 0.8; transition: transform 0.15s ease; }
+.music-toggle[aria-expanded="true"] .music-toggle-caret { transform: rotate(180deg); }
+
+.music-toggle:hover { background: var(--bg-card); }
+.music-toggle.playing { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); animation: music-pulse 2.2s ease-in-out infinite; }
+
+.music-mute-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--ink-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 6px;
+  vertical-align: middle;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.music-mute-btn:hover { background: var(--bg-card); color: var(--gold-strong); transform: scale(1.06); }
+.music-mute-btn.playing {
+  background: var(--gold);
+  color: var(--bg-deep);
+  border-color: var(--gold);
+}
+.music-mute-btn.playing:hover { background: var(--gold-strong); color: var(--bg-deep); }
+
+.music-now-playing {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--gold-strong);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.music-now-playing .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold-strong);
+  animation: music-dot 1.4s ease-in-out infinite;
+}
+@keyframes music-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 620px) {
+  .music-toggle .music-toggle-label { display: none; }
+  .music-toggle { padding: 0; width: 32px; justify-content: center; border-radius: 50%; }
+  .music-toggle-caret { display: none; }
+}
+
+@keyframes music-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 106, 0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(201, 168, 106, 0); }
+}
+
+.music-playlist {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  padding: 14px;
+  z-index: 50;
+}
+
+.music-playlist-title {
+  font-size: 12px;
+  color: var(--ink-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.music-playlist ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.music-track {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.music-track:hover { background: var(--bg-alt); color: var(--ink); }
+
+.music-track.active {
+  background: rgba(201, 168, 106, 0.16);
+  color: var(--gold-strong);
+  font-weight: 500;
+  border-left: 2px solid var(--gold);
+}
+
+.music-track .music-track-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--gold);
+  font-size: 11px;
+  background: rgba(201, 168, 106, 0.12);
+}
+
+.music-track.active .music-track-icon {
+  background: var(--gold);
+  color: var(--bg-deep);
+}
+
+.music-track-hint {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+.music-track.active .music-track-hint { color: var(--gold-strong); }
+
+.music-playlist-stop {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: center;
+  padding-top: 10px;
+}
+
+.music-playlist-stop:hover { color: var(--gold-strong); }
+
+/* Hero */
+.hero {
+  position: relative;
+  height: 68vh;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.hero-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg-video { display: none; }
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10,20,14,0.02) 0%, rgba(10,20,14,0.08) 12%, rgba(10,20,14,0.32) 40%, rgba(10,20,14,0.62) 70%, rgba(10,20,14,0.78) 100%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  color: var(--white);
+  padding: 48px 24px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+  max-width: 1440px;
+}
+
+.hero-text {
+  flex: 1 1 480px;
+}
+
+.hero-content .eyebrow {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  color: var(--gold-strong);
+  margin-bottom: 22px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(5, 10, 7, 0.4);
+  backdrop-filter: blur(2px);
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.85);
+}
+
+.hero-content h1 {
+  font-size: clamp(42px, 4vw, 58px);
+  line-height: 1.15;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--ink);
+  text-shadow: 0 2px 14px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.8);
+}
+
+.hero-content p {
+  font-size: 16px;
+  max-width: 520px;
+  color: var(--ink);
+  margin-bottom: 0;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.95), 0 1px 3px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6);
+}
+
+.hero-cta {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.page-hero {
+  height: 32vh;
+  min-height: 220px;
+}
+
+.page-hero h1 { font-size: 32px; }
+
+/* Healing banner (mid-page full-bleed image with quote) */
+.healing-banner {
+  position: relative;
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  text-align: center;
+}
+
+.healing-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10,20,14,0.55) 0%, rgba(10,20,14,0.35) 40%, rgba(10,20,14,0.6) 100%);
+}
+
+.healing-banner .banner-text {
+  position: relative;
+  z-index: 2;
+  color: var(--white);
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-size: 30px;
+  font-style: italic;
+  line-height: 1.6;
+  max-width: 640px;
+  padding: 0 24px;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.9), 0 1px 4px rgba(0,0,0,0.85), 0 0 24px rgba(0,0,0,0.6);
+}
+
+@media (max-width: 860px) {
+  .healing-banner .banner-text { font-size: 22px; }
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 12px 30px;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--bg-deep);
+}
+
+.btn-primary:hover { background: var(--gold-strong); }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold-strong);
+}
+
+.btn-outline:hover { background: rgba(201, 168, 106, 0.1); }
+
+/* Sections */
+section { padding: 80px 0; }
+
+.section-label {
+  display: inline-block;
+  font-size: 16px;
+  letter-spacing: 2.5px;
+  color: var(--gold-yellow);
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding: 5px 16px;
+  border: 1.5px solid var(--gold-yellow);
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.ecology-cypress {
+  display: none;
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 861px) {
+  .ecology-cypress { display: block; }
+}
+
+.section-label-icon {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  vertical-align: middle;
+  margin-left: 10px;
+  margin-bottom: 12px;
+}
+
+h2.section-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+.lead {
+  font-size: 16px;
+  color: var(--ink-soft);
+  max-width: 640px;
+  margin-bottom: 40px;
+}
+
+.lead a { color: var(--gold-strong); border-bottom: 1px solid var(--border-strong); }
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.card img { height: 200px; object-fit: cover; width: 100%; }
+
+.card-body { padding: 22px; }
+
+.card-body h3 { font-size: 17px; margin-bottom: 8px; color: var(--ink); }
+
+.card-body p { font-size: 14px; color: var(--ink-soft); }
+
+.tinted { background: var(--bg-alt); }
+
+/* Standardized illustration system: all "featured scene" corner accents
+   share one size, one offset, and one shadow treatment so they read as
+   one consistent decorative language instead of ad-hoc per-section
+   sizing. Width/position can still be overridden inline for a genuine
+   exception, but the default below is the site standard. */
+.corner-illustration {
+  position: absolute;
+  width: 200px;
+  top: -18px;
+  right: 0;
+  height: auto;
+  z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
+}
+@media (max-width: 860px) {
+  .corner-illustration { display: none; }
+}
+/* Secondary/supporting accents (one-off closing signs, small critters
+   placed in normal flow rather than the top-right corner). Same shadow
+   language as .corner-illustration for cohesion; width stays per-instance
+   since these vary in role, but should stay in the 110-180px range. */
+.corner-illustration-static {
+  display: block;
+  height: auto;
+  pointer-events: none;
+  margin: 28px 0 0 auto;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
+}
+@media (max-width: 860px) {
+  .corner-illustration-static { display: none; }
+}
+
+.deco-inline {
+  display: block;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
+}
+@media (max-width: 860px) {
+  .deco-inline { display: none; }
+}
+
+/* Illustrated hero: the illustration is shown at its natural aspect ratio
+   (full width, height:auto) so it is NEVER cropped on any viewport, with
+   the section's label/title/lead overlaid on top of it instead of sitting
+   in plain text beside a small corner accent. This is the standard
+   treatment for every "thematic intro" section (ecology, land, wildlife,
+   sites, reasons) so they all read as one consistent illustrated language.
+   On mobile the image is short once scaled to full width, so the text
+   drops below it in normal flow rather than overlaying — the shared
+   bottom-fade gradient makes that transition feel like one continuous
+   panel rather than two stacked pieces. */
+.illustrated-hero {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 36px;
+}
+.illustrated-hero-media {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.illustrated-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(8, 16, 11, 0.12) 0%, rgba(8, 16, 11, 0.55) 62%, rgba(8, 16, 11, 0.93) 100%);
+}
+.illustrated-hero-text {
+  position: relative;
+  z-index: 2;
+  padding: 20px 20px 26px;
+}
+.illustrated-hero-text .section-label,
+.illustrated-hero-text h2.section-title,
+.illustrated-hero-text .lead,
+.illustrated-hero-text .quote-block {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 0, 0, 0.45);
+}
+.illustrated-hero-text .lead:last-child,
+.illustrated-hero-text .quote-block:last-child {
+  margin-bottom: 0;
+}
+@media (min-width: 861px) {
+  .illustrated-hero::before {
+    background: linear-gradient(100deg, rgba(8, 16, 11, 0.9) 0%, rgba(8, 16, 11, 0.72) 30%, rgba(8, 16, 11, 0.18) 58%, rgba(8, 16, 11, 0) 78%);
+  }
+  .illustrated-hero-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 46%;
+    padding: 0 4% 0 5%;
+  }
+}
+
+/* ===== 森林生態區塊：香樟夫妻樹實拍照片上的蝴蝶影片小窗 + 樹種標籤
+   小窗疊在照片左下角的草叢區域（避開樹幹本體）。
+   位置用百分比對齊 .illustrated-hero-media-wrap（＝圖片本身的框），
+   這樣圖片不管縮放到多寬，小窗都會跟著等比例移動、不跑版。 */
+.illustrated-hero-media-wrap {
+  position: relative;
+  display: block;
+}
+.illustrated-hero-media-wrap .illustrated-hero-media {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ecology-clip-overlay {
+  position: absolute;
+  left: 3%;
+  top: 70%;
+  width: 42%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 4px solid var(--ink);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+  z-index: 3;
+}
+/* .eco-clip 共用樣式會重設 border/aspect-ratio/background，這裡用組合選擇器蓋回來 */
+.ecology-clip-overlay.eco-clip {
+  margin: 0;
+  padding: 0;
+  aspect-ratio: 16 / 9;
+  border: 4px solid var(--ink);
+  background: transparent;
+  cursor: pointer;
+}
+.ecology-clip-overlay.eco-clip:hover .ecology-clip-video { transform: scale(1.04); }
+.ecology-clip-expand-hint {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  z-index: 4;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-radius: 50%;
+  background: rgba(8, 16, 11, 0.6);
+  color: var(--ink);
+}
+.ecology-clip-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #1a2e1f;
+  transition: transform 0.4s ease;
+}
+.ecology-clip-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(8, 16, 11, 0.6);
+  color: var(--ink);
+  white-space: nowrap;
+}
+.ecology-tree-badge {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+  z-index: 3;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(8, 16, 11, 0.6);
+  color: var(--ink);
+  white-space: nowrap;
+}
+@media (max-width: 520px) {
+  .ecology-clip-overlay {
+    left: 5%;
+    width: 38%;
+    border-width: 3px;
+    border-radius: 8px;
+  }
+  .ecology-clip-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+  }
+  .ecology-tree-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+  }
+  .ecology-clip-expand-hint {
+    width: 19px;
+    height: 19px;
+    font-size: 10px;
+  }
+}
+
+.tinted-dark {
+  background: var(--bg-deep);
+  color: var(--white);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.tinted-dark .section-title, .tinted-dark .lead { color: var(--ink); }
+.tinted-dark .lead { color: var(--ink-soft); }
+
+/* Facts strip */
+.facts {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  flex-wrap: wrap;
+  gap: 24px 18px;
+}
+
+.facts .fact {
+  position: relative;
+  width: 172px;
+}
+
+.facts .fact strong {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 156px;
+  height: 156px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  border: 4px solid var(--gold-strong);
+  background: var(--bg-card);
+  box-shadow: inset 0 0 0 4px var(--bg), 0 4px 14px rgba(0,0,0,0.25);
+  font-size: 50px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--gold-strong);
+  font-family: "Noto Sans TC", "PingFang TC", sans-serif;
+  text-shadow: 0 0 16px rgba(224,198,144,0.45);
+}
+
+.facts .fact-num-sm {
+  font-size: 34px;
+}
+
+.facts .fact-label {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.facts .fact-power {
+  overflow: visible;
+}
+
+.facts .fact-bolt {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%) rotate(12deg);
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+  z-index: 2;
+}
+
+/* 頁尾上方的森林動物裝飾長條，填補進入頁尾前的空白 */
+.footer-nature-banner {
+  background: var(--bg-deep);
+  line-height: 0;
+}
+
+.footer-nature-banner > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Footer */
+footer {
+  background: var(--bg-deep);
+  color: var(--ink-soft);
+  padding: 48px 0 24px;
+  font-size: 14px;
+  border-top: 1px solid var(--border);
+}
+
+footer .footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+
+footer h4 {
+  color: var(--gold-strong);
+  font-size: 15px;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+footer ul { list-style: none; }
+
+footer li { margin-bottom: 8px; }
+
+footer li a:hover { color: var(--gold-strong); }
+
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+/* Booking widget */
+.booking-wrap {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.calendar-card, .calc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.cal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+
+.cal-nav { display: flex; align-items: center; gap: 10px; }
+
+.cal-nav-btn {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--gold-strong);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cal-nav-btn:hover { background: var(--bg-alt); }
+.cal-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.cal-nav-btn:disabled:hover { background: transparent; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.cal-dow {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-alt);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  gap: 2px;
+  color: var(--ink);
+}
+
+.cal-day:hover { border-color: var(--gold); }
+.cal-day.disabled { cursor: not-allowed; opacity: 0.55; }
+.cal-day.disabled:hover { border-color: var(--border); }
+.cal-day.selected { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); }
+.cal-day .occ { font-size: 10px; border-radius: 6px; padding: 0 4px; }
+.cal-day.low .occ { color: #8fd68f; background: rgba(59, 109, 17, 0.35); }
+.cal-day.mid .occ { color: #f2c766; background: rgba(224, 161, 0, 0.25); }
+.cal-day.full .occ { color: #f29a9a; background: rgba(192, 57, 43, 0.25); }
+.cal-day.selected .occ { background: rgba(10,20,14,0.25); color: var(--bg-deep); }
+
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-soft); flex-wrap: wrap; }
+.legend .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+.dot.low { background:#5fa83f; }
+.dot.mid { background:#e0a100; }
+.dot.full { background:#c0392b; }
+
+.calc-card label { display:block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; margin-top: 14px; }
+.calc-card input:not([type="radio"]):not([type="checkbox"]) {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-size: 15px;
+  background: var(--bg-alt);
+  color: var(--ink);
+}
+.calc-card input[type="radio"],
+.calc-card input[type="checkbox"] {
+  width: auto;
+  flex-shrink: 0;
+}
+.calc-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 14px;
+}
+.calc-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 6px;
+}
+.calc-total .amount { font-size: 28px; font-weight: 700; color: var(--gold); font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif; }
+
+form.contact-form { display: grid; gap: 16px; max-width: 520px; }
+form.contact-form label { font-size: 14px; color: var(--ink-soft); margin-bottom: 4px; display: block; }
+form.contact-form input, form.contact-form textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 15px; font-family: inherit;
+  background: var(--bg-card); color: var(--ink);
+}
+
+.faq-item { border-bottom: 1px solid var(--border); padding: 20px 0; }
+.faq-item h3 { font-size: 16px; margin-bottom: 8px; color: var(--ink); }
+.faq-item p { font-size: 14px; color: var(--ink-soft); }
+
+.notice {
+  background: var(--bg-alt);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 20px;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* 入住須知／森林公約：自然閱讀節奏——標題區與封面圖都在同一個素色背景上
+   （跟全站其他一般區塊一致），不再用單獨的深色相片方框把內容裝起來，
+   避免「黑色大盒子裡放一張海報」的斷裂感。 */
+.covenant-container {
+  max-width: 1000px;
+}
+.covenant-intro {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* 森林公約主視覺：橫幅森林照片＋品牌標誌，寬度跟著內容欄走，不再是直式海報 */
+.covenant-featured-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 56px;
+}
+.covenant-featured {
+  position: relative;
+  width: 100%;
+}
+.covenant-featured img:first-child {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+}
+/* 森林公約設計圖：四張公約書頁縮圖，點擊可放大檢視 */
+.covenant-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.covenant-page {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-card);
+  cursor: zoom-in;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.covenant-page:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.covenant-page img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.covenant-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 7, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 32px;
+}
+
+.covenant-lightbox[hidden] { display: none; }
+
+/* 林霧晴 首頁「限定收藏」電影感故事區塊 */
+.linwuqing-cinema {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 70% at 50% 8%, rgba(201, 168, 106, 0.12) 0%, rgba(201, 168, 106, 0) 55%),
+    linear-gradient(180deg, var(--bg-alt) 0%, var(--bg-deep) 100%);
+  padding: 96px 24px 104px;
+}
+
+.linwuqing-cinema-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+  text-align: center;
+}
+
+/* 音樂 MV 區塊的植栽邊框：藤蔓／蕨類／菇菇／小花把卡片整個包圍起來，讓四周不再是空景 */
+.cinema-vine,
+.cinema-fern,
+.cinema-mushroom,
+.cinema-flower,
+.cinema-bird,
+.cinema-butterflies,
+.cinema-note,
+.cinema-script {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cinema-vine { width: 150px; height: auto; opacity: 0.85; }
+.cinema-vine-tl { left: -6px; top: -6px; }
+.cinema-vine-tr { right: -6px; top: -6px; transform: scaleX(-1); }
+.cinema-vine-bl { left: -6px; bottom: -6px; transform: scaleY(-1); }
+.cinema-vine-br { right: -6px; bottom: -6px; transform: scale(-1, -1); }
+
+.cinema-fern { width: 82px; height: auto; opacity: 0.95; bottom: 30px; }
+.cinema-fern-l { left: 22px; }
+.cinema-fern-r { right: 22px; transform: scaleX(-1); }
+
+.cinema-mushroom { width: 86px; height: auto; opacity: 0.95; bottom: 10px; }
+.cinema-mushroom-l { left: 36px; }
+.cinema-mushroom-r { right: 36px; transform: scaleX(-1); }
+
+.cinema-flower { width: 28px; height: auto; opacity: 0.9; }
+.cinema-flower-1 { left: 108px; bottom: 44px; }
+.cinema-flower-2 { right: 104px; bottom: 60px; }
+.cinema-flower-3 { left: 50%; bottom: 16px; margin-left: -150px; }
+
+.cinema-bird {
+  left: 10px;
+  top: 8px;
+  width: 150px;
+  height: auto;
+  opacity: 0.97;
+  transform: rotate(-10deg);
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.45));
+}
+
+.cinema-butterflies {
+  right: 16px;
+  top: 30px;
+  width: 96px;
+  height: auto;
+  opacity: 0.97;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.45));
+  animation: cinemaButterflyFloat 6.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes cinemaButterflyFloat {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinema-butterflies { animation: none; }
+}
+
+.cinema-note { color: var(--gold); font-size: 22px; opacity: 0.65; }
+.cinema-note-1 { left: 15%; top: 132px; }
+.cinema-note-2 { right: 18%; top: 190px; }
+
+.cinema-script {
+  font-family: "Dancing Script", cursive;
+  font-weight: 700;
+  color: var(--gold-strong);
+  font-size: 27px;
+  line-height: 1.2;
+  left: 14px;
+  top: 148px;
+  margin: 0;
+  opacity: 0.9;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+@media (max-width: 900px) {
+  .cinema-vine { width: 110px; }
+  .cinema-fern { width: 62px; }
+  .cinema-mushroom { width: 66px; }
+  .cinema-bird { width: 108px; top: 6px; left: 6px; }
+  .cinema-butterflies { width: 74px; top: 22px; right: 10px; }
+  .cinema-note-1 { top: 108px; }
+  .cinema-note-2 { top: 158px; }
+  .cinema-script { font-size: 22px; top: 116px; left: 10px; }
+}
+
+@media (max-width: 560px) {
+  .cinema-vine { width: 76px; }
+  .cinema-fern { width: 44px; bottom: 18px; }
+  .cinema-fern-l { left: 8px; }
+  .cinema-fern-r { right: 8px; }
+  .cinema-mushroom { width: 46px; bottom: 4px; }
+  .cinema-mushroom-l { left: 4px; }
+  .cinema-mushroom-r { right: 4px; }
+  .cinema-flower-1, .cinema-flower-2, .cinema-flower-3 { display: none; }
+  .cinema-bird { width: 66px; top: 2px; left: 2px; transform: rotate(-6deg); }
+  .cinema-butterflies { width: 48px; top: 10px; right: 4px; }
+  .cinema-note-1, .cinema-note-2 { display: none; }
+  .cinema-script { display: none; }
+}
+
+.linwuqing-cinema-video {
+  width: 100%;
+  max-width: 660px;
+  flex-shrink: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(201, 168, 106, 0.5);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-deep);
+}
+
+@media (max-width: 1100px) {
+  .linwuqing-cinema-video { max-width: 520px; }
+}
+
+@media (max-width: 900px) {
+  .linwuqing-cinema-video { max-width: 320px; }
+}
+
+@media (max-width: 560px) {
+  .linwuqing-cinema-video { max-width: 100%; }
+}
+
+/* 首頁各區塊留白處的小樹／螢火蟲／瓢蟲裝飾，只在夠寬的螢幕上顯示（避免跟內容打架） */
+.section-critters { position: relative; }
+
+/* 全站通用：藤蔓／蕨類／菇菇／小花／飛行軌跡裝飾，從區塊四個角落「長出來」，只在夠寬的螢幕上顯示 */
+.page-deco {
+  display: none;
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+@media (min-width: 1440px) {
+  .page-deco { display: block; }
+}
+
+.page-deco-flip-x { transform: scaleX(-1); }
+.page-deco-flip-y { transform: scaleY(-1); }
+.page-deco-flip-xy { transform: scale(-1, -1); }
+
+.page-deco-trail.critter-ladybug-trail path { stroke: #d97a63; }
+
+.critter {
+  display: none;
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+@media (min-width: 1440px) {
+  .critter { display: block; }
+}
+
+.critter-firefly .firefly-glow {
+  animation: critterFireflyPulse 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+.critter-firefly:nth-of-type(3n) .firefly-glow { animation-delay: 1s; }
+.critter-firefly:nth-of-type(3n+1) .firefly-glow { animation-delay: 2s; }
+
+@keyframes critterFireflyPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .critter-firefly .firefly-glow { animation: none; }
+}
+
+.linwuqing-cinema-video video {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.linwuqing-cinema-text { max-width: 420px; }
+.linwuqing-cinema-text .lead { margin: 14px 0 22px; }
+.linwuqing-cinema-text .section-label,
+.linwuqing-cinema-text h2.section-title,
+.linwuqing-cinema-text .lead {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 0, 0, 0.45);
+}
+.linwuqing-cinema-play { border: none; cursor: pointer; }
+
+@media (max-width: 560px) {
+  .linwuqing-cinema { padding: 64px 20px 72px; }
+  .linwuqing-cinema-inner { gap: 26px; }
+}
+
+.covenant-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.covenant-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* 生態紀事：食蛇龜故事卡片與影片／照片 lightbox */
+.eco-story-card {
+  margin-top: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.eco-story-feature {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: var(--bg-deep);
+  overflow: hidden;
+}
+
+.eco-story-feature img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.eco-story-feature:hover img { transform: scale(1.03); }
+
+.eco-clip-play-lg {
+  font-size: 40px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.eco-story-feature-label {
+  font-size: 15px;
+  padding: 16px 16px 14px;
+  text-align: left;
+}
+
+.eco-story-media-label {
+  margin: 22px 0 12px;
+  color: var(--gold-strong);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.eco-story-badge {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  background: rgba(10, 20, 14, 0.78);
+  border: 1px solid var(--border-strong);
+  color: var(--gold-strong);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+
+.eco-story-body { padding: 28px 28px 8px; }
+
+.eco-story-body h3 {
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-size: 22px;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+
+.eco-story-body p {
+  color: var(--ink-soft);
+  line-height: 1.9;
+  margin: 0;
+}
+
+.eco-story-media {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  padding: 24px 28px 28px;
+}
+
+.eco-clip {
+  position: relative;
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--bg-deep);
+  aspect-ratio: 1;
+}
+
+.eco-clip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.eco-clip:hover img { transform: scale(1.06); }
+
+.eco-clip-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.18);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.eco-clip-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #fff;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
+  text-align: center;
+}
+
+.eco-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 7, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 32px;
+}
+
+.eco-lightbox[hidden] { display: none; }
+
+.eco-lightbox video,
+.eco-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.eco-lightbox video {
+  width: min(90vw, 960px);
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.eco-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+
+@media (max-width: 860px) {
+  .eco-story-media { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .eco-story-media { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 20px; }
+  .eco-story-body { padding: 22px 20px 4px; }
+  .eco-clip-play-lg { font-size: 30px; }
+  .eco-story-feature-label { font-size: 13px; padding: 12px 14px; }
+}
+
+@media (max-width: 860px) {
+  .covenant-gallery { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .covenant-gallery { grid-template-columns: 1fr; }
+}
+
+/* 森林公約濃縮成一張精簡版之後，畫廊只有一張圖，置中顯示、寬度收窄，不要被4欄網格拉伸 */
+.covenant-gallery-single {
+  grid-template-columns: 1fr;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* 手繪插畫風的三張故事場景圖：直式單欄堆疊，讓每張裡面的文字卡片維持可讀大小 */
+.covenant-gallery-story {
+  grid-template-columns: 1fr;
+  max-width: 900px;
+  margin: 0 auto;
+  gap: 24px;
+}
+
+.gallery-grid figure { margin: 0; }
+
+.gallery-grid img {
+  border-radius: 8px;
+  height: 220px;
+  object-fit: cover;
+  width: 100%;
+  border: 1px solid var(--border);
+}
+
+.gallery-grid figcaption {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+
+.gallery-grid figcaption strong {
+  display: block;
+  color: var(--gold-strong);
+  font-size: 14px;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+.card-tag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--gold-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  padding: 2px 8px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.card.no-image .card-body { padding-top: 24px; }
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: rgba(201, 168, 106, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.card-icon svg { width: 22px; height: 22px; display: block; }
+
+.card img.logo-img { object-fit: contain; background: #0a140e; padding: 20px; }
+
+.card-map-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--gold-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.card-map-link:hover { color: var(--gold); }
+
+.map-embed {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-embed iframe { display: block; }
+
+.quote-block {
+  border-left: 2px solid var(--gold);
+  padding-left: 20px;
+  font-size: 19px;
+  color: var(--ink);
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-style: italic;
+  margin: 32px 0;
+}
+
+@media (max-width: 860px) {
+  nav.main-nav { display: none; }
+  .nav-toggle { display: block; }
+  .nav-inner { padding: 12px 16px; }
+  .brand img { width: 44px; height: 44px; }
+  .lang-toggle { margin-left: 8px; }
+  .music-widget { margin-left: 8px; }
+  .nav-toggle { margin-left: 8px; }
+  .music-now-playing { display: none !important; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .booking-wrap { grid-template-columns: 1fr; }
+  footer .footer-grid { grid-template-columns: 1fr; }
+  .hero-content h1 { font-size: 36px; }
+  .hero-content { flex-direction: column; align-items: flex-start; }
+  .hero-cta { margin-left: 0; margin-top: 8px; }
+
+  nav.main-nav.nav-open {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+    padding: 10px 24px 18px;
+    z-index: 60;
+  }
+
+  nav.main-nav.nav-open ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 20px;
+  }
+
+  nav.main-nav.nav-open a {
+    display: block;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border);
+    white-space: normal;
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1180px) {
+  .brand .brand-text { display: none; }
+  nav.main-nav ul { gap: 14px; }
+  nav.main-nav a { font-size: 14px; }
+  .music-toggle {
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  .music-toggle-label,
+  .music-toggle-caret { display: none; }
+  .music-now-playing { display: none !important; }
+}
+
+@media (max-width: 520px) {
+  .hero {
+    height: auto;
+    min-height: calc(100svh - 69px);
+    align-items: flex-start;
+  }
+  .hero-content {
+    padding: 42px 24px 36px;
+    gap: 22px;
+  }
+  .hero-content .eyebrow {
+    font-size: 12px;
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+  }
+  .hero-content h1 {
+    font-size: clamp(30px, 8.4vw, 34px);
+    line-height: 1.22;
+    margin-bottom: 18px;
+  }
+  .hero-content p {
+    font-size: 15px;
+    line-height: 1.85;
+  }
+  .calendar-card,
+  .calc-card {
+    min-width: 0;
+    padding: 18px;
+  }
+  .cal-grid {
+    min-width: 0;
+    gap: 3px;
+  }
+  .cal-day {
+    min-width: 0;
+    font-size: 12px;
+  }
+  .cal-day .occ {
+    padding: 0 1px;
+    font-size: 8px;
+  }
+}
+
+/* ===== 首頁單頁式敘事流程（2026 改版）=====
+   跟著林大哥規劃的順序滾動說故事：森林全景漸現、老樹溪流生態、
+   建設進程、營位、三個理由、森林居民，最後預約與森林公約直接嵌成首頁區塊。 */
+
+html { scroll-behavior: smooth; }
+
+/* 滾動淡入工具 class：預設半透明+微微下沉，進入視窗後才浮現，配合 main.js 的 IntersectionObserver */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 1.1s ease, transform 1.1s ease;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-stagger.in-view > * { transition-delay: calc(var(--stagger-i, 0) * 0.12s); }
+
+/* 森林全景／樹影慢慢浮現 —— 大面積滿版森林景，文字淡入 */
+.panorama-reveal {
+  position: relative;
+  height: 86vh;
+  min-height: 480px;
+  max-height: 760px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+.panorama-reveal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 20, 14, 0.2) 0%, rgba(10, 20, 14, 0.62) 100%);
+}
+.panorama-reveal .panorama-text {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  padding: 0 24px;
+  color: var(--ink-soft);
+}
+.panorama-reveal .panorama-eyebrow {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 5px;
+  font-weight: 700;
+  color: var(--gold-strong);
+  opacity: 1;
+  margin-bottom: 16px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.55), 0 0 18px rgba(0,0,0,0.35);
+}
+.panorama-reveal .panorama-text h2 {
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-weight: 500;
+  font-size: clamp(22px, 4vw, 34px);
+  line-height: 1.85;
+  color: var(--ink);
+}
+
+/* 森林公約嵌入首頁後的精簡摘要卡（完整四章仍在 forest-covenant.html 可查） */
+.covenant-chapters {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin: 28px 0;
+}
+.covenant-chapter {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  background: var(--bg-card);
+}
+.covenant-chapter h4 {
+  font-family: "Huninn", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-size: 15px;
+  color: var(--gold-strong);
+  margin-bottom: 8px;
+}
+.covenant-chapter p {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.8;
+}
+
+/* 首頁區塊間的錨點定位微調：導覽列是 fixed 效果不強，但預留一點空間避免標題貼齊視窗頂端 */
+#story, #ecology, #progress, #sites, #reasons, #wildlife, #booking, #covenant {
+  scroll-margin-top: 18px;
+}
+
+@media (max-width: 860px) {
+  .panorama-reveal { height: 70vh; }
+  .covenant-chapters { grid-template-columns: 1fr; }
+}
+
+/* 營位配置圖與尺寸表 */
+.site-maps {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 36px;
+}
+.site-maps figure { margin: 0; }
+.site-maps .eco-clip {
+  aspect-ratio: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+}
+.site-maps .eco-clip img {
+  height: auto;
+  object-fit: contain;
+}
+.site-maps figcaption {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+.site-maps figcaption strong {
+  display: block;
+  color: var(--gold-strong);
+  font-size: 14px;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+@media (max-width: 760px) {
+  .site-maps { grid-template-columns: 1fr; }
+}
+.site-pricing { margin-top: 48px; }
+.site-pricing-title { margin: 6px 0 8px; font-size: 22px; }
+.site-pricing-lead { font-size: 14px; color: var(--ink-soft); max-width: 640px; margin: 0; }
+.site-price-feature { margin: 24px 0 0; }
+.site-price-feature .eco-clip { aspect-ratio: auto; background: transparent; border: 1px solid var(--border); }
+.site-price-feature .eco-clip img { height: auto; object-fit: contain; }
+
+/* ===== 依營位預約（選入住／退房日 + 點地圖選營位）===== */
+.cal-day { position: relative; }
+.cal-day .hd-badge {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 9px;
+  line-height: 1;
+}
+.hd-badge {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--bg-deep);
+  background: var(--gold);
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin-right: 5px;
+}
+.cal-day.in-range { background: rgba(224, 176, 70, 0.28); border-color: var(--gold); }
+.cal-day.selected-out { background: var(--gold-strong, var(--gold)); color: var(--bg-deep); border-color: var(--gold); }
+.cal-day.selected .hd-badge,
+.cal-day.selected-out .hd-badge { background: var(--bg-deep); color: var(--gold); }
+.cal-hint { font-size: 12px; color: var(--ink-soft); margin-top: 4px; line-height: 1.6; }
+
+.site-picker { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 22px; }
+.site-picker h3 { margin: 0 0 12px; font-size: 18px; }
+.site-map { border-radius: 8px; overflow-x: auto; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+.site-map-inner { position: relative; }
+.site-map img { display: block; width: 100%; height: auto; }
+.site-pins { position: absolute; inset: 0; }
+.site-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 28px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 11px;
+  border: 2px solid #fff;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+.site-pin.zone-A { background: #c99a00; }
+.site-pin.zone-B { background: #c2307f; }
+.site-pin.zone-C { background: #1f6fc4; }
+.site-pin.zone-D { background: #2a8a3e; }
+.site-pin:hover { z-index: 2; transform: translate(-50%, -50%) scale(1.15); }
+.site-pin.unavailable { background: #6b6b6b; border-color: #bbb; color: #ddd; cursor: not-allowed; text-decoration: line-through; opacity: 0.85; }
+.site-pin.unavailable:hover { transform: translate(-50%, -50%); }
+.site-pin.selected { z-index: 3; transform: translate(-50%, -50%) scale(1.3); border-color: #fff; outline: 3px solid var(--gold); }
+.site-map-hint { font-size: 12px; color: var(--ink-soft); margin: 8px 0 0; }
+.site-select-label { display: block; margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
+.site-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-size: 14px;
+  background: var(--bg-alt);
+  color: var(--ink);
+  margin-top: 6px;
+}
+.calc-card select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-size: 15px;
+  background: var(--bg-alt);
+  color: var(--ink);
+}
+.site-info {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.site-info strong { color: var(--gold-strong, var(--gold)); font-size: 15px; }
+
+.quote-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+.quote-box .quote-title { color: var(--ink); font-weight: 700; margin-bottom: 4px; }
+.quote-box .quote-row { display: flex; justify-content: space-between; gap: 12px; }
+.quote-box .quote-warn { color: #f2c766; margin-top: 6px; }
+.quote-box .quote-err { color: #f29a9a; margin-top: 6px; }
+.quote-box .tag-holiday { color: var(--gold); }
+.early-label { display: flex !important; gap: 8px; align-items: flex-start; line-height: 1.5; }
+.early-label small { display: block; color: var(--ink-muted); font-size: 12px; margin-top: 2px; }
+
+@media (max-width: 560px) {
+  .site-map-inner { min-width: 600px; }
+}
+.cal-reset-btn { background: transparent; border: 1px solid var(--border-strong); color: var(--gold-strong, var(--gold)); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; margin-top: 6px; font-family: inherit; }
+.cal-reset-btn:hover { background: var(--bg-alt); }
+.cal-reset-btn[hidden] { display: none; }
+.cal-instruction {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold-strong, var(--gold));
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  background: rgba(224, 176, 70, 0.12);
+  line-height: 1.5;
+}
+
+/* ---------- 營位實景照片 ---------- */
+.site-info-note { color: #b4531a; font-size: 12px; }
+.site-photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.site-photo {
+  width: 120px;
+  height: 90px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-alt);
+  cursor: zoom-in;
+}
+.site-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.site-photo:focus-visible { outline: 2px solid var(--gold-strong, var(--gold)); outline-offset: 2px; }
+.site-photo-none { margin-top: 8px; font-size: 12px; color: var(--gray); }
+.site-photo-box {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px 56px;
+}
+.site-photo-box[hidden] { display: none; }
+.site-photo-box img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+.site-photo-close {
+  position: absolute; top: 10px; right: 12px;
+  width: 44px; height: 44px;
+  border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18); color: #fff;
+  font-size: 28px; line-height: 1; cursor: pointer;
+}
+.site-photo-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 56px;
+  border: 0; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.18); color: #fff;
+  font-size: 32px; line-height: 1; cursor: pointer;
+}
+.site-photo-nav[hidden] { display: none; }
+.site-photo-nav.prev { left: 8px; }
+.site-photo-nav.next { right: 8px; }
+.site-photo-cap { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; }
+body.site-photo-open { overflow: hidden; }
+
+/* 營位實景照片：地圖下方大圖 */
+.site-photos { display: block; margin-top: 10px; }
+.site-photo-big {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-alt);
+  cursor: zoom-in;
+}
+.site-photo-big img { width: 100%; height: 340px; object-fit: cover; display: block; }
+@media (max-width: 560px) { .site-photo-big img { height: 300px; } }
+.site-photo-tip {
+  position: absolute; right: 8px; bottom: 8px;
+  padding: 3px 10px; border-radius: 12px;
+  background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 12px;
+}
+.site-photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.site-photo-thumbs .site-photo { width: 72px; height: 54px; }
+.site-photo-thumbs .site-photo.active { outline: 2px solid var(--gold-strong, var(--gold)); outline-offset: 1px; }
+.site-info { margin-bottom: 12px; }
+
+.site-note { display: inline-block; margin-top: 4px; padding: 1px 10px; border-radius: 10px; background: var(--gold-strong, var(--gold)); color: #fff; font-size: 12px; font-weight: 700; }
