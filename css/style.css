@@ -2198,3 +2198,28 @@ html { scroll-behavior: smooth; }
 .site-photo-nav.next { right: 8px; }
 .site-photo-cap { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; }
 body.site-photo-open { overflow: hidden; }
+
+/* 營位實景照片：地圖下方大圖 */
+.site-photos { display: block; margin-top: 10px; }
+.site-photo-big {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-alt);
+  cursor: zoom-in;
+}
+.site-photo-big img { width: 100%; height: 340px; object-fit: cover; display: block; }
+@media (max-width: 560px) { .site-photo-big img { height: 300px; } }
+.site-photo-tip {
+  position: absolute; right: 8px; bottom: 8px;
+  padding: 3px 10px; border-radius: 12px;
+  background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 12px;
+}
+.site-photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.site-photo-thumbs .site-photo { width: 72px; height: 54px; }
+.site-photo-thumbs .site-photo.active { outline: 2px solid var(--gold-strong, var(--gold)); outline-offset: 1px; }
+.site-info { margin-bottom: 12px; }

@@ -449,19 +449,41 @@ document.addEventListener("DOMContentLoaded", function () {
     var wrap = document.createElement("div");
     if (urls.length) {
       wrap.className = "site-photos";
-      urls.forEach(function (u, i) {
-        var btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "site-photo";
-        btn.setAttribute("aria-label", s.id + t(" 實景照片，點擊放大", " photo, tap to enlarge"));
-        var img = document.createElement("img");
-        img.src = u;
-        img.alt = s.id + t(" 營位實景照片", " campsite photo");
-        img.loading = "lazy";
-        btn.appendChild(img);
-        btn.addEventListener("click", function () { openPhoto(urls, i, s.id); });
-        wrap.appendChild(btn);
-      });
+      var cur = 0;
+      var big = document.createElement("button");
+      big.type = "button";
+      big.className = "site-photo-big";
+      big.setAttribute("aria-label", s.id + t(" 實景照片，點擊放大", " photo, tap to enlarge"));
+      var bigImg = document.createElement("img");
+      bigImg.alt = s.id + t(" 營位實景照片", " campsite photo");
+      bigImg.src = urls[0];
+      var tip = document.createElement("span");
+      tip.className = "site-photo-tip";
+      tip.textContent = t("點照片放大", "Tap to enlarge");
+      big.appendChild(bigImg);
+      big.appendChild(tip);
+      big.addEventListener("click", function () { openPhoto(urls, cur, s.id); });
+      wrap.appendChild(big);
+      if (urls.length > 1) {
+        var row = document.createElement("div");
+        row.className = "site-photo-thumbs";
+        urls.forEach(function (u, i) {
+          var tb = document.createElement("button");
+          tb.type = "button";
+          tb.className = "site-photo" + (i === 0 ? " active" : "");
+          var im = document.createElement("img");
+          im.src = u;
+          im.alt = s.id + " " + (i + 1);
+          tb.appendChild(im);
+          tb.addEventListener("click", function () {
+            cur = i;
+            bigImg.src = u;
+            Array.prototype.forEach.call(row.children, function (c, k) { c.classList.toggle("active", k === i); });
+          });
+          row.appendChild(tb);
+        });
+        wrap.appendChild(row);
+      }
     } else {
       wrap.className = "site-photo-none";
       wrap.textContent = t("實景照片陸續更新中", "Site photos coming soon");
