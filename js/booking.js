@@ -70,6 +70,8 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   var P = null; // lib/pricing.js（動態載入，前後端共用）
+  var PHOTOS = {}; // lib/sitePhotos.js：各營位實景照片張數
+  var previewId = null; // 點到「已被預訂」的營位時，只看照片、不選取
   var today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
   var minYear = parseInt(today.slice(0, 4), 10);
   var minMonth = parseInt(today.slice(5, 7), 10);
@@ -289,7 +291,11 @@ document.addEventListener("DOMContentLoaded", function () {
       b.style.left = (pos[0] / MAP_W) * 100 + "%";
       b.style.top = (pos[1] / MAP_H) * 100 + "%";
       b.addEventListener("click", function () {
-        if (b.classList.contains("unavailable")) return;
+        if (b.classList.contains("unavailable")) {
+          previewId = s.id; // 已被預訂：不能選，但仍可看實景照片
+          updateSiteInfo();
+          return;
+        }
         chooseSite(s.id);
       });
       pinsEl.appendChild(b);
@@ -346,6 +352,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function chooseSite(id) {
+    previewId = null;
     siteId = id || null;
     var s = siteObj();
     // 帳篷數量選項依營位的可搭帳數
@@ -362,8 +369,70 @@ document.addEventListener("DOMContentLoaded", function () {
     updateAll();
   }
 
+  function photoUrls(id) {
+    var n = PHOTOS[id] || 0;
+    var urls = [];
+    for (var i = 1; i <= n; i++) urls.push("images/sites/" + id + (i === 1 ? "" : "-" + i) + ".jpg");
+    return urls;
+  }
+
+  var photoBox = null;
+  var photoState = { urls: [], i: 0, id: "" };
+
+  function showPhoto() {
+    var img = photoBox.querySelector("img");
+    img.src = photoState.urls[photoState.i];
+    img.alt = photoState.id + t(" 營位實景照片", " campsite photo");
+    var multi = photoState.urls.length > 1;
+    photoBox.querySelector(".prev").hidden = !multi;
+    photoBox.querySelector(".next").hidden = !multi;
+    photoBox.querySelector(".site-photo-cap").textContent =
+      photoState.id + (multi ? "　" + (photoState.i + 1) + " / " + photoState.urls.length : "");
+  }
+
+  function closePhoto() {
+    if (photoBox) photoBox.hidden = true;
+    document.body.classList.remove("site-photo-open");
+  }
+
+  function stepPhoto(d) {
+    var n = photoState.urls.length;
+    photoState.i = (photoState.i + d + n) % n;
+    showPhoto();
+  }
+
+  function openPhoto(urls, i, id) {
+    if (!photoBox) {
+      photoBox = document.createElement("div");
+      photoBox.className = "site-photo-box";
+      photoBox.hidden = true;
+      photoBox.innerHTML =
+        '<button type="button" class="site-photo-close" aria-label="關閉 / Close">×</button>' +
+        '<button type="button" class="site-photo-nav prev" aria-label="上一張 / Previous">‹</button>' +
+        '<img alt="">' +
+        '<button type="button" class="site-photo-nav next" aria-label="下一張 / Next">›</button>' +
+        '<div class="site-photo-cap"></div>';
+      document.body.appendChild(photoBox);
+      photoBox.addEventListener("click", function (e) {
+        if (e.target === photoBox || e.target.classList.contains("site-photo-close")) closePhoto();
+      });
+      photoBox.querySelector(".prev").addEventListener("click", function () { stepPhoto(-1); });
+      photoBox.querySelector(".next").addEventListener("click", function () { stepPhoto(1); });
+      document.addEventListener("keydown", function (e) {
+        if (photoBox.hidden) return;
+        if (e.key === "Escape") closePhoto();
+        else if (e.key === "ArrowLeft" && photoState.urls.length > 1) stepPhoto(-1);
+        else if (e.key === "ArrowRight" && photoState.urls.length > 1) stepPhoto(1);
+      });
+    }
+    photoState = { urls: urls, i: i, id: id };
+    showPhoto();
+    photoBox.hidden = false;
+    document.body.classList.add("site-photo-open");
+  }
+
   function updateSiteInfo() {
-    var s = siteObj();
+    var s = previewId ? P.getSite(previewId) : siteObj();
     if (!s) {
       siteInfoEl.innerHTML = "";
       return;
@@ -373,7 +442,31 @@ document.addEventListener("DOMContentLoaded", function () {
       "<strong>" + s.id + "</strong>　" + zoneName + "　" + s.length + "×" + s.width + t(" 公尺", " m") + "<br>" +
       tentsText(s) + "　" +
       t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" +
-      t("夜衝 ", "Early arrival ") + money(s.early);
+      t("夜衝 ", "Early arrival ") + money(s.early) +
+      (previewId ? '<br><span class="site-info-note">' + t("此營位在您選的日期已被預訂，僅供查看照片。", "This site is booked for your dates; photos are for viewing only.") + "</span>" : "");
+
+    var urls = photoUrls(s.id);
+    var wrap = document.createElement("div");
+    if (urls.length) {
+      wrap.className = "site-photos";
+      urls.forEach(function (u, i) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "site-photo";
+        btn.setAttribute("aria-label", s.id + t(" 實景照片，點擊放大", " photo, tap to enlarge"));
+        var img = document.createElement("img");
+        img.src = u;
+        img.alt = s.id + t(" 營位實景照片", " campsite photo");
+        img.loading = "lazy";
+        btn.appendChild(img);
+        btn.addEventListener("click", function () { openPhoto(urls, i, s.id); });
+        wrap.appendChild(btn);
+      });
+    } else {
+      wrap.className = "site-photo-none";
+      wrap.textContent = t("實景照片陸續更新中", "Site photos coming soon");
+    }
+    siteInfoEl.appendChild(wrap);
   }
 
   /* ---------- 明細與價格 ---------- */
@@ -662,9 +755,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* ---------- 啟動 ---------- */
 
-  import("/lib/pricing.js")
-    .then(function (mod) {
-      P = mod;
+  Promise.all([
+    import("/lib/pricing.js"),
+    import("/lib/sitePhotos.js").catch(function () { return { SITE_PHOTOS: {} }; })
+  ])
+    .then(function (mods) {
+      P = mods[0];
+      PHOTOS = (mods[1] && mods[1].SITE_PHOTOS) || {};
       buildPins();
       chooseSite(null);
       return loadMonthData(year, month);
