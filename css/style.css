@@ -2223,3 +2223,5 @@ body.site-photo-open { overflow: hidden; }
 .site-photo-thumbs .site-photo { width: 72px; height: 54px; }
 .site-photo-thumbs .site-photo.active { outline: 2px solid var(--gold-strong, var(--gold)); outline-offset: 1px; }
 .site-info { margin-bottom: 12px; }
+
+.site-note { display: inline-block; margin-top: 4px; padding: 1px 10px; border-radius: 10px; background: var(--gold-strong, var(--gold)); color: #fff; font-size: 12px; font-weight: 700; }

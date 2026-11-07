@@ -72,6 +72,10 @@ document.addEventListener("DOMContentLoaded", function () {
   var P = null; // lib/pricing.js（動態載入，前後端共用）
   var PHOTOS = {}; // lib/sitePhotos.js：各營位實景照片張數
   var previewId = null; // 點到「已被預訂」的營位時，只看照片、不選取
+  // 營位備註（只顯示在營位資訊裡）。要加備註：在這裡新增一行即可。
+  var SITE_NOTES = {
+    C1: { zh: "適合露營車停放", en: "Suitable for motorhomes / RVs" }
+  };
   var today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
   var minYear = parseInt(today.slice(0, 4), 10);
   var minMonth = parseInt(today.slice(5, 7), 10);
@@ -443,6 +447,7 @@ document.addEventListener("DOMContentLoaded", function () {
       tentsText(s) + "　" +
       t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" +
       t("夜衝 ", "Early arrival ") + money(s.early) +
+      (SITE_NOTES[s.id] ? '<br><span class="site-note">' + t(SITE_NOTES[s.id].zh, SITE_NOTES[s.id].en) + "</span>" : "") +
       (previewId ? '<br><span class="site-info-note">' + t("此營位在您選的日期已被預訂，僅供查看照片。", "This site is booked for your dates; photos are for viewing only.") + "</span>" : "");
 
     var urls = photoUrls(s.id);
