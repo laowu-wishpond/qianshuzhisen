@@ -2,12 +2,13 @@
 // PATCH /api/admin-bookings  { id, payment_status }                       → 更新單筆訂單狀態
 // 兩支都需要先登入（admin_session cookie 合法）才能用。
 import { getSupabaseAdmin } from "../lib/supabase.js";
-import { isAuthorized } from "../lib/adminAuth.js";
+import { getRole, maskPhone } from "../lib/adminAuth.js";
 
 const ALLOWED_STATUS = ["pending", "paid", "failed", "cancelled"];
 
 export default async function handler(req, res) {
-  if (!isAuthorized(req)) {
+  const role = getRole(req);
+  if (!role) {
     return res.status(401).json({ error: "未登入或登入已逾期，請重新登入" });
   }
 
@@ -30,10 +31,18 @@ export default async function handler(req, res) {
       console.error("admin-bookings GET error:", error);
       return res.status(500).json({ error: "查詢訂單失敗" });
     }
-    return res.status(200).json({ bookings: data || [] });
+    let bookings = data || [];
+    // 唯讀角色看不到完整電話
+    if (role !== "admin") {
+      bookings = bookings.map((b) => ({ ...b, customer_phone: maskPhone(b.customer_phone) }));
+    }
+    return res.status(200).json({ bookings, role });
   }
 
   if (req.method === "PATCH") {
+    if (role !== "admin") {
+      return res.status(403).json({ error: "唯讀帳號無法修改訂單" });
+    }
     const { id, payment_status } = req.body || {};
     if (!id || !payment_status) {
       return res.status(400).json({ error: "缺少 id 或 payment_status" });

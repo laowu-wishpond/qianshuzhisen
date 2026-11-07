@@ -1,6 +1,6 @@
-// POST /api/admin-login  { password } → 驗證密碼，通過後發登入 cookie
+// POST /api/admin-login  { password } → 驗證密碼（完整或唯讀），通過後發登入 cookie，回傳 role
 // DELETE /api/admin-login → 登出，清掉 cookie
-import { createSessionToken, ADMIN_COOKIE_NAME } from "../lib/adminAuth.js";
+import { createSessionToken, roleForPassword, ADMIN_COOKIE_NAME } from "../lib/adminAuth.js";
 
 export default async function handler(req, res) {
   if (req.method === "DELETE") {
@@ -22,13 +22,14 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "後端尚未設定 ADMIN_PASSWORD 環境變數" });
   }
 
-  if (!password || password !== adminPassword) {
+  const role = roleForPassword(password);
+  if (!role) {
     return res.status(401).json({ error: "密碼錯誤" });
   }
 
   let token;
   try {
-    token = createSessionToken();
+    token = createSessionToken(role);
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
@@ -37,5 +38,5 @@ export default async function handler(req, res) {
     "Set-Cookie",
     `${ADMIN_COOKIE_NAME}=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${60 * 60 * 24 * 7}`
   );
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, role });
 }

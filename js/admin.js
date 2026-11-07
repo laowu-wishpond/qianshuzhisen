@@ -13,6 +13,14 @@ document.addEventListener("DOMContentLoaded", function () {
   var filterStatus = document.getElementById("filterStatus");
   var messagesBody = document.getElementById("messagesBody");
   var messagesError = document.getElementById("messagesError");
+  var roleBadge = document.getElementById("roleBadge");
+  var paidSummary = document.getElementById("paidSummary");
+  var currentRole = "admin"; // 由後端回傳；viewer = 唯讀
+
+  function setRole(role) {
+    currentRole = role === "viewer" ? "viewer" : "admin";
+    roleBadge.hidden = currentRole !== "viewer";
+  }
 
   var statusLabels = {
     pending: "待確認",
@@ -67,6 +75,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function renderBookings(bookings) {
     bookingsBody.innerHTML = "";
+    var paidTotal = 0, paidCount = 0;
+    bookings.forEach(function (b) {
+      if (b.payment_status === "paid") {
+        paidTotal += Number(b.total_amount || 0);
+        paidCount += 1;
+      }
+    });
+    paidSummary.textContent =
+      "目前列表中已付款 " + paidCount + " 筆，合計 NT$" + paidTotal.toLocaleString();
     if (!bookings.length) {
       bookingsBody.innerHTML = '<tr><td colspan="11">目前沒有符合條件的訂單</td></tr>';
       return;
@@ -94,14 +111,18 @@ document.addEventListener("DOMContentLoaded", function () {
       var actionsTd = document.createElement("td");
       actionsTd.className = "admin-actions";
 
-      if (b.payment_status !== "paid") {
+      if (currentRole !== "admin") {
+        actionsTd.textContent = "—";
+      }
+
+      if (currentRole === "admin" && b.payment_status !== "paid") {
         actionsTd.appendChild(
           makeActionBtn("標記已付款", function () {
             updateStatus(b.id, "paid");
           })
         );
       }
-      if (b.payment_status !== "cancelled") {
+      if (currentRole === "admin" && b.payment_status !== "cancelled") {
         actionsTd.appendChild(
           makeActionBtn("取消訂單", function () {
             if (confirm("確定要取消這筆訂單嗎？取消後會釋出該日期的營位。")) {
@@ -137,6 +158,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       })
       .then(function (data) {
+        setRole(data.role);
         renderBookings(data.bookings || []);
       })
       .catch(function (err) {
@@ -165,7 +187,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "</span></td>";
 
       var actionsTd = document.createElement("td");
-      if (m.status !== "read") {
+      if (currentRole === "admin" && m.status !== "read") {
         actionsTd.appendChild(
           makeActionBtn("標記已讀", function () {
             fetch("/api/admin-messages", {
@@ -222,7 +244,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!res.ok) throw new Error("密碼錯誤");
         return res.json();
       })
-      .then(function () {
+      .then(function (data) {
+        setRole(data && data.role);
         loginForm.reset();
         showDashboard();
         loadBookings();
@@ -253,6 +276,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       return res.json().then(function (data) {
         showDashboard();
+        setRole(data.role);
         renderBookings(data.bookings || []);
         loadMessages();
       });

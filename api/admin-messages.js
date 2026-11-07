@@ -1,12 +1,13 @@
 // GET   /api/admin-messages           → 查留言列表
 // PATCH /api/admin-messages { id, status } → 更新單筆留言狀態（new / read）
 import { getSupabaseAdmin } from "../lib/supabase.js";
-import { isAuthorized } from "../lib/adminAuth.js";
+import { getRole, maskPhone } from "../lib/adminAuth.js";
 
 const ALLOWED_STATUS = ["new", "read"];
 
 export default async function handler(req, res) {
-  if (!isAuthorized(req)) {
+  const role = getRole(req);
+  if (!role) {
     return res.status(401).json({ error: "未登入或登入已逾期，請重新登入" });
   }
 
@@ -22,10 +23,17 @@ export default async function handler(req, res) {
       console.error("admin-messages GET error:", error);
       return res.status(500).json({ error: "查詢留言失敗" });
     }
-    return res.status(200).json({ messages: data || [] });
+    let messages = data || [];
+    if (role !== "admin") {
+      messages = messages.map((m) => ({ ...m, phone: maskPhone(m.phone) }));
+    }
+    return res.status(200).json({ messages, role });
   }
 
   if (req.method === "PATCH") {
+    if (role !== "admin") {
+      return res.status(403).json({ error: "唯讀帳號無法修改留言" });
+    }
     const { id, status } = req.body || {};
     if (!id || !status || !ALLOWED_STATUS.includes(status)) {
       return res.status(400).json({ error: "缺少或不合法的參數" });
