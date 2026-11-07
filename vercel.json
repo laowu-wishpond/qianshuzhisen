@@ -1,7 +1,10 @@
 {
   "redirects": [
     {
-      "source": "/:path((?!admin\\.html|api/|maintenance\\.html|images/|css/|js/|lib/|favicon|robots\\.txt).*)",
+      "source": "/:path((?!admin\\.html|api/|maintenance\\.html|images/|css/|js/|lib/|videos/|audio/|favicon|robots\\.txt).*)",
+      "missing": [
+        { "type": "query", "key": "preview", "value": "d311b4ebf170e9be" }
+      ],
       "destination": "/maintenance.html",
       "permanent": false
     }
