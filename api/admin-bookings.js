@@ -15,6 +15,7 @@ export default async function handler(req, res) {
   const supabase = getSupabaseAdmin();
 
   if (req.method === "GET") {
+    await supabase.rpc("expire_stale_holds");
     const { from, to, status } = req.query;
     let query = supabase
       .from("bookings")

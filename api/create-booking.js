@@ -6,7 +6,7 @@
 //    如果是「銀行匯款」，直接回傳金額，前端顯示既有的匯款須知
 
 import { getSupabaseAdmin } from "../lib/supabase.js";
-import { BOOKING_OPEN } from "../lib/siteStatus.js";
+import { isBookingOpen, HOLD_MINUTES } from "../lib/siteStatus.js";
 import { quoteStay, getSite, addDays, isValidISODate } from "../lib/pricing.js";
 import {
   genCheckMacValue,
@@ -26,9 +26,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // 網站尚未正式開放：一律拒絕新訂單（開關在 lib/siteStatus.js）
-  if (!BOOKING_OPEN) {
-    return res.status(503).json({ error: "目前尚未開放線上訂位，開放時間將另行公告。" });
+  // 還沒到開放預約的時間：一律拒絕新訂單（開放時間在 lib/siteStatus.js，由伺服器的時鐘判斷）
+  if (!isBookingOpen(new Date(), req.headers.cookie || "")) {
+    return res.status(503).json({ error: "線上預約尚未開放，開放後即可預約。" });
   }
 
   const { name, phone, email, siteId, checkIn, checkOut, earlyArrival, tents, people, paymentMethod, notes } =
@@ -72,6 +72,8 @@ export default async function handler(req, res) {
   const method = "bank_transfer";
 
   const supabase = getSupabaseAdmin();
+  // 先把逾時沒回報匯款的保留單釋出，營位才會即時空出來給下一位
+  await supabase.rpc("expire_stale_holds");
 
   // 先檢查這個營位在這幾晚（含夜衝那一晚）有沒有人佔用。
   // 真正防止重複預約的是資料庫的唯一索引（見 migration），這裡先擋是為了給客人清楚的提示。
@@ -113,6 +115,7 @@ export default async function handler(req, res) {
       total_amount: total,
       payment_method: method,
       payment_status: "pending",
+      hold_expires_at: new Date(Date.now() + HOLD_MINUTES * 60 * 1000).toISOString(),
       notes: notes || null,
     })
     .select()
@@ -160,6 +163,8 @@ export default async function handler(req, res) {
       bookingId: booking.id,
       paymentMethod: "bank_transfer",
       totalAmount: total,
+      holdExpiresAt: booking.hold_expires_at,
+      holdMinutes: HOLD_MINUTES,
     });
   }
 

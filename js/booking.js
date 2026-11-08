@@ -40,6 +40,61 @@ document.addEventListener("DOMContentLoaded", function () {
   var resultEl = document.getElementById("bookingResult");
   var bankNoticeEl = document.getElementById("bankTransferNotice");
 
+  /* ---------- 開放預約時間（由伺服器判斷，到點自動開放） ---------- */
+  var gateOpen = true;
+  var gateOpensAt = null;
+  var gateBtn = form ? form.querySelector('button[type="submit"]') : null;
+  var gateBtnHTML = gateBtn ? gateBtn.innerHTML : "";
+  var gateNote = null;
+  if (form && gateBtn) {
+    gateNote = document.createElement("p");
+    gateNote.className = "notice";
+    gateNote.style.cssText = "margin-top:14px;font-weight:600;";
+    gateNote.hidden = true;
+    gateBtn.insertAdjacentElement("beforebegin", gateNote);
+  }
+  function gateTimeLabel() {
+    if (!gateOpensAt) return "";
+    var d = new Date(gateOpensAt);
+    var opt = { timeZone: "Asia/Taipei", month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false };
+    return d.toLocaleString(document.documentElement.lang === "en" ? "en-US" : "zh-TW", opt);
+  }
+  function applyGate() {
+    if (!gateBtn) return;
+    var en = typeof isEnglish === "function" && isEnglish();
+    if (gateOpen) {
+      if (gateNote) gateNote.hidden = true;
+      if (gateBtn.dataset.gated) {
+        gateBtn.disabled = false;
+        gateBtn.innerHTML = gateBtnHTML;
+        delete gateBtn.dataset.gated;
+      }
+    } else {
+      var label = gateTimeLabel();
+      gateBtn.dataset.gated = "1";
+      gateBtn.disabled = true;
+      gateBtn.textContent = en ? "Booking opens " + label : label + " 開放預約";
+      if (gateNote) {
+        gateNote.hidden = false;
+        gateNote.textContent = en
+          ? "Online booking opens " + label + " (Taiwan time). Until then you can browse the campsites and prices."
+          : "線上預約將於 " + label + " 開放，目前可以先瀏覽營位與價格。";
+      }
+    }
+  }
+  function refreshGate() {
+    fetch("/api/booking-status", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        gateOpen = !!d.open;
+        gateOpensAt = d.opensAt;
+        applyGate();
+      })
+      .catch(function () { /* 查不到就維持原狀，真正擋單的是後端 */ });
+  }
+  refreshGate();
+  setInterval(refreshGate, 30000);
+
   // 地圖上每個營位的位置（以 images/site-map.jpg 1374×1145 的像素座標，程式會換算成百分比）
   var MAP_W = 1374;
   var MAP_H = 1145;
@@ -258,9 +313,16 @@ document.addEventListener("DOMContentLoaded", function () {
   // - 還沒選過：這天是入住日，先預設住一晚（價格馬上算出來）
   // - 已選入住日後，點更晚的日期：改成退房日（連住多晚）
   // - 點入住日當天或更早的日期：重新以這天當入住日（預設住一晚）
-  // - 想把入住日改到更晚，按「重新選擇日期」
+  // - 想把入住日改到更晚，按「取消選擇日期」重選
+  // - 再點一次入住日：取消全部日期選擇
+  // - 再點一次退房日：退回只住一晚（再點入住日就能完全取消）
   function pickDate(iso) {
-    if (!checkIn) {
+    if (checkIn && iso === checkIn) {
+      checkIn = null;
+      checkOut = null;
+    } else if (checkIn && checkOut && iso === checkOut && P.addDays(checkIn, 1) !== checkOut) {
+      checkOut = P.addDays(checkIn, 1);
+    } else if (!checkIn) {
       checkIn = iso;
       checkOut = P.addDays(iso, 1);
     } else if (iso > checkIn) {
@@ -514,7 +576,7 @@ document.addEventListener("DOMContentLoaded", function () {
     selectedLabel.textContent = text;
     if (resetBtn) {
       resetBtn.hidden = !checkIn;
-      resetBtn.textContent = t("重新選擇日期", "Reset dates");
+      resetBtn.textContent = t("✕ 取消選擇日期", "✕ Clear dates");
     }
   }
 
@@ -605,6 +667,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function updateAll() {
+    applyGate();
     renderCalendar();
     updateSelectedLabel();
     buildSelect();
@@ -694,6 +757,11 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
+      if (!gateOpen) {
+        showError("線上預約尚未開放（" + gateTimeLabel() + " 開放）", "Online booking isn't open yet (opens " + gateTimeLabel() + ").");
+        return;
+      }
+
       var paymentMethod = form.querySelector('input[name="paymentMethod"]:checked').value;
       var submitBtn = form.querySelector('button[type="submit"]');
       var submitBtnOriginalHTML = submitBtn.innerHTML;
@@ -760,6 +828,7 @@ document.addEventListener("DOMContentLoaded", function () {
             resultEl.textContent = isEnglish()
               ? "Booking request submitted! Order ID: " + data.bookingId.slice(0, 8) + ". Please complete payment per the transfer details below."
               : "預約申請已送出！訂單編號：" + data.bookingId.slice(0, 8) + "，請依下方匯款須知完成付款。";
+            showHoldPanel(data);
             form.reset();
             checkIn = null;
             checkOut = null;
@@ -780,6 +849,105 @@ document.addEventListener("DOMContentLoaded", function () {
         .finally(function () {
           submitBtn.disabled = false;
           submitBtn.innerHTML = submitBtnOriginalHTML;
+          applyGate();
+        });
+    });
+  }
+
+  /* ---------- 匯款保留時間與回報末五碼 ---------- */
+  var holdTimer = null;
+  function showHoldPanel(data) {
+    if (!data || !data.holdExpiresAt) return;
+    var old = document.getElementById("holdPanel");
+    if (old) old.remove();
+    if (holdTimer) clearInterval(holdTimer);
+
+    var expires = new Date(data.holdExpiresAt).getTime();
+    var panel = document.createElement("div");
+    panel.id = "holdPanel";
+    panel.className = "notice";
+    panel.style.cssText = "margin-top:14px;";
+    var info = document.createElement("p");
+    info.style.cssText = "font-weight:600;margin:0 0 10px;";
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;align-items:center;";
+    var input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "numeric";
+    input.maxLength = 5;
+    input.pattern = "[0-9]*";
+    input.placeholder = t("匯款帳號末五碼", "Last 5 digits of your account");
+    input.style.cssText = "max-width:200px;";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-primary";
+    btn.textContent = t("我已匯款，回報末五碼", "I've paid — send last 5 digits");
+    var msg = document.createElement("p");
+    msg.style.cssText = "margin:10px 0 0;";
+    row.appendChild(input);
+    row.appendChild(btn);
+    panel.appendChild(info);
+    panel.appendChild(row);
+    panel.appendChild(msg);
+    resultEl.insertAdjacentElement("afterend", panel);
+
+    function clock(ms) {
+      return new Date(ms).toLocaleTimeString(isEnglish() ? "en-US" : "zh-TW", {
+        timeZone: "Asia/Taipei", hour: "2-digit", minute: "2-digit", hour12: false
+      });
+    }
+    function tick() {
+      var left = Math.max(0, Math.ceil((expires - Date.now()) / 60000));
+      if (expires <= Date.now()) {
+        clearInterval(holdTimer);
+        info.textContent = t(
+          "保留時間已到，營位已釋出。如果您已經匯款，請直接電話聯絡我們；也可以重新預約。",
+          "The hold has expired and the site was released. If you've already paid, please call us — or book again."
+        );
+        row.style.display = "none";
+        loadMonthData(year, month).then(updateAll);
+        return;
+      }
+      info.textContent = t(
+        "已為您保留營位，請在 " + clock(expires) + " 前（還剩約 " + left + " 分鐘）完成匯款，並在下方回報匯款帳號末五碼。逾時系統會自動釋出營位給下一位。",
+        "Your site is held. Please pay before " + clock(expires) + " (about " + left + " min left) and send the last 5 digits of your transfer account below. Otherwise it will be released automatically."
+      );
+    }
+    tick();
+    holdTimer = setInterval(tick, 20000);
+
+    btn.addEventListener("click", function () {
+      var v = input.value.trim();
+      if (!/^\d{5}$/.test(v)) {
+        msg.style.color = "#f29a9a";
+        msg.textContent = t("請填 5 位數字", "Please enter exactly 5 digits.");
+        return;
+      }
+      btn.disabled = true;
+      fetch("/api/report-transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: data.bookingId, last5: v })
+      })
+        .then(function (r) {
+          return r.json().then(function (d) {
+            if (!r.ok) throw new Error(d.error || "failed");
+            return d;
+          });
+        })
+        .then(function () {
+          clearInterval(holdTimer);
+          row.style.display = "none";
+          info.textContent = t(
+            "已收到您回報的末五碼 " + v + "。營主核對款項後會與您聯絡確認，這段時間營位會為您保留。",
+            "Got it — last 5 digits " + v + ". We'll confirm after checking the payment; your site stays held meanwhile."
+          );
+          msg.textContent = "";
+        })
+        .catch(function (err) {
+          btn.disabled = false;
+          msg.style.color = "#f29a9a";
+          msg.textContent = err.message;
         });
     });
   }

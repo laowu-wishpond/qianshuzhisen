@@ -46,6 +46,9 @@ export default async function handler(req, res) {
 
   const supabase = getSupabaseAdmin();
 
+  // 逾時沒回報匯款的保留單先釋出，日曆上的空位才是即時的
+  await supabase.rpc("expire_stale_holds");
+
   const { data, error } = await supabase
     .from("booking_nights")
     .select("night_date, site_id")

@@ -73,6 +73,28 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
+  // 保留單的補充說明：已回報匯款（末五碼）／保留到幾點／逾時自動釋出
+  function holdNote(b) {
+    function hhmm(iso) {
+      return new Date(iso).toLocaleString("zh-TW", {
+        timeZone: "Asia/Taipei", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false
+      });
+    }
+    var note = "";
+    if (b.payment_status === "pending" && b.transfer_last5) {
+      note = "客人已回報匯款，末五碼 " + b.transfer_last5 + "（請核對後標記已付款）";
+    } else if (b.payment_status === "pending" && b.hold_expires_at) {
+      note = new Date(b.hold_expires_at) > new Date()
+        ? "保留到 " + hhmm(b.hold_expires_at) + "，尚未回報匯款"
+        : "保留時間已過，等待系統釋出";
+    } else if (b.payment_status === "cancelled" && b.cancel_reason === "expired") {
+      note = "逾時未匯款，系統自動釋出";
+    } else if (b.payment_status === "paid" && b.transfer_last5) {
+      note = "末五碼 " + b.transfer_last5;
+    }
+    return note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "";
+  }
+
   function renderBookings(bookings) {
     bookingsBody.innerHTML = "";
     var paidTotal = 0, paidCount = 0;
@@ -106,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>" + (b.payment_method === "ecpay" ? "線上刷卡" : b.payment_method === "linepay" ? "LINE Pay" : "銀行匯款") + "</td>" +
         '<td><span class="status-badge status-' + b.payment_status + '">' +
         (statusLabels[b.payment_status] || b.payment_status) +
-        "</span></td>";
+        "</span>" + holdNote(b) + "</td>";
 
       var actionsTd = document.createElement("td");
       actionsTd.className = "admin-actions";
