@@ -537,8 +537,10 @@ document.addEventListener("DOMContentLoaded", function () {
       note = t("請先選擇營位", "Choose a campsite first");
     } else if (!checkIn) {
       note = t("請先選擇入住日", "Choose a check-in date first");
-    } else if (!P.isEarlyAllowed(P.addDays(checkIn, -1))) {
-      note = t("週五晚不提供夜衝", "Early arrival is not offered on Friday nights");
+    } else if (P.earlyBlockReason(P.addDays(checkIn, -1))) {
+      note = P.earlyBlockReason(P.addDays(checkIn, -1)) === "newyear"
+        ? t("過年期間不提供夜衝", "Early arrival is not offered during Lunar New Year")
+        : t("假日（週五、週六、國定假日）不提供夜衝", "Early arrival is not offered on holiday nights (Fri, Sat, public holidays)");
     } else if (!earlyFree(s.id)) {
       note = t("前一晚這個營位已被預訂或日期已過，無法加訂夜衝", "Not available: the night before is booked or already past");
     } else {
@@ -581,7 +583,7 @@ document.addEventListener("DOMContentLoaded", function () {
         q.nights.forEach(function (n) {
           html +=
             '<div class="quote-row"><span>' + dateLabel(n.date) + "　" +
-            (n.type === "holiday" ? '<span class="tag-holiday">' + t("假日", "Holiday") + "</span>" : t("平日", "Weekday")) +
+            (n.newYear ? '<span class="tag-holiday">' + t("過年加價 +30%", "Lunar New Year +30%") + "</span>" : n.type === "holiday" ? '<span class="tag-holiday">' + t("假日", "Holiday") + "</span>" : t("平日", "Weekday")) +
             "</span><span>" + money(n.price) + "</span></div>";
         });
         if (q.early) {
