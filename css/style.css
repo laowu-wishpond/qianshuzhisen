@@ -2225,3 +2225,15 @@ body.site-photo-open { overflow: hidden; }
 .site-info { margin-bottom: 12px; }
 
 .site-note { display: inline-block; margin-top: 4px; padding: 1px 10px; border-radius: 10px; background: var(--gold-strong, var(--gold)); color: #fff; font-size: 12px; font-weight: 700; }
+
+/* 交通指引：入口照片 */
+.entrance-photos { margin-top: 40px; }
+.entrance-photos-title { font-size: 20px; margin-bottom: 8px; color: var(--ink); }
+.entrance-photos-lead { font-size: 14px; color: var(--ink-soft); margin-bottom: 18px; }
+.entrance-photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.entrance-photos-grid figure { margin: 0; }
+.entrance-photos-grid img { width: 100%; height: auto; border-radius: 10px; display: block; }
+.entrance-photos-grid figcaption { font-size: 13px; color: var(--ink-soft); margin-top: 6px; text-align: center; }
+@media (max-width: 640px) {
+  .entrance-photos-grid { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; }
+}
