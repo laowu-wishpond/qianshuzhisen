@@ -2,7 +2,7 @@
  依營位預約（林大哥規則）：
  - 客人先選「入住日 → 退房日」（可連住，連住不打折），再點地圖或清單選一個營位。
  - 價格是「每個營位／每晚」，整塊出租，不看帳數與人數；平日（週日～週四）與假日（週五、週六、國定假日）不同價。
- - 夜衝（前一晚 18:00～22:00 進場）可勾選，必須同時預訂隔日正式營位，用該營位的夜衝價。
+ - 夜衝（前一晚 18:00～22:00 進場）可勾選，必須同時預訂隔日正式營位；夜衝價 = 夜衝那一晚當天價格的 5 折。
  - 價格資料與計價公式在 lib/sites.js、lib/holidays.js、lib/pricing.js，
    前端（這支）與後端（api/create-booking.js）共用同一份，金額不會對不上；改價格只要改 lib/sites.js。
  - 空位來自 /api/get-availability（Supabase booking_nights 表的真實資料）。
@@ -508,7 +508,7 @@ document.addEventListener("DOMContentLoaded", function () {
       "<strong>" + s.id + "</strong>　" + zoneName + "　" + s.length + "×" + s.width + t(" 公尺", " m") + "<br>" +
       tentsText(s) + "　" +
       t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" +
-      t("夜衝 ", "Early arrival ") + money(s.early) +
+      t("夜衝 ", "Early arrival ") + t("平日 " + money(P.earlyPrice(s, "2026-11-10")) + "／假日 " + money(P.earlyPrice(s, "2026-11-13")), "weekday " + money(P.earlyPrice(s, "2026-11-10")) + " / holiday " + money(P.earlyPrice(s, "2026-11-13"))) +
       (SITE_NOTES[s.id] ? '<br><span class="site-note">' + t(SITE_NOTES[s.id].zh, SITE_NOTES[s.id].en) + "</span>" : "") +
       (previewId ? '<br><span class="site-info-note">' + t("此營位在您選的日期已被預訂，僅供查看照片。", "This site is booked for your dates; photos are for viewing only.") + "</span>" : "");
 
@@ -600,16 +600,17 @@ document.addEventListener("DOMContentLoaded", function () {
     } else if (!checkIn) {
       note = t("請先選擇入住日", "Choose a check-in date first");
     } else if (P.earlyBlockReason(P.addDays(checkIn, -1))) {
-      note = P.earlyBlockReason(P.addDays(checkIn, -1)) === "newyear"
-        ? t("過年期間不提供夜衝", "Early arrival is not offered during Lunar New Year")
-        : t("假日（週五、週六、國定假日）不提供夜衝", "Early arrival is not offered on holiday nights (Fri, Sat, public holidays)");
+      note = t("過年期間不提供夜衝", "Early arrival is not offered during Lunar New Year");
     } else if (!earlyFree(s.id)) {
       note = t("前一晚這個營位已被預訂或日期已過，無法加訂夜衝", "Not available: the night before is booked or already past");
     } else {
       can = true;
+      var eDate = P.addDays(checkIn, -1);
+      var ePrice = P.earlyPrice(s, eDate);
+      var eHoliday = P.dayTypeOf(eDate) === "holiday";
       note = t(
-        "夜衝 " + money(s.early) + "（須同時預訂隔日正式營位；22:00 後請降低音量）",
-        "Early arrival " + money(s.early) + " (must be combined with the next day's stay; quiet after 22:00)"
+        "夜衝（前一晚 18:00～22:00 進場）＋" + money(ePrice) + "，是前一晚" + (eHoliday ? "假日價" : "平日價") + "的 5 折；須同時預訂隔日正式營位，22:00 後請降低音量",
+        "Early arrival (arrive 18:00–22:00 the night before) +" + money(ePrice) + " — 50% off that night's " + (eHoliday ? "holiday" : "weekday") + " rate; must be combined with the next day's stay; quiet after 22:00"
       );
     }
     earlyBox.disabled = !can;
@@ -628,7 +629,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else if (!checkIn || !checkOut) {
       html =
         '<div class="quote-title">' + s.id + t("　營位價格", " rates") + "</div>" +
-        t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" + t("夜衝 ", "Early ") + money(s.early) +
+        t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" + t("夜衝 ", "Early ") + t("當晚價格 5 折", "50% off that night") +
         "<br>" + t("請在左邊選擇入住日與退房日。", "Select your check-in and check-out dates on the left.");
     } else {
       var free = siteFree(s.id);
@@ -649,7 +650,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "</span><span>" + money(n.price) + "</span></div>";
         });
         if (q.early) {
-          html += '<div class="quote-row"><span>' + dateLabel(q.early.date) + "　" + t("夜衝（前一晚進場）", "Early arrival") + "</span><span>" + money(q.early.price) + "</span></div>";
+          html += '<div class="quote-row"><span>' + dateLabel(q.early.date) + "　" + t("加訂前一晚夜衝（18:00～22:00 進場，當晚價格 5 折）", "Early arrival the night before (18:00–22:00, 50% off)") + "</span><span>" + money(q.early.price) + "</span></div>";
         }
         if (checkOut > P.HOLIDAYS_COVERED_THROUGH) {
           var y = P.HOLIDAYS_COVERED_THROUGH.slice(0, 4);
