@@ -438,7 +438,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function photoUrls(id) {
     var n = PHOTOS[id] || 0;
     var urls = [];
-    for (var i = 1; i <= n; i++) urls.push("images/sites/" + id + (i === 1 ? "" : "-" + i) + ".jpg");
+    for (var i = 1; i <= n; i++) urls.push("images/sites/" + id + (i === 1 ? "" : "-" + i) + ".jpg?v=20261108");
     return urls;
   }
 
