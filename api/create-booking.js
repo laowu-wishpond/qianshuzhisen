@@ -31,11 +31,11 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "線上預約尚未開放，開放後即可預約。" });
   }
 
-  const { name, phone, email, siteId, checkIn, checkOut, earlyArrival, tents, people, paymentMethod, notes } =
+  const { name, phone, email, siteId, checkIn, checkOut, earlyArrival, people, paymentMethod, notes } =
     req.body || {};
 
-  if (!name || !phone || !siteId || !checkIn || !checkOut || !tents || !people) {
-    return res.status(400).json({ error: "缺少必要欄位（姓名、電話、營位、入住／退房日期、帳篷數、人數）" });
+  if (!name || !phone || !siteId || !checkIn || !checkOut || !people) {
+    return res.status(400).json({ error: "缺少必要欄位（姓名、電話、營位、入住／退房日期、入住人數）" });
   }
   if (!isValidISODate(checkIn) || !isValidISODate(checkOut)) {
     return res.status(400).json({ error: "日期格式錯誤" });
@@ -46,13 +46,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "找不到這個營位" });
   }
 
-  const tentsCount = parseInt(tents, 10);
   const peopleCount = parseInt(people, 10);
-  if (!(tentsCount >= 1) || tentsCount > site.maxTents) {
-    return res.status(400).json({ error: `${site.id} 營位最多可搭 ${site.maxTents} 帳` });
-  }
   if (!(peopleCount >= 1) || peopleCount > 60) {
-    return res.status(400).json({ error: "人數請填 1～60 之間的數字" });
+    return res.status(400).json({ error: "請填入住人數（1～60 人）" });
   }
 
   const today = todayInTaipei();
@@ -109,7 +105,7 @@ export default async function handler(req, res) {
       check_out: checkOut,
       nights_count: nightsCount,
       early_arrival: !!quote.early,
-      tents_count: tentsCount,
+      tents_count: 1, // 不再收帳數（每人帶的帳篷大小不同），固定填 1 以符合資料表
       people_per_tent: peopleCount,
       per_tent_price: null,
       total_amount: total,

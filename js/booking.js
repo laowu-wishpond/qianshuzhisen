@@ -1,7 +1,7 @@
 /*
  依營位預約（林大哥規則）：
  - 客人先選「入住日 → 退房日」（可連住，連住不打折），再點地圖或清單選一個營位。
- - 價格是「每個營位／每晚」，整塊出租，不看帳數與人數；平日（週日～週四）與假日（週五、週六、國定假日）不同價。
+ - 價格是「每個營位／每晚」，整塊出租，不限帳數、不看人數；平日（週日～週四）與假日（週五、週六、國定假日）不同價。
  - 夜衝（前一晚 18:00～22:00 進場）可勾選，必須同時預訂隔日正式營位；夜衝價 = 夜衝那一晚當天價格的 5 折。
  - 價格資料與計價公式在 lib/sites.js、lib/holidays.js、lib/pricing.js，
    前端（這支）與後端（api/create-booking.js）共用同一份，金額不會對不上；改價格只要改 lib/sites.js。
@@ -31,7 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
   var siteSelect = document.getElementById("siteSelect");
   var siteInfoEl = document.getElementById("siteInfo");
   var quoteBox = document.getElementById("quoteBox");
-  var tentsSelect = document.getElementById("tents");
   var peopleInput = document.getElementById("people");
   var earlyBox = document.getElementById("earlyArrival");
   var earlyNote = document.getElementById("earlyNote");
@@ -368,15 +367,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function tentsText(s) {
-    return isEnglish()
-      ? "up to " + s.maxTents + (s.small ? " small tent(s)" : " tent(s)")
-      : "最多 " + s.maxTents + (s.small ? " 小帳" : " 帳");
-  }
-
   function siteSummary(s) {
     return (
-      s.id + " · " + s.length + "×" + s.width + t(" 公尺", " m") + " · " + tentsText(s) +
+      s.id + " · " + s.length + "×" + s.width + t(" 公尺", " m") +
       " · " + t("平日 ", "weekday ") + money(s.weekday) + " / " + t("假日 ", "holiday ") + money(s.holiday)
     );
   }
@@ -421,17 +414,6 @@ document.addEventListener("DOMContentLoaded", function () {
     previewId = null;
     siteId = id || null;
     var s = siteObj();
-    // 帳篷數量選項依營位的可搭帳數
-    var prev = parseInt(tentsSelect.value, 10) || 1;
-    tentsSelect.innerHTML = "";
-    var max = s ? s.maxTents : 1;
-    for (var i = 1; i <= max; i++) {
-      var o = document.createElement("option");
-      o.value = i;
-      o.textContent = i + (s && s.small ? t(" 小帳", " small tent") : "");
-      tentsSelect.appendChild(o);
-    }
-    tentsSelect.value = Math.min(prev, max);
     updateAll();
   }
 
@@ -506,7 +488,6 @@ document.addEventListener("DOMContentLoaded", function () {
     var zoneName = isEnglish() ? P.ZONES[s.zone].en : s.zone + " 區 " + P.ZONES[s.zone].zh;
     siteInfoEl.innerHTML =
       "<strong>" + s.id + "</strong>　" + zoneName + "　" + s.length + "×" + s.width + t(" 公尺", " m") + "<br>" +
-      tentsText(s) + "　" +
       t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" +
       t("夜衝 ", "Early arrival ") + t("平日 " + money(P.earlyPrice(s, "2026-11-10")) + "／假日 " + money(P.earlyPrice(s, "2026-11-13")), "weekday " + money(P.earlyPrice(s, "2026-11-10")) + " / holiday " + money(P.earlyPrice(s, "2026-11-13"))) +
       (SITE_NOTES[s.id] ? '<br><span class="site-note">' + t(SITE_NOTES[s.id].zh, SITE_NOTES[s.id].en) + "</span>" : "") +
@@ -753,6 +734,12 @@ document.addEventListener("DOMContentLoaded", function () {
         showError("請先選擇營位（點地圖上的編號或從清單選擇）", "Please choose a campsite (tap the map or use the list).");
         return;
       }
+      var peopleN = parseInt(peopleInput.value, 10);
+      if (!(peopleN >= 1) || peopleN > 60) {
+        showError("請填入住人數（1～60 人）", "Please enter the number of guests (1–60).");
+        peopleInput.focus();
+        return;
+      }
       if (quoteBox.dataset.blocked) {
         showError("所選營位在這些日期已被預訂，請改選其他營位或日期", "That campsite is booked for these dates. Please choose another site or dates.");
         return;
@@ -782,7 +769,6 @@ document.addEventListener("DOMContentLoaded", function () {
           checkIn: checkIn,
           checkOut: checkOut,
           earlyArrival: earlyBox.checked && !earlyBox.disabled,
-          tents: tentsSelect.value,
           people: peopleInput.value,
           paymentMethod: paymentMethod
         })

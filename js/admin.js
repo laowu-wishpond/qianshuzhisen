@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function () {
     paidSummary.textContent =
       "目前列表中已付款 " + paidCount + " 筆，合計 NT$" + paidTotal.toLocaleString();
     if (!bookings.length) {
-      bookingsBody.innerHTML = '<tr><td colspan="11">目前沒有符合條件的訂單</td></tr>';
+      bookingsBody.innerHTML = '<tr><td colspan="10">目前沒有符合條件的訂單</td></tr>';
       return;
     }
     bookings.forEach(function (b) {
@@ -122,7 +122,6 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>" + (b.early_arrival ? "有（前一晚）" : "—") + "</td>" +
         "<td>" + escapeHtml(b.customer_name) + "</td>" +
         "<td>" + escapeHtml(b.customer_phone) + "</td>" +
-        "<td>" + escapeHtml(b.tents_count) + "</td>" +
         "<td>" + escapeHtml(b.people_per_tent) + "</td>" +
         "<td>NT$" + Number(b.total_amount || 0).toLocaleString() + "</td>" +
         "<td>" + (b.payment_method === "ecpay" ? "線上刷卡" : b.payment_method === "linepay" ? "LINE Pay" : "銀行匯款") + "</td>" +
@@ -161,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function loadBookings() {
     dashError.textContent = "";
-    bookingsBody.innerHTML = '<tr><td colspan="11">載入中…</td></tr>';
+    bookingsBody.innerHTML = '<tr><td colspan="10">載入中…</td></tr>';
 
     var params = new URLSearchParams();
     if (filterFrom.value) params.set("from", filterFrom.value);

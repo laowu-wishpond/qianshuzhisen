@@ -223,17 +223,14 @@
       <div class="calc-card">
         <h3 style="margin-bottom:6px;"><span class="lang-zh">預約明細</span><span class="lang-en" hidden>Booking summary</span></h3>
         <p style="font-size:13px;color:var(--gray);">
-          <span class="lang-zh">營位整塊出租，同一營位同一晚價格固定，不論帳篷數與人數。</span>
-          <span class="lang-en" hidden>Each campsite is rented as a whole plot. The price is fixed per site per night, regardless of tents or guests.</span>
+          <span class="lang-zh">營位整塊出租，同一營位同一晚價格固定，不限帳篷數量，也不依人數加價。</span>
+          <span class="lang-en" hidden>Each campsite is rented as a whole plot. The price is fixed per site per night, regardless of the number of tents or guests.</span>
         </p>
 
         <div class="quote-box" id="quoteBox"></div>
 
-        <label for="tents"><span class="lang-zh">帳篷數量（依營位而定）</span><span class="lang-en" hidden>Number of tents (depends on the site)</span></label>
-        <select id="tents"><option value="1">1</option></select>
-
-        <label for="people"><span class="lang-zh">總人數（僅供營地準備，不影響價格）</span><span class="lang-en" hidden>Total guests (for our preparation only; doesn't affect price)</span></label>
-        <input type="number" id="people" value="2" min="1" max="60">
+        <label for="people"><span class="lang-zh">入住人數（必填，僅供營地準備，不影響價格）</span><span class="lang-en" hidden>Number of guests (required; for our preparation only, doesn't affect price)</span></label>
+        <input type="number" id="people" value="2" min="1" max="60" required inputmode="numeric">
 
         <label class="early-label" for="earlyArrival">
           <input type="checkbox" id="earlyArrival" disabled>
@@ -335,6 +332,6 @@
 
 <script src="js/main.js?v=20260923a"></script>
 <script src="js/open-banner.js?v=20261108a"></script>
-<script src="js/booking.js?v=20261108i"></script>
+<script src="js/booking.js?v=20261108j"></script>
 </body>
 </html>
