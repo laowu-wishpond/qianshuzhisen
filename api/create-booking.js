@@ -68,7 +68,8 @@ export default async function handler(req, res) {
   }
   const total = quote.total;
   const nightsCount = quote.nights.length;
-  const method = paymentMethod === "ecpay" || paymentMethod === "linepay" ? paymentMethod : "bank_transfer";
+  // 目前只開放銀行匯款（綠界、LINE Pay 尚未開通，之後開通再改回來）
+  const method = "bank_transfer";
 
   const supabase = getSupabaseAdmin();
 

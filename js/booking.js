@@ -537,6 +537,8 @@ document.addEventListener("DOMContentLoaded", function () {
       note = t("請先選擇營位", "Choose a campsite first");
     } else if (!checkIn) {
       note = t("請先選擇入住日", "Choose a check-in date first");
+    } else if (!P.isEarlyAllowed(P.addDays(checkIn, -1))) {
+      note = t("週五晚不提供夜衝", "Early arrival is not offered on Friday nights");
     } else if (!earlyFree(s.id)) {
       note = t("前一晚這個營位已被預訂或日期已過，無法加訂夜衝", "Not available: the night before is booked or already past");
     } else {
