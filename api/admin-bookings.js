@@ -56,7 +56,18 @@ export default async function handler(req, res) {
     if (role !== "admin") {
       return res.status(403).json({ error: "唯讀帳號無法修改訂單" });
     }
-    const { id, payment_status } = req.body || {};
+    const { id, payment_status, handled } = req.body || {};
+    if (id && typeof handled === "boolean" && !payment_status) {
+      const { error: hErr } = await supabase
+        .from("bookings")
+        .update({ handled, handled_at: handled ? new Date().toISOString() : null })
+        .eq("id", id);
+      if (hErr) {
+        console.error("admin-bookings handled error:", hErr);
+        return res.status(500).json({ error: "更新失敗" });
+      }
+      return res.status(200).json({ ok: true });
+    }
     if (!id || !payment_status) {
       return res.status(400).json({ error: "缺少 id 或 payment_status" });
     }

@@ -7,6 +7,14 @@
 <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="css/style.css?v=20260923a">
 <link rel="stylesheet" href="css/admin.css">
+<style>
+.handled-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.handled-cb{appearance:none;-webkit-appearance:none;width:26px;height:26px;flex:none;border:2px solid #333;border-radius:4px;background:#fff;cursor:pointer;position:relative;margin:0;}
+.handled-cb:checked{background:#2e7d32;border-color:#2e7d32;}
+.handled-cb:checked::after{content:"✓";color:#fff;font-size:20px;line-height:22px;position:absolute;left:4px;top:0;}
+.handled-cb:disabled{opacity:.6;cursor:not-allowed;}
+tr.row-handled td{opacity:.55;}
+</style>
 </head>
 <body class="admin-body">
 
@@ -116,6 +124,6 @@
   </section>
 </div>
 
-<script src="js/admin.js?v=20261109d"></script>
+<script src="js/admin.js?v=20261109e"></script>
 </body>
 </html>

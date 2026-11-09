@@ -161,7 +161,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "</div></td>" +
         "<td>" + escapeHtml(b.site_id || "—") + "</td>" +
         "<td>" + (b.early_arrival ? "有（前一晚）" : "—") + "</td>" +
-        "<td>" + escapeHtml(b.customer_name) + "</td>" +
+        '<td><label class="handled-wrap"><input type="checkbox" class="handled-cb"' +
+        (b.handled ? " checked" : "") + (currentRole !== "admin" ? " disabled" : "") +
+        ' aria-label="已處理"> <span>' + escapeHtml(b.customer_name) + "</span></label></td>" +
         "<td>" + escapeHtml(b.customer_phone) + "</td>" +
         "<td>" + escapeHtml(b.people_per_tent) + "</td>" +
         "<td>NT$" + Number(b.total_amount || 0).toLocaleString() + "</td>" +
@@ -169,6 +171,28 @@ document.addEventListener("DOMContentLoaded", function () {
         '<td><span class="status-badge status-' + b.payment_status + '">' +
         (b.payment_status === "paid" && b.payment_verified === false ? "已付款（待對帳）" : (statusLabels[b.payment_status] || b.payment_status)) +
         "</span>" + holdNote(b) + "</td>";
+
+      var cb = tr.querySelector(".handled-cb");
+      if (cb) {
+        if (b.handled) tr.classList.add("row-handled");
+        cb.addEventListener("change", function () {
+          var want = cb.checked;
+          fetch("/api/admin-bookings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: b.id, handled: want }),
+          })
+            .then(function (res) {
+              if (!res.ok) throw new Error("fail");
+              b.handled = want;
+              tr.classList.toggle("row-handled", want);
+            })
+            .catch(function () {
+              cb.checked = !want;
+              alert("勾選沒有存成功，請重新整理再試一次");
+            });
+        });
+      }
 
       var actionsTd = document.createElement("td");
       actionsTd.className = "admin-actions";

@@ -88,7 +88,7 @@ export default async function handler(req, res) {
     const trs = unpaid ? list.map((b, i) => {
       const phone = role === "admin" ? b.customer_phone : maskPhone(b.customer_phone);
       return "<tr>" +
-        "<td class=box><span class=cb></span></td>" +
+        "<td class=box><span class=cb>" + (b.handled ? "✓" : "") + "</span></td>" +
         "<td>" + (i + 1) + "</td>" +
         "<td><b>" + esc(b.customer_name) + "</b></td>" +
         "<td>" + esc(phone) + "</td>" +
@@ -134,7 +134,7 @@ thead { display: table-header-group; }
 td.r { text-align:right; white-space:nowrap; }
 td.chk { width:34px; }
 td.box { width:56px; text-align:center; }
-.cb { display:inline-block; width:22px; height:22px; border:2px solid #222; background:#fff; border-radius:3px; }
+.cb { display:inline-block; width:22px; height:22px; line-height:22px; font-size:18px; font-weight:bold; text-align:center; vertical-align:middle; border:2px solid #222; background:#fff; border-radius:3px; }
 td.note { min-width:110px; }
 .total { margin-top:10px; font-size:14px; font-weight:bold; text-align:right; }
 @media print { .bar { display:none; } body { margin:0; } }
