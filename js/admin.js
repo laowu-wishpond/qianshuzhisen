@@ -109,8 +109,12 @@ document.addEventListener("DOMContentLoaded", function () {
       note = "逾時未匯款，系統自動釋出";
     } else if (b.payment_status === "paid" && b.payment_verified === false) {
       note = "客人回報末五碼 " + (b.transfer_last5 || "") + "，系統已自動標記已付款。請對帳；對帳完成才會寄預約成功 email。";
-    } else if (b.payment_status === "paid" && b.transfer_last5) {
-      note = "末五碼 " + b.transfer_last5 + (b.confirmation_email_sent_at ? "　已寄確認信" : "");
+    } else if (b.payment_status === "paid" && b.payment_verified !== false) {
+      var mail = b.confirmation_email_sent_at
+        ? "預約成功信已寄出（" + hhmm(b.confirmation_email_sent_at) + "）"
+        : (b.customer_email ? "預約成功信尚未寄出（可按右邊「補寄預約成功信」）" : "沒有留 Email，請用電話／LINE 通知");
+      return '<div style="font-size:13px;margin-top:6px;color:#9be59b;font-weight:700;">✓ 已對帳完成，不用再按</div>' +
+        '<div style="font-size:12px;opacity:.9;margin-top:2px;">' + escapeHtml((b.transfer_last5 ? "末五碼 " + b.transfer_last5 + "　" : "") + mail) + "</div>";
     }
     return note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "";
   }
@@ -305,7 +309,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>NT$" + Number(b.total_amount || 0).toLocaleString() + "</td>" +
         "<td>" + (b.payment_method === "ecpay" ? "線上刷卡" : b.payment_method === "linepay" ? "LINE Pay" : "銀行匯款") + "</td>" +
         '<td><span class="status-badge status-' + b.payment_status + '">' +
-        (b.payment_status === "paid" && b.payment_verified === false ? "已付款（待對帳）" : (statusLabels[b.payment_status] || b.payment_status)) +
+        (b.payment_status === "paid" && b.payment_verified === false ? "已付款（待對帳）" : b.payment_status === "paid" ? "已對帳完成" : (statusLabels[b.payment_status] || b.payment_status)) +
         "</span>" + holdNote(b) + "</td>";
 
       var cb = tr.querySelector(".handled-cb");
@@ -357,7 +361,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       if (currentRole === "admin" && !inTrashView && b.payment_status === "paid" && b.payment_verified !== false) {
         actionsTd.appendChild(
-          makeActionBtn(b.confirmation_email_sent_at ? "再寄一次預約成功信" : "補寄預約成功信", function () {
+          makeActionBtn(b.confirmation_email_sent_at ? "已對帳 ✓ 再寄一次預約成功信" : "補寄預約成功信", function () {
             if (!b.customer_email) { alert("這位客人沒有留 email，請改用電話或 LINE 通知。"); return; }
             if (!confirm("要寄「預約成功」email 給 " + b.customer_email + " 嗎？")) return;
             fetch("/api/admin-bookings", {
