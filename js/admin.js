@@ -187,33 +187,38 @@ document.addEventListener("DOMContentLoaded", function () {
   var noticeBar = document.getElementById("noticeBar");
   var noticeBtn = document.getElementById("noticeBtn");
   var noticeMsg = document.getElementById("noticeMsg");
-  if (noticeBtn) {
-    noticeBtn.addEventListener("click", function () {
-      noticeBtn.disabled = true;
-      fetch("/api/admin-send-notice")
-        .then(function (res) { if (!res.ok) throw new Error("preview"); return res.json(); })
-        .then(function (s) {
-          if (!s.configured) { alert("寄信功能還沒設定好（Vercel 缺 RESEND_API_KEY / EMAIL_FROM）。"); return null; }
-          if (!s.totalEmails) { noticeMsg.textContent = "目前沒有需要寄的通知，全部都寄過了。"; return null; }
-          if (!s.canSendNow) { alert("過去 24 小時已經寄了 " + s.sentLast24h + " 封，已達單日防呆上限，請稍後再按。"); return null; }
-          var msg = "還有 " + s.totalEmails + " 封通知沒寄：\n・預約成功信（已對帳完成的客人）：" + s.confirmPending + " 封\n・已收到您的預約（待匯款／待對帳，同 email 合併）：" + s.receivedPending + " 封\n\n這次會寄出 " + s.canSendNow + " 封。確定要寄出嗎？寄出後無法收回。";
-          if (!confirm(msg)) return null;
-          return fetch("/api/admin-send-notice", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
-            .then(function (res) { return res.json().then(function (r) { return { ok: res.ok, r: r }; }); })
-            .then(function (x) {
-              if (x.ok) {
-                noticeMsg.textContent = "已寄出 " + x.r.sent + " 封。" + (x.r.remaining ? "還有 " + x.r.remaining + " 封明天再按一次繼續寄。" : "全部寄完了。");
-              } else {
-                noticeMsg.textContent = x.r.error || "寄信失敗";
-                alert(x.r.error || "寄信失敗");
-              }
-              return loadBookings();
-            });
-        })
-        .catch(function () { alert("操作失敗，請重新整理再試一次"); })
-        .finally(function () { noticeBtn.disabled = false; });
-    });
+  var confirmBtn = document.getElementById("confirmBtn");
+  function runNotice(kind, btn) {
+    var label = kind === "received" ? "「已收到您的預約」" : "「預約成功」";
+    btn.disabled = true;
+    fetch("/api/admin-send-notice?kind=" + kind)
+      .then(function (res) { if (!res.ok) throw new Error("preview"); return res.json(); })
+      .then(function (s) {
+        if (!s.configured) { alert("寄信功能還沒設定好（Vercel 缺 RESEND_API_KEY / EMAIL_FROM）。"); return null; }
+        if (!s.totalEmails) { noticeMsg.textContent = label + "目前沒有需要寄的，全部都寄過了。"; return null; }
+        if (!s.canSendNow) { alert("過去 24 小時已經寄了 " + s.sentLast24h + " 封，已達單日防呆上限，請稍後再按。"); return null; }
+        var who = kind === "received"
+          ? "寄給「待匯款／待對帳」的客人（同一個 email 的多筆訂單合併成一封）"
+          : "寄給「已對帳完成」、還沒收過預約成功信的客人";
+        var msg = "要寄出 " + label + " 通知：\n" + who + "\n\n共 " + s.canSendNow + " 封。確定要寄出嗎？寄出後無法收回。";
+        if (!confirm(msg)) return null;
+        return fetch("/api/admin-send-notice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: kind }) })
+          .then(function (res) { return res.json().then(function (r) { return { ok: res.ok, r: r }; }); })
+          .then(function (x) {
+            if (x.ok) {
+              noticeMsg.textContent = label + "已寄出 " + x.r.sent + " 封。" + (x.r.remaining ? "還有 " + x.r.remaining + " 封沒寄，可以再按一次。" : "全部寄完了。");
+            } else {
+              noticeMsg.textContent = x.r.error || "寄信失敗";
+              alert(x.r.error || "寄信失敗");
+            }
+            return loadBookings();
+          });
+      })
+      .catch(function () { alert("操作失敗，請重新整理再試一次"); })
+      .finally(function () { btn.disabled = false; });
   }
+  if (noticeBtn) noticeBtn.addEventListener("click", function () { runNotice("received", noticeBtn); });
+  if (confirmBtn) confirmBtn.addEventListener("click", function () { runNotice("confirmed", confirmBtn); });
   if (trashBtn) trashBtn.addEventListener("click", function () { bulkTrash(true); });
   if (restoreBtn) restoreBtn.addEventListener("click", function () { bulkTrash(false); });
 

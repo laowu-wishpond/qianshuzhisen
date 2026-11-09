@@ -69,8 +69,9 @@ tr.row-handled td{opacity:.55;}
       <button id="refreshBtn" class="btn btn-outline" type="button">重新整理</button>
     </div>
     <div class="admin-filters" id="noticeBar" style="margin-top:10px;display:none;">
-      <button id="noticeBtn" class="btn btn-primary" type="button">📧 寄「已收到預約／預約成功」通知給有留 email 的客人</button>
-      <span id="noticeMsg" style="font-size:13px;opacity:.85;">按下後會先顯示要寄幾封，確認後才會寄出。</span>
+      <button id="noticeBtn" class="btn btn-primary" type="button">📧 ① 寄「已收到您的預約」（待匯款／待對帳的客人）</button>
+      <button id="confirmBtn" class="btn btn-primary" type="button">📧 ② 寄「預約成功」（已對帳完成的客人）</button>
+      <span id="noticeMsg" style="font-size:13px;opacity:.85;">兩顆按鈕各寄各的。按下後會先顯示要寄幾封，確認後才會寄出，寄過的不會重寄。</span>
     </div>
     <div class="admin-filters" id="trashBar" style="margin-top:10px;display:none;">
       <button id="trashBtn" class="btn btn-outline" type="button">🗑 把打勾的移到垃圾桶</button>
@@ -138,6 +139,6 @@ tr.row-handled td{opacity:.55;}
   </section>
 </div>
 
-<script src="js/admin.js?v=20261109k"></script>
+<script src="js/admin.js?v=20261109l"></script>
 </body>
 </html>

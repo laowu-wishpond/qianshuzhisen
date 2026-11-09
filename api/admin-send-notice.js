@@ -56,14 +56,21 @@ export default async function handler(req, res) {
   const sentRecently = (c1 || 0) + (c2 || 0);
   const room = Math.max(0, DAILY_CAP - sentRecently);
 
+  // kind：received＝只寄「已收到您的預約」；confirmed＝只寄「預約成功」；沒指定＝兩種都寄
+  const kindRaw = (req.method === "GET" ? req.query.kind : req.body && req.body.kind) || "";
+  const kind = kindRaw === "received" || kindRaw === "confirmed" ? kindRaw : "all";
+  const nConfirm = kind === "received" ? 0 : confirmList.length;
+  const nReceived = kind === "confirmed" ? 0 : receivedList.length;
+
   const summary = {
+    kind,
     configured: emailConfigured(),
-    confirmPending: confirmList.length,
-    receivedPending: receivedList.length,
-    receivedBookings: receivedList.reduce((n, g) => n + g.bookings.length, 0),
-    totalEmails: confirmList.length + receivedList.length,
+    confirmPending: nConfirm,
+    receivedPending: nReceived,
+    receivedBookings: kind === "confirmed" ? 0 : receivedList.reduce((n, g) => n + g.bookings.length, 0),
+    totalEmails: nConfirm + nReceived,
     sentLast24h: sentRecently,
-    canSendNow: Math.min(room, confirmList.length + receivedList.length),
+    canSendNow: Math.min(room, nConfirm + nReceived),
     dailyCap: DAILY_CAP,
   };
   if (req.method === "GET") return res.status(200).json(summary);
@@ -73,8 +80,8 @@ export default async function handler(req, res) {
 
   // 先寄預約成功信，再寄已收到信；總數不超過 room
   const jobs = [];
-  confirmList.forEach((b) => jobs.push({ kind: "confirmed", ids: [b.id], payload: confirmedPayload(b) }));
-  receivedList.forEach((g) => jobs.push({ kind: "received", ids: g.bookings.map((b) => b.id), payload: receivedPayload(g.email, g.name, g.bookings) }));
+  if (kind !== "received") confirmList.forEach((b) => jobs.push({ kind: "confirmed", ids: [b.id], payload: confirmedPayload(b) }));
+  if (kind !== "confirmed") receivedList.forEach((g) => jobs.push({ kind: "received", ids: g.bookings.map((b) => b.id), payload: receivedPayload(g.email, g.name, g.bookings) }));
   const todo = jobs.slice(0, room);
 
   let sent = 0;
