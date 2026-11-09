@@ -24,6 +24,7 @@ export default async function handler(req, res) {
   const kindRaw = (req.method === "GET" ? req.query.kind : body.kind) || "";
   const kind = kindRaw === "confirmed" ? "confirmed" : "received";
   const label = kind === "received" ? "已收到您的預約" : "預約成功";
+  const resend = !!body.resend; // true＝連「已經寄過」的也重寄（用戶在畫面上明確確認後才會帶）
 
   const hasEmail = (b) => EMAIL_RE.test(String(b.customer_email || "").trim());
   const isVerified = (b) => b.payment_status === "paid" && b.payment_verified;
@@ -58,7 +59,7 @@ export default async function handler(req, res) {
     if (!alive(b)) { skipped.dead.push(nm); return; }
     if (kind === "confirmed" ? !isVerified(b) : isVerified(b)) { skipped.wrongStatus.push(nm); return; }
     if (!hasEmail(b)) { skipped.noEmail.push(nm); return; }
-    if (kind === "confirmed" ? b.confirmation_email_sent_at : b.received_email_sent_at) { skipped.alreadySent.push(nm); return; }
+    if (!resend && (kind === "confirmed" ? b.confirmation_email_sent_at : b.received_email_sent_at)) { skipped.alreadySent.push(nm); return; }
     eligible.push(b);
   });
 
@@ -84,7 +85,7 @@ export default async function handler(req, res) {
   const room = Math.max(0, DAILY_CAP - sentRecently);
 
   const summary = {
-    kind, label,
+    kind, label, resend,
     configured: emailConfigured(),
     selected: selected.length,
     emails: jobs.length,
@@ -114,6 +115,7 @@ export default async function handler(req, res) {
   return res.status(failedMsg ? 502 : 200).json({
     ok: !failedMsg,
     sent,
+    recipients: todo.slice(0, sent).map((j) => j.name + " <" + j.to + ">"),
     remaining: jobs.length - sent,
     skipped,
     error: failedMsg ? "寄信中途失敗（已寄出 " + sent + " 封）：" + failedMsg : undefined,

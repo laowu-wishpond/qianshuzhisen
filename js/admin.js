@@ -196,8 +196,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var label = kind === "received" ? "「已收到您的預約」" : "「預約成功」";
     if (!ids.length) { alert("請先在姓名前面的方格，勾選要寄信的客人，再按寄出。"); return; }
     btn.disabled = true;
+    var resend = false;
     function post(preview) {
-      return fetch("/api/admin-send-notice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: kind, ids: ids, preview: !!preview }) })
+      return fetch("/api/admin-send-notice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: kind, ids: ids, preview: !!preview, resend: resend }) })
         .then(function (res) { return res.json().then(function (r) { return { ok: res.ok, r: r }; }); });
     }
     function skipText(sk) {
@@ -211,17 +212,30 @@ document.addEventListener("DOMContentLoaded", function () {
     post(true)
       .then(function (x) {
         if (!x.ok) { alert(x.r.error || "預覽失敗"); return null; }
+        if (!x.r.configured) { alert("寄信功能還沒設定好（Vercel 缺 RESEND_API_KEY / EMAIL_FROM）。"); return null; }
+        var again = (x.r.skipped && x.r.skipped.alreadySent) || [];
+        // 打勾的人裡有「已經寄過」的 → 明確問要不要再寄一次
+        if (again.length && confirm("打勾的人裡，有 " + again.length + " 位之前已經寄過" + label + "信：\n\n" + again.join("、") + "\n\n要把他們「再寄一次」嗎？\n\n按「確定」＝連他們一起重寄\n按「取消」＝只寄沒寄過的人")) {
+          resend = true;
+          return post(true);
+        }
+        return x;
+      })
+      .then(function (x) {
+        if (!x) return null;
+        if (!x.ok) { alert(x.r.error || "預覽失敗"); return null; }
         var s = x.r;
-        if (!s.configured) { alert("寄信功能還沒設定好（Vercel 缺 RESEND_API_KEY / EMAIL_FROM）。"); return null; }
         var sk = skipText(s.skipped || {});
         if (!s.emails) { alert("打勾的 " + s.selected + " 筆都沒有可以寄的" + label + "信。" + sk); return null; }
         var names = s.recipients.slice(0, 20).join("\n");
         if (s.recipients.length > 20) names += "\n…等共 " + s.recipients.length + " 位";
-        var msg = "要寄出 " + label + " 通知，共 " + s.emails + " 封，收件人：\n\n" + names + (sk ? "\n\n略過：" + sk : "") + "\n\n確定要寄出嗎？寄出後無法收回。";
+        var msg = "要寄出 " + label + " 通知" + (resend ? "（含重寄）" : "") + "，共 " + s.emails + " 封，收件人：\n\n" + names + (sk ? "\n\n略過：" + sk : "") + "\n\n確定要寄出嗎？寄出後無法收回。";
         if (!confirm(msg)) return null;
         return post(false).then(function (y) {
           if (y.ok) {
-            noticeMsg.textContent = label + "已寄出 " + y.r.sent + " 封。";
+            var done = label + "已寄出 " + y.r.sent + " 封（" + new Date().toLocaleTimeString("zh-TW", { timeZone: "Asia/Taipei", hour12: false }) + "）。";
+            noticeMsg.textContent = done;
+            alert(done + "\n\n收件人：\n" + (y.r.recipients || []).join("\n") + "\n\n（是否送達可到 Resend 後台 Emails 頁查看）");
           } else {
             noticeMsg.textContent = y.r.error || "寄信失敗";
             alert(y.r.error || "寄信失敗");
