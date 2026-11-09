@@ -1,5 +1,5 @@
 // POST /api/report-transfer { bookingId, last5 }
-// 客人匯款後在預約頁回報「匯款帳號末五碼」。回報後這筆保留單就不會被自動釋出，等營主在後台核對、標記已付款。
+// 客人匯款後在預約頁回報「匯款帳號末五碼」。回報後系統會自動把這筆標記為「已付款（待對帳）」，營位持續保留；營主在後台對帳完成後才會寄預約成功 email。
 import { getSupabaseAdmin } from "../lib/supabase.js";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -20,7 +20,12 @@ export default async function handler(req, res) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("bookings")
-    .update({ transfer_last5: digits, transfer_reported_at: new Date().toISOString() })
+    .update({
+      transfer_last5: digits,
+      transfer_reported_at: new Date().toISOString(),
+      payment_status: "paid",
+      payment_verified: false,
+    })
     .eq("id", bookingId)
     .eq("payment_status", "pending")
     .select("id")

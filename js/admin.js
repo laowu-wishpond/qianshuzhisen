@@ -11,6 +11,11 @@ document.addEventListener("DOMContentLoaded", function () {
   var filterFrom = document.getElementById("filterFrom");
   var filterTo = document.getElementById("filterTo");
   var filterStatus = document.getElementById("filterStatus");
+  var last4Input = document.getElementById("last4Input");
+  var last4Btn = document.getElementById("last4Btn");
+  var last4Clear = document.getElementById("last4Clear");
+  var last4Msg = document.getElementById("last4Msg");
+  var activeLast4 = "";
   var messagesBody = document.getElementById("messagesBody");
   var messagesError = document.getElementById("messagesError");
   var roleBadge = document.getElementById("roleBadge");
@@ -66,6 +71,18 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then(function (res) {
         if (!res.ok) throw new Error("更新失敗");
+        return res.json().catch(function () { return {}; });
+      })
+      .then(function (r) {
+        if (r && status === "paid") {
+          var msgs = {
+            sent: "已寄出「預約成功」email 給客人。",
+            no_email: "這位客人沒有留 email，沒有寄信，請改用電話或簡訊通知。",
+            not_configured: "尚未設定寄信功能（Vercel 缺 RESEND_API_KEY / EMAIL_FROM），這次沒有寄信。",
+            send_failed: "寄信失敗，請稍後再按一次「對帳完成」重寄，或用電話通知客人。"
+          };
+          if (r.email && msgs[r.email]) alert("已標記對帳完成。" + msgs[r.email]);
+        }
         return loadBookings();
       })
       .catch(function () {
@@ -89,23 +106,28 @@ document.addEventListener("DOMContentLoaded", function () {
         : "保留時間已過，等待系統釋出";
     } else if (b.payment_status === "cancelled" && b.cancel_reason === "expired") {
       note = "逾時未匯款，系統自動釋出";
+    } else if (b.payment_status === "paid" && b.payment_verified === false) {
+      note = "客人回報末五碼 " + (b.transfer_last5 || "") + "，系統已自動標記已付款。請對帳；對帳完成才會寄預約成功 email。";
     } else if (b.payment_status === "paid" && b.transfer_last5) {
-      note = "末五碼 " + b.transfer_last5;
+      note = "末五碼 " + b.transfer_last5 + (b.confirmation_email_sent_at ? "　已寄確認信" : "");
     }
     return note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "";
   }
 
   function renderBookings(bookings) {
     bookingsBody.innerHTML = "";
-    var paidTotal = 0, paidCount = 0;
+    var paidTotal = 0, paidCount = 0, unverified = 0;
     bookings.forEach(function (b) {
-      if (b.payment_status === "paid") {
+      if (b.payment_status === "paid" && b.payment_verified === false) {
+        unverified += 1;
+      } else if (b.payment_status === "paid") {
         paidTotal += Number(b.total_amount || 0);
         paidCount += 1;
       }
     });
     paidSummary.textContent =
-      "目前列表中已付款 " + paidCount + " 筆，合計 NT$" + paidTotal.toLocaleString();
+      "目前列表中已對帳 " + paidCount + " 筆，合計 NT$" + paidTotal.toLocaleString() +
+      (unverified ? "；待對帳 " + unverified + " 筆（客人已回報末碼，尚未確認入帳）" : "");
     if (!bookings.length) {
       bookingsBody.innerHTML = '<tr><td colspan="10">目前沒有符合條件的訂單</td></tr>';
       return;
@@ -126,7 +148,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>NT$" + Number(b.total_amount || 0).toLocaleString() + "</td>" +
         "<td>" + (b.payment_method === "ecpay" ? "線上刷卡" : b.payment_method === "linepay" ? "LINE Pay" : "銀行匯款") + "</td>" +
         '<td><span class="status-badge status-' + b.payment_status + '">' +
-        (statusLabels[b.payment_status] || b.payment_status) +
+        (b.payment_status === "paid" && b.payment_verified === false ? "已付款（待對帳）" : (statusLabels[b.payment_status] || b.payment_status)) +
         "</span>" + holdNote(b) + "</td>";
 
       var actionsTd = document.createElement("td");
@@ -138,8 +160,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (currentRole === "admin" && b.payment_status !== "paid") {
         actionsTd.appendChild(
-          makeActionBtn("標記已付款", function () {
+          makeActionBtn("對帳完成（標記已付款並寄確認信）", function () {
             updateStatus(b.id, "paid");
+          })
+        );
+      }
+      if (currentRole === "admin" && b.payment_status === "paid" && b.payment_verified === false) {
+        actionsTd.appendChild(
+          makeActionBtn("對帳完成，寄確認信", function () {
+            if (confirm("確認這筆款項已入帳？按下去會寄「預約成功」email 給客人。")) {
+              updateStatus(b.id, "paid");
+            }
           })
         );
       }
@@ -166,6 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (filterFrom.value) params.set("from", filterFrom.value);
     if (filterTo.value) params.set("to", filterTo.value);
     if (filterStatus.value) params.set("status", filterStatus.value);
+    if (activeLast4) params.set("last4", activeLast4);
 
     return fetch("/api/admin-bookings?" + params.toString())
       .then(function (res) {
@@ -181,6 +213,15 @@ document.addEventListener("DOMContentLoaded", function () {
       .then(function (data) {
         setRole(data.role);
         renderBookings(data.bookings || []);
+        if (activeLast4) {
+          var n = (data.bookings || []).length;
+          last4Msg.textContent = n
+            ? "匯款末碼 " + activeLast4 + " 共找到 " + n + " 筆（不受上方日期／狀態篩選影響）。請核對金額與姓名後，再標記已付款。"
+            : "找不到末碼 " + activeLast4 + " 的訂單。可能客人還沒回報匯款末五碼，或輸入有誤。";
+          last4Msg.style.color = n ? "#8fd68f" : "#f2c766";
+        } else {
+          last4Msg.textContent = "";
+        }
       })
       .catch(function (err) {
         if (err.message === "__unauthorized__") return;
@@ -281,6 +322,28 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch("/api/admin-login", { method: "DELETE" }).finally(function () {
       showLogin();
     });
+  });
+
+  function runLast4() {
+    var v = (last4Input.value || "").replace(/\D/g, "");
+    if (v.length < 4 || v.length > 5) {
+      last4Msg.textContent = "請輸入 4 或 5 位數字";
+      last4Msg.style.color = "#f29a9a";
+      return;
+    }
+    activeLast4 = v;
+    last4Clear.hidden = false;
+    loadBookings();
+  }
+  last4Btn.addEventListener("click", runLast4);
+  last4Input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); runLast4(); }
+  });
+  last4Clear.addEventListener("click", function () {
+    activeLast4 = "";
+    last4Input.value = "";
+    last4Clear.hidden = true;
+    loadBookings();
   });
 
   refreshBtn.addEventListener("click", loadBookings);

@@ -3,6 +3,7 @@
 // 兩支都需要先登入（admin_session cookie 合法）才能用。
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { getRole, maskPhone } from "../lib/adminAuth.js";
+import { sendBookingConfirmed, emailConfigured } from "../lib/email.js";
 
 const ALLOWED_STATUS = ["pending", "paid", "failed", "cancelled"];
 
@@ -16,16 +17,25 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     await supabase.rpc("expire_stale_holds");
-    const { from, to, status } = req.query;
+    const { from, to, status, last4 } = req.query;
+    // 末四碼查詢：輸入 4 碼（或 5 碼）數字，找匯款末五碼結尾相符的訂單；查詢時不受日期／狀態篩選限制
+    const searchDigits = last4 ? String(last4).trim() : "";
+    if (searchDigits && !/^\d{4,5}$/.test(searchDigits)) {
+      return res.status(400).json({ error: "請輸入 4 或 5 位數字" });
+    }
     let query = supabase
       .from("bookings")
       .select("*")
       .order("booking_date", { ascending: true })
       .order("created_at", { ascending: true });
 
-    if (from) query = query.gte("booking_date", from);
-    if (to) query = query.lte("booking_date", to);
-    if (status && ALLOWED_STATUS.includes(status)) query = query.eq("payment_status", status);
+    if (searchDigits) {
+      query = query.not("transfer_last5", "is", null).like("transfer_last5", "%" + searchDigits);
+    } else {
+      if (from) query = query.gte("booking_date", from);
+      if (to) query = query.lte("booking_date", to);
+      if (status && ALLOWED_STATUS.includes(status)) query = query.eq("payment_status", status);
+    }
 
     const { data, error } = await query;
     if (error) {
@@ -52,16 +62,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "不合法的狀態值" });
     }
 
-    const { error } = await supabase
-      .from("bookings")
-      .update({ payment_status })
-      .eq("id", id);
+    const patch = { payment_status };
+    if (payment_status === "paid") patch.payment_verified = true; // 營主手動標記／按「對帳完成」＝已對帳
 
-    if (error) {
+    const { data: updated, error } = await supabase
+      .from("bookings")
+      .update(patch)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+
+    if (error || !updated) {
       console.error("admin-bookings PATCH error:", error);
       return res.status(500).json({ error: "更新訂單狀態失敗" });
     }
-    return res.status(200).json({ ok: true });
+
+    // 對帳完成 → 寄「預約成功」email（每筆只寄一次）
+    let email = null;
+    if (payment_status === "paid" && !updated.confirmation_email_sent_at) {
+      const r = await sendBookingConfirmed(updated);
+      if (r.sent) {
+        await supabase.from("bookings").update({ confirmation_email_sent_at: new Date().toISOString() }).eq("id", id);
+        email = "sent";
+      } else {
+        email = r.reason; // no_email / not_configured / send_failed
+      }
+    }
+    return res.status(200).json({ ok: true, email, emailConfigured: emailConfigured() });
   }
 
   return res.status(405).json({ error: "Method not allowed" });

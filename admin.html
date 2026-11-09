@@ -46,6 +46,14 @@
       </label>
       <button id="refreshBtn" class="btn btn-outline" type="button">重新整理</button>
     </div>
+    <div class="admin-filters" style="margin-top:10px;">
+      <label>匯款末四碼查詢
+        <input type="text" id="last4Input" inputmode="numeric" maxlength="5" placeholder="輸入末 4 碼，例如 1234" autocomplete="off">
+      </label>
+      <button id="last4Btn" class="btn btn-outline" type="button">查詢</button>
+      <button id="last4Clear" class="btn btn-outline" type="button" hidden>清除查詢</button>
+    </div>
+    <p id="last4Msg" style="font-size:14px;margin:6px 0 0;"></p>
 
     <div class="admin-table-wrap">
       <table class="admin-table" id="bookingsTable">
@@ -91,6 +99,6 @@
   </section>
 </div>
 
-<script src="js/admin.js?v=20261108b"></script>
+<script src="js/admin.js?v=20261109b"></script>
 </body>
 </html>

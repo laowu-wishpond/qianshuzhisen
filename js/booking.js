@@ -813,8 +813,8 @@ document.addEventListener("DOMContentLoaded", function () {
           } else {
             resultEl.style.color = "#8fd68f";
             resultEl.textContent = isEnglish()
-              ? "Booking request submitted! Order ID: " + data.bookingId.slice(0, 8) + ". Please complete payment per the transfer details below."
-              : "預約申請已送出！訂單編號：" + data.bookingId.slice(0, 8) + "，請依下方匯款須知完成付款。";
+              ? "Thank you for your booking! (Order " + data.bookingId.slice(0, 8) + ") Please transfer payment as shown below, then send us the last 5 digits of your account. Once we've checked the payment, we'll email you to confirm your booking."
+              : "感謝您的預約！（訂單編號 " + data.bookingId.slice(0, 8) + "）請依下方匯款須知完成付款，並回報匯款帳號末五碼。我們查帳以後，會主動寄 email 通知您預約成功。";
             showHoldPanel(data);
             form.reset();
             checkIn = null;
@@ -884,7 +884,10 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
     function tick() {
-      var left = Math.max(0, Math.ceil((expires - Date.now()) / 60000));
+      var leftMin = Math.max(0, Math.ceil((expires - Date.now()) / 60000));
+      var left = leftMin > 90 ? Math.round(leftMin / 60) : leftMin;
+      var leftUnitZh = leftMin > 90 ? " 小時" : " 分鐘";
+      var leftUnitEn = leftMin > 90 ? " h" : " min";
       if (expires <= Date.now()) {
         clearInterval(holdTimer);
         info.textContent = t(
@@ -896,8 +899,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       info.textContent = t(
-        "已為您保留營位，請在 " + clock(expires) + " 前（還剩約 " + left + " 分鐘）完成匯款，並在下方回報匯款帳號末五碼。逾時系統會自動釋出營位給下一位。",
-        "Your site is held. Please pay before " + clock(expires) + " (about " + left + " min left) and send the last 5 digits of your transfer account below. Otherwise it will be released automatically."
+        "已為您保留營位，請在 " + clock(expires) + " 前（還剩約 " + left + leftUnitZh + "）完成匯款，並在下方回報匯款帳號末五碼。逾時系統會自動釋出營位給下一位。我們查帳以後，會主動寄 email 通知您預約成功。",
+        "Your site is held. Please pay before " + clock(expires) + " (about " + left + leftUnitEn + " left) and send the last 5 digits of your transfer account below. Otherwise it will be released automatically. After we check the payment, we'll email you to confirm your booking."
       );
     }
     tick();
@@ -926,8 +929,8 @@ document.addEventListener("DOMContentLoaded", function () {
           clearInterval(holdTimer);
           row.style.display = "none";
           info.textContent = t(
-            "已收到您回報的末五碼 " + v + "。營主核對款項後會與您聯絡確認，這段時間營位會為您保留。",
-            "Got it — last 5 digits " + v + ". We'll confirm after checking the payment; your site stays held meanwhile."
+            "感謝您的預約！已收到您回報的末五碼 " + v + "，營位已為您保留。我們查帳以後，會主動寄 email 通知您預約成功（請留意信箱，也請看一下垃圾信件匣）。",
+            "Thank you for your booking! We've received the last 5 digits (" + v + ") and your site is held. Once we've checked the payment, we'll email you to confirm (please also check your spam folder)."
           );
           msg.textContent = "";
         })

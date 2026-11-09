@@ -34,8 +34,11 @@ export default async function handler(req, res) {
   const { name, phone, email, siteId, checkIn, checkOut, earlyArrival, people, paymentMethod, notes } =
     req.body || {};
 
-  if (!name || !phone || !siteId || !checkIn || !checkOut || !people) {
-    return res.status(400).json({ error: "缺少必要欄位（姓名、電話、營位、入住／退房日期、入住人數）" });
+  if (!name || !phone || !siteId || !checkIn || !checkOut || !people || !email) {
+    return res.status(400).json({ error: "缺少必要欄位（姓名、電話、營位、入住／退房日期、入住人數、Email）" });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+    return res.status(400).json({ error: "Email 格式不正確，預約成功通知會寄到這個信箱" });
   }
   if (!isValidISODate(checkIn) || !isValidISODate(checkOut)) {
     return res.status(400).json({ error: "日期格式錯誤" });
