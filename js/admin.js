@@ -157,6 +157,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var inTrash = filterStatus.value === "trashed";
     if (trashBar) trashBar.style.display = currentRole === "admin" ? "" : "none";
     if (noticeBar) noticeBar.style.display = currentRole === "admin" ? "" : "none";
+    var nSel = checkedBookingIds().length;
+    if (noticeBtn) noticeBtn.textContent = "📧 ① 寄「已收到您的預約」給打勾的客人（" + nSel + "）";
+    if (confirmBtn) confirmBtn.textContent = "📧 ② 寄「預約成功」給打勾的客人（" + nSel + "）";
     if (trashBtn) { trashBtn.style.display = inTrash ? "none" : ""; trashBtn.textContent = "🗑 把打勾的移到垃圾桶（" + checkedBookingIds().length + "）"; }
     if (restoreBtn) { restoreBtn.style.display = inTrash ? "" : "none"; restoreBtn.textContent = "↩ 把打勾的從垃圾桶還原（" + checkedBookingIds().length + "）"; }
   }
@@ -189,30 +192,42 @@ document.addEventListener("DOMContentLoaded", function () {
   var noticeMsg = document.getElementById("noticeMsg");
   var confirmBtn = document.getElementById("confirmBtn");
   function runNotice(kind, btn) {
+    var ids = checkedBookingIds();
     var label = kind === "received" ? "「已收到您的預約」" : "「預約成功」";
+    if (!ids.length) { alert("請先在姓名前面的方格，勾選要寄信的客人，再按寄出。"); return; }
     btn.disabled = true;
-    fetch("/api/admin-send-notice?kind=" + kind)
-      .then(function (res) { if (!res.ok) throw new Error("preview"); return res.json(); })
-      .then(function (s) {
+    function post(preview) {
+      return fetch("/api/admin-send-notice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: kind, ids: ids, preview: !!preview }) })
+        .then(function (res) { return res.json().then(function (r) { return { ok: res.ok, r: r }; }); });
+    }
+    function skipText(sk) {
+      var t = "";
+      if (sk.noEmail && sk.noEmail.length) t += "\n・沒有留 Email（不寄）：" + sk.noEmail.join("、");
+      if (sk.alreadySent && sk.alreadySent.length) t += "\n・已經寄過（不重寄）：" + sk.alreadySent.join("、");
+      if (sk.wrongStatus && sk.wrongStatus.length) t += "\n・狀態不符（" + (kind === "received" ? "已對帳完成的請用②" : "還沒對帳完成") + "）：" + sk.wrongStatus.join("、");
+      if (sk.dead && sk.dead.length) t += "\n・已取消／垃圾桶：" + sk.dead.join("、");
+      return t;
+    }
+    post(true)
+      .then(function (x) {
+        if (!x.ok) { alert(x.r.error || "預覽失敗"); return null; }
+        var s = x.r;
         if (!s.configured) { alert("寄信功能還沒設定好（Vercel 缺 RESEND_API_KEY / EMAIL_FROM）。"); return null; }
-        if (!s.totalEmails) { noticeMsg.textContent = label + "目前沒有需要寄的，全部都寄過了。"; return null; }
-        if (!s.canSendNow) { alert("過去 24 小時已經寄了 " + s.sentLast24h + " 封，已達單日防呆上限，請稍後再按。"); return null; }
-        var who = kind === "received"
-          ? "寄給「待匯款／待對帳」的客人（同一個 email 的多筆訂單合併成一封）"
-          : "寄給「已對帳完成」、還沒收過預約成功信的客人";
-        var msg = "要寄出 " + label + " 通知：\n" + who + "\n\n共 " + s.canSendNow + " 封。確定要寄出嗎？寄出後無法收回。";
+        var sk = skipText(s.skipped || {});
+        if (!s.emails) { alert("打勾的 " + s.selected + " 筆都沒有可以寄的" + label + "信。" + sk); return null; }
+        var names = s.recipients.slice(0, 20).join("\n");
+        if (s.recipients.length > 20) names += "\n…等共 " + s.recipients.length + " 位";
+        var msg = "要寄出 " + label + " 通知，共 " + s.emails + " 封，收件人：\n\n" + names + (sk ? "\n\n略過：" + sk : "") + "\n\n確定要寄出嗎？寄出後無法收回。";
         if (!confirm(msg)) return null;
-        return fetch("/api/admin-send-notice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: kind }) })
-          .then(function (res) { return res.json().then(function (r) { return { ok: res.ok, r: r }; }); })
-          .then(function (x) {
-            if (x.ok) {
-              noticeMsg.textContent = label + "已寄出 " + x.r.sent + " 封。" + (x.r.remaining ? "還有 " + x.r.remaining + " 封沒寄，可以再按一次。" : "全部寄完了。");
-            } else {
-              noticeMsg.textContent = x.r.error || "寄信失敗";
-              alert(x.r.error || "寄信失敗");
-            }
-            return loadBookings();
-          });
+        return post(false).then(function (y) {
+          if (y.ok) {
+            noticeMsg.textContent = label + "已寄出 " + y.r.sent + " 封。";
+          } else {
+            noticeMsg.textContent = y.r.error || "寄信失敗";
+            alert(y.r.error || "寄信失敗");
+          }
+          return loadBookings();
+        });
       })
       .catch(function () { alert("操作失敗，請重新整理再試一次"); })
       .finally(function () { btn.disabled = false; });
