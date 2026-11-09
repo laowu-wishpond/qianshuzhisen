@@ -34,7 +34,7 @@
         '<li>送出預約後，您會先收到一封<b>「已收到您的預約」確認信</b>。</li>' +
         '<li>匯款完成、我們核對帳款後，會再寄一封<b>「預約成功」通知信</b>，收到這封信才代表預約完成、營位確定保留。</li>' +
       '</ol>' +
-      '<p>可隨時到<a href="order.html">「查詢訂單」</a>查看狀態；有任何問題，歡迎來電 0939-235-168。</p>' +
+      '<p><b>找不到回報末五碼的頁面？</b>請到<a href="order.html">「查詢訂單」</a>，輸入「訂單編號＋訂位手機」即可查看狀態並回報末五碼（訂單編號在「已收到您的預約」信裡）。<b>請不要重新下單</b>，重複下單會多佔營位。有任何問題，歡迎來電 0939-235-168。</p>' +
     '</div>' +
     '<div class="lang-en"' + (isEn ? "" : " hidden") + '>' +
       '<div class="sn-title">📢 Important notice</div>' +
@@ -43,7 +43,7 @@
         '<li>After you submit a booking, you will first receive a <b>“We’ve received your booking”</b> email.</li>' +
         '<li>Once your payment is received and checked, we will send a <b>“Booking confirmed”</b> email. That email is what confirms your booking and secures your site.</li>' +
       '</ol>' +
-      '<p>You can check your status anytime on the <a href="order.html">Check booking</a> page. Questions? Call 0939-235-168.</p>' +
+      '<p><b>Can’t find the page to report your transfer?</b> Go to <a href="order.html">Check booking</a> and enter your order number + phone to see your status and report the last 5 digits (the order number is in the “received” email). <b>Please do not book again</b> — duplicates hold extra sites. Questions? Call 0939-235-168.</p>' +
     '</div>' +
     '<button type="button" class="sn-x" aria-label="close">×</button>' +
     '</div>';
