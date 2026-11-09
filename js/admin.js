@@ -115,10 +115,24 @@ document.addEventListener("DOMContentLoaded", function () {
     return note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "";
   }
 
+  // 營位編號排序用：A2 → ["A", 2]；沒有營位的（舊訂單）排最後
+  function siteKey(id) {
+    var m = String(id || "").trim().toUpperCase().match(/^([A-Z]*)\s*0*(\d+)/);
+    return m ? [m[1] || "~", parseInt(m[2], 10)] : ["~~", 0];
+  }
+
   function sortBookings(list) {
     var mode = sortBy ? sortBy.value : "created_asc";
     var arr = list.slice();
     arr.sort(function (a, b) {
+      if (mode === "site_asc") {
+        var pa = siteKey(a.site_id), pb = siteKey(b.site_id);
+        if (pa[0] !== pb[0]) return pa[0] < pb[0] ? -1 : 1;
+        if (pa[1] !== pb[1]) return pa[1] - pb[1];
+        var ca = a.check_in || a.booking_date || "", cb = b.check_in || b.booking_date || "";
+        if (ca !== cb) return ca < cb ? -1 : 1;
+        return a.created_at < b.created_at ? -1 : 1;
+      }
       if (mode === "checkin_asc") {
         var da = a.check_in || a.booking_date || "", db = b.check_in || b.booking_date || "";
         return da < db ? -1 : da > db ? 1 : (a.created_at < b.created_at ? -1 : 1);
