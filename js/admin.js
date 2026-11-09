@@ -222,18 +222,19 @@ document.addEventListener("DOMContentLoaded", function () {
     shownBookings = bookings;
     updateTrashUi();
     bookingsBody.innerHTML = "";
-    var paidTotal = 0, paidCount = 0, unverified = 0;
+    var vTotal = 0, vCount = 0, uTotal = 0, uCount = 0;
     bookings.forEach(function (b) {
-      if (b.payment_status === "paid" && b.payment_verified === false) {
-        unverified += 1;
-      } else if (b.payment_status === "paid") {
-        paidTotal += Number(b.total_amount || 0);
-        paidCount += 1;
-      }
+      if (b.payment_status !== "paid") return;
+      var amt = Number(b.total_amount || 0);
+      if (b.payment_verified === false) { uTotal += amt; uCount += 1; }
+      else { vTotal += amt; vCount += 1; }
     });
+    paidSummary.style.whiteSpace = "pre-line";
     paidSummary.textContent =
-      "目前列表中已對帳 " + paidCount + " 筆，合計 NT$" + paidTotal.toLocaleString() +
-      (unverified ? "；待對帳 " + unverified + " 筆（客人已回報末碼，尚未確認入帳）" : "");
+      "目前列表合計（依上方日期／狀態篩選）\n" +
+      "① 已對帳：" + vCount + " 筆，NT$" + vTotal.toLocaleString() + "\n" +
+      "② 已付款（含未對帳）：" + (vCount + uCount) + " 筆，NT$" + (vTotal + uTotal).toLocaleString() +
+      (uCount ? "（其中待對帳 " + uCount + " 筆，NT$" + uTotal.toLocaleString() + "）" : "");
     if (!bookings.length) {
       bookingsBody.innerHTML = '<tr><td colspan="10">目前沒有符合條件的訂單</td></tr>';
       return;
