@@ -61,7 +61,7 @@ export default async function handler(req, res) {
     if (role !== "admin") {
       return res.status(403).json({ error: "唯讀帳號無法修改訂單" });
     }
-    const { id, payment_status, handled, ids, trash, resend } = req.body || {};
+    const { id, payment_status, handled, ids, trash, resend, restore } = req.body || {};
     // 補寄「預約成功」信（已對帳完成、當時還沒辦法寄信的客人）
     if (id && resend === true) {
       const { data: bk, error: bkErr } = await supabase.from("bookings").select("*").eq("id", id).maybeSingle();
@@ -70,6 +70,42 @@ export default async function handler(req, res) {
       const r = await sendBookingConfirmed(bk);
       if (r.sent) await supabase.from("bookings").update({ confirmation_email_sent_at: new Date().toISOString() }).eq("id", id);
       return res.status(200).json({ ok: true, email: r.sent ? "sent" : r.reason });
+    }
+    // 恢復已取消的訂單（誤按取消、或客人又說要訂）。若營位日期已被別人訂走就不能恢復。
+    if (id && restore === true) {
+      const { data: bk, error: bkErr } = await supabase.from("bookings").select("*").eq("id", id).maybeSingle();
+      if (bkErr || !bk) return res.status(404).json({ error: "找不到這筆訂單" });
+      if (bk.payment_status !== "cancelled") return res.status(400).json({ error: "這筆不是已取消狀態" });
+      const { data: nights } = await supabase.from("booking_nights").select("site_id,night_date").eq("booking_id", id);
+      for (const n of nights || []) {
+        const { data: clash } = await supabase
+          .from("booking_nights")
+          .select("id")
+          .eq("site_id", n.site_id)
+          .eq("night_date", n.night_date)
+          .eq("is_active", true)
+          .neq("booking_id", id)
+          .limit(1);
+        if (clash && clash.length) {
+          return res.status(409).json({ error: "無法恢復：" + n.site_id + " 營位 " + n.night_date + " 那晚已被別人訂走了。" });
+        }
+      }
+      // 恢復成什麼狀態：已對帳過→已付款；客人回報過末五碼→已付款（待對帳）；其他→待匯款（重新保留 24 小時）
+      const patch = { trashed: false, trashed_at: null, cancel_reason: null, handled: false };
+      let state;
+      if (bk.payment_verified) { patch.payment_status = "paid"; state = "paid"; }
+      else if (bk.transfer_last5) { patch.payment_status = "paid"; patch.payment_verified = false; state = "reported"; }
+      else {
+        patch.payment_status = "pending";
+        patch.hold_expires_at = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+        state = "pending";
+      }
+      const { error: rErr } = await supabase.from("bookings").update(patch).eq("id", id);
+      if (rErr) {
+        console.error("admin-bookings restore error:", rErr);
+        return res.status(rErr.code === "23505" ? 409 : 500).json({ error: rErr.code === "23505" ? "無法恢復：該營位日期已被別人訂走了。" : "恢復失敗" });
+      }
+      return res.status(200).json({ ok: true, state });
     }
     // 批次：把打勾的訂單移到垃圾桶／從垃圾桶還原（不會真的刪除資料）
     if (Array.isArray(ids) && typeof trash === "boolean") {

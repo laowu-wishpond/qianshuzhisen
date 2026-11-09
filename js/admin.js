@@ -379,6 +379,22 @@ document.addEventListener("DOMContentLoaded", function () {
           })
         );
       }
+      if (b.payment_status === "cancelled" && !inTrashView) tr.classList.add("row-cancelled");
+      if (currentRole === "admin" && !inTrashView && b.payment_status === "cancelled") {
+        actionsTd.appendChild(
+          makeActionBtn("恢復訂單", function () {
+            if (!confirm("要恢復這筆訂單嗎？\n\n・原本已對帳／已回報匯款的，會回到「已付款」狀態\n・還沒匯款的，會回到「待匯款」並重新保留 24 小時\n・如果這個營位那幾晚已被別人訂走，就無法恢復\n\n恢復時不會自動寄信。")) return;
+            fetch("/api/admin-bookings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: b.id, restore: true }) })
+              .then(function (res) { return res.json().then(function (r) { return { ok: res.ok, r: r }; }); })
+              .then(function (x) {
+                if (!x.ok) { alert(x.r.error || "恢復失敗"); return; }
+                alert("已恢復。" + (x.r.state === "pending" ? "狀態是「待匯款」，保留 24 小時。" : x.r.state === "reported" ? "狀態是「已付款（待對帳）」。" : "狀態是「已對帳完成」。"));
+                return loadBookings();
+              })
+              .catch(function () { alert("操作失敗，請重新整理再試一次"); });
+          })
+        );
+      }
       if (currentRole === "admin" && !inTrashView && b.payment_status !== "cancelled") {
         actionsTd.appendChild(
           makeActionBtn("取消訂單", function () {
