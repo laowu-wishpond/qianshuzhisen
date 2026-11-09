@@ -195,8 +195,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(function (s) {
           if (!s.configured) { alert("寄信功能還沒設定好（Vercel 缺 RESEND_API_KEY / EMAIL_FROM）。"); return null; }
           if (!s.totalEmails) { noticeMsg.textContent = "目前沒有需要寄的通知，全部都寄過了。"; return null; }
-          if (!s.canSendNow) { alert("過去 24 小時已經寄了 " + s.sentLast24h + " 封，接近 Resend 免費額度（約每天 100 封），請明天再按。"); return null; }
-          var msg = "還有 " + s.totalEmails + " 封通知沒寄：\n・預約成功信（已對帳完成的客人）：" + s.confirmPending + " 封\n・已收到您的預約（待匯款／待對帳，同 email 合併）：" + s.receivedPending + " 封\n\n這次最多先寄 " + s.canSendNow + " 封（Resend 免費方案每天約 100 封）。確定要寄出嗎？寄出後無法收回。";
+          if (!s.canSendNow) { alert("過去 24 小時已經寄了 " + s.sentLast24h + " 封，已達單日防呆上限，請稍後再按。"); return null; }
+          var msg = "還有 " + s.totalEmails + " 封通知沒寄：\n・預約成功信（已對帳完成的客人）：" + s.confirmPending + " 封\n・已收到您的預約（待匯款／待對帳，同 email 合併）：" + s.receivedPending + " 封\n\n這次會寄出 " + s.canSendNow + " 封。確定要寄出嗎？寄出後無法收回。";
           if (!confirm(msg)) return null;
           return fetch("/api/admin-send-notice", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
             .then(function (res) { return res.json().then(function (r) { return { ok: res.ok, r: r }; }); })

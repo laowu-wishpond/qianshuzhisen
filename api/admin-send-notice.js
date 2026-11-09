@@ -9,7 +9,7 @@ import { getRole } from "../lib/adminAuth.js";
 import { emailConfigured, confirmedPayload, receivedPayload, postBatch } from "../lib/email.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const DAILY_CAP = 90; // Resend 免費方案每天約 100 封，留一點空間給新預約與對帳信
+const DAILY_CAP = 1500; // 已升級 Resend Pro（每月 5 萬封、無每日上限），這只是防呆的單日上限
 
 export default async function handler(req, res) {
   const role = getRole(req);
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") return res.status(200).json(summary);
 
   if (!emailConfigured()) return res.status(400).json({ error: "尚未設定寄信功能（Vercel 缺 RESEND_API_KEY / EMAIL_FROM）", ...summary });
-  if (room <= 0) return res.status(429).json({ error: "過去 24 小時已寄了 " + sentRecently + " 封，接近 Resend 免費額度上限，請明天再按，或升級 Resend 方案。", ...summary });
+  if (room <= 0) return res.status(429).json({ error: "過去 24 小時已寄了 " + sentRecently + " 封，已達單日防呆上限，請稍後再按。", ...summary });
 
   // 先寄預約成功信，再寄已收到信；總數不超過 room
   const jobs = [];
