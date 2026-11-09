@@ -474,6 +474,7 @@ document.addEventListener("DOMContentLoaded", function () {
         body: JSON.stringify({
           name: document.getElementById("cname").value,
           phone: document.getElementById("cphone").value,
+          email: document.getElementById("cemail") ? document.getElementById("cemail").value : "",
           message: document.getElementById("cmsg").value,
         }),
       })
@@ -486,8 +487,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(function () {
           contactResult.style.color = "#8fd68f";
           contactResult.textContent = isEn
-            ? "Message sent! We'll get back to you soon."
-            : "留言已送出，我們會盡快與您聯繫。";
+            ? "Dear guest, we have received your message and will reply as soon as possible. Thank you for your patience."
+            : "親愛的顧客您好，已經收到您的訊息，我們會盡快回復您，感謝您的耐心等候。";
           contactForm.reset();
         })
         .catch(function (err) {
