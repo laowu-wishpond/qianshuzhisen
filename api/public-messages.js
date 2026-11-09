@@ -16,8 +16,14 @@ function maskName(name) {
 function cleanMessage(msg) {
   let s = String(msg || "");
   s = s.replace(/（客人 Email：[^）]*）/g, ""); // create-message 附加的 email
-  s = s.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "［已隱藏］"); // email
-  s = s.replace(/(\+?\d[\d\s-]{6,}\d)/g, "［已隱藏］"); // 電話等 7 碼以上數字
+  // 全形數字轉半形，避免用全形數字繞過
+  s = s.replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  const HIDE = "［已隱藏］";
+  s = s.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, HIDE); // email
+  s = s.replace(/[A-Za-z][12]\d{8}/g, HIDE); // 身分證字號
+  s = s.replace(/(末|後|尾)\s*[四五4-5]?\s*碼?\s*[:：是為]?\s*\d{3,}/g, HIDE); // 「末五碼 12345」「後四碼1234」
+  s = s.replace(/\d[\d\s-]{3,}\d/g, (m) => (m.replace(/\D/g, "").length >= 5 ? HIDE : m)); // 5 位以上數字（電話、帳號、末五碼）
+  s = s.replace(/\d{5,}/g, HIDE);
   return s.trim().slice(0, 400);
 }
 
@@ -38,7 +44,7 @@ export default async function handler(req, res) {
     name: maskName(m.name),
     message: cleanMessage(m.message),
     created_at: m.created_at,
-    reply: m.reply ? String(m.reply).slice(0, 600) : null,
+    reply: m.reply ? cleanMessage(m.reply) : null,
     replied_at: m.replied_at || null,
   }));
   res.setHeader("Cache-Control", "public, s-maxage=10, stale-while-revalidate=30");
