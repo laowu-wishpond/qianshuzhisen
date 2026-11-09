@@ -61,7 +61,16 @@ export default async function handler(req, res) {
     if (role !== "admin") {
       return res.status(403).json({ error: "唯讀帳號無法修改訂單" });
     }
-    const { id, payment_status, handled, ids, trash } = req.body || {};
+    const { id, payment_status, handled, ids, trash, resend } = req.body || {};
+    // 補寄「預約成功」信（已對帳完成、當時還沒辦法寄信的客人）
+    if (id && resend === true) {
+      const { data: bk, error: bkErr } = await supabase.from("bookings").select("*").eq("id", id).maybeSingle();
+      if (bkErr || !bk) return res.status(404).json({ error: "找不到這筆訂單" });
+      if (bk.payment_status !== "paid") return res.status(400).json({ error: "這筆還不是已付款狀態，請先按「對帳完成」" });
+      const r = await sendBookingConfirmed(bk);
+      if (r.sent) await supabase.from("bookings").update({ confirmation_email_sent_at: new Date().toISOString() }).eq("id", id);
+      return res.status(200).json({ ok: true, email: r.sent ? "sent" : r.reason });
+    }
     // 批次：把打勾的訂單移到垃圾桶／從垃圾桶還原（不會真的刪除資料）
     if (Array.isArray(ids) && typeof trash === "boolean") {
       const list = ids.filter((x) => typeof x === "string").slice(0, 300);

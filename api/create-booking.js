@@ -6,6 +6,7 @@
 //    如果是「銀行匯款」，直接回傳金額，前端顯示既有的匯款須知
 
 import { getSupabaseAdmin } from "../lib/supabase.js";
+import { sendBookingReceived } from "../lib/email.js";
 import { isBookingOpen, HOLD_MINUTES } from "../lib/siteStatus.js";
 import { quoteStay, getSite, addDays, isValidISODate } from "../lib/pricing.js";
 import {
@@ -158,6 +159,13 @@ export default async function handler(req, res) {
   const itemName = `露營營位 ${siteId}（${nightsCount}晚${quote.early ? "＋夜衝" : ""}）`;
 
   if (method === "bank_transfer") {
+    // 第一封信：已收到您的預約（寄信失敗不影響預約；之後可由後台補寄）
+    try {
+      const r = await sendBookingReceived(booking);
+      if (r.sent) await supabase.from("bookings").update({ received_email_sent_at: new Date().toISOString() }).eq("id", booking.id);
+    } catch (e) {
+      console.error("received email error:", e);
+    }
     return res.status(200).json({
       bookingId: booking.id,
       paymentMethod: "bank_transfer",

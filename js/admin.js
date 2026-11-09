@@ -156,6 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function updateTrashUi() {
     var inTrash = filterStatus.value === "trashed";
     if (trashBar) trashBar.style.display = currentRole === "admin" ? "" : "none";
+    if (noticeBar) noticeBar.style.display = currentRole === "admin" ? "" : "none";
     if (trashBtn) { trashBtn.style.display = inTrash ? "none" : ""; trashBtn.textContent = "🗑 把打勾的移到垃圾桶（" + checkedBookingIds().length + "）"; }
     if (restoreBtn) { restoreBtn.style.display = inTrash ? "" : "none"; restoreBtn.textContent = "↩ 把打勾的從垃圾桶還原（" + checkedBookingIds().length + "）"; }
   }
@@ -182,6 +183,36 @@ document.addEventListener("DOMContentLoaded", function () {
         return loadBookings();
       })
       .catch(function () { alert("操作失敗，請重新整理再試一次"); });
+  }
+  var noticeBar = document.getElementById("noticeBar");
+  var noticeBtn = document.getElementById("noticeBtn");
+  var noticeMsg = document.getElementById("noticeMsg");
+  if (noticeBtn) {
+    noticeBtn.addEventListener("click", function () {
+      noticeBtn.disabled = true;
+      fetch("/api/admin-send-notice")
+        .then(function (res) { if (!res.ok) throw new Error("preview"); return res.json(); })
+        .then(function (s) {
+          if (!s.configured) { alert("寄信功能還沒設定好（Vercel 缺 RESEND_API_KEY / EMAIL_FROM）。"); return null; }
+          if (!s.totalEmails) { noticeMsg.textContent = "目前沒有需要寄的通知，全部都寄過了。"; return null; }
+          if (!s.canSendNow) { alert("過去 24 小時已經寄了 " + s.sentLast24h + " 封，接近 Resend 免費額度（約每天 100 封），請明天再按。"); return null; }
+          var msg = "還有 " + s.totalEmails + " 封通知沒寄：\n・預約成功信（已對帳完成的客人）：" + s.confirmPending + " 封\n・已收到您的預約（待匯款／待對帳，同 email 合併）：" + s.receivedPending + " 封\n\n這次最多先寄 " + s.canSendNow + " 封（Resend 免費方案每天約 100 封）。確定要寄出嗎？寄出後無法收回。";
+          if (!confirm(msg)) return null;
+          return fetch("/api/admin-send-notice", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
+            .then(function (res) { return res.json().then(function (r) { return { ok: res.ok, r: r }; }); })
+            .then(function (x) {
+              if (x.ok) {
+                noticeMsg.textContent = "已寄出 " + x.r.sent + " 封。" + (x.r.remaining ? "還有 " + x.r.remaining + " 封明天再按一次繼續寄。" : "全部寄完了。");
+              } else {
+                noticeMsg.textContent = x.r.error || "寄信失敗";
+                alert(x.r.error || "寄信失敗");
+              }
+              return loadBookings();
+            });
+        })
+        .catch(function () { alert("操作失敗，請重新整理再試一次"); })
+        .finally(function () { noticeBtn.disabled = false; });
+    });
   }
   if (trashBtn) trashBtn.addEventListener("click", function () { bulkTrash(true); });
   if (restoreBtn) restoreBtn.addEventListener("click", function () { bulkTrash(false); });
@@ -286,6 +317,26 @@ document.addEventListener("DOMContentLoaded", function () {
             if (confirm("確認這筆款項已入帳？按下去會寄「預約成功」email 給客人。")) {
               updateStatus(b.id, "paid");
             }
+          })
+        );
+      }
+      if (currentRole === "admin" && !inTrashView && b.payment_status === "paid" && b.payment_verified !== false) {
+        actionsTd.appendChild(
+          makeActionBtn(b.confirmation_email_sent_at ? "再寄一次預約成功信" : "補寄預約成功信", function () {
+            if (!b.customer_email) { alert("這位客人沒有留 email，請改用電話或 LINE 通知。"); return; }
+            if (!confirm("要寄「預約成功」email 給 " + b.customer_email + " 嗎？")) return;
+            fetch("/api/admin-bookings", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: b.id, resend: true }),
+            })
+              .then(function (res) { if (!res.ok) throw new Error("fail"); return res.json(); })
+              .then(function (r) {
+                var m = { sent: "已寄出預約成功信。", no_email: "沒有 email。", not_configured: "尚未設定寄信功能。", send_failed: "寄信失敗（可能今天額度用完），請稍後再試。" };
+                alert(m[r.email] || "完成");
+                return loadBookings();
+              })
+              .catch(function () { alert("操作失敗，請重新整理再試一次"); });
           })
         );
       }
