@@ -129,8 +129,53 @@ document.addEventListener("DOMContentLoaded", function () {
     return arr;
   }
 
+  var shownBookings = [];
+  var trashBar = document.getElementById("trashBar");
+  var trashBtn = document.getElementById("trashBtn");
+  var restoreBtn = document.getElementById("restoreBtn");
+  var trashMsg = document.getElementById("trashMsg");
+  var TRASH_HINT = "先在姓名前面的方格打勾，再按按鈕。垃圾桶只是收起來，不會真的刪除資料。";
+
+  function checkedBookingIds() {
+    return shownBookings.filter(function (x) { return x.handled; }).map(function (x) { return x.id; });
+  }
+  function updateTrashUi() {
+    var inTrash = filterStatus.value === "trashed";
+    if (trashBar) trashBar.style.display = currentRole === "admin" ? "" : "none";
+    if (trashBtn) { trashBtn.style.display = inTrash ? "none" : ""; trashBtn.textContent = "🗑 把打勾的移到垃圾桶（" + checkedBookingIds().length + "）"; }
+    if (restoreBtn) { restoreBtn.style.display = inTrash ? "" : "none"; restoreBtn.textContent = "↩ 把打勾的從垃圾桶還原（" + checkedBookingIds().length + "）"; }
+  }
+  function bulkTrash(trash) {
+    var ids = checkedBookingIds();
+    if (!ids.length) { alert("請先在姓名前面的方格打勾。"); return; }
+    var q = trash
+      ? "確定把 " + ids.length + " 筆打勾的訂單移到垃圾桶？\n\n沒付款、待對帳的會同時取消並釋出營位；已對帳完成的不會被移走。\n垃圾桶裡的資料不會真的刪除，之後可以還原。"
+      : "確定把 " + ids.length + " 筆從垃圾桶還原？\n\n還原後狀態會是「已取消」，要恢復請再按「對帳完成」。";
+    if (!confirm(q)) return;
+    fetch("/api/admin-bookings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: ids, trash: trash }),
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error("fail");
+        return res.json();
+      })
+      .then(function (r) {
+        var msg = (trash ? "已移到垃圾桶 " : "已還原 ") + r.moved + " 筆。";
+        if (r.skipped) msg += "另有 " + r.skipped + " 筆已對帳完成，沒有移走（請到該筆按「取消訂單」）。";
+        if (trashMsg) trashMsg.textContent = msg;
+        return loadBookings();
+      })
+      .catch(function () { alert("操作失敗，請重新整理再試一次"); });
+  }
+  if (trashBtn) trashBtn.addEventListener("click", function () { bulkTrash(true); });
+  if (restoreBtn) restoreBtn.addEventListener("click", function () { bulkTrash(false); });
+
   function renderBookings(bookings) {
     bookings = sortBookings(bookings);
+    shownBookings = bookings;
+    updateTrashUi();
     bookingsBody.innerHTML = "";
     var paidTotal = 0, paidCount = 0, unverified = 0;
     bookings.forEach(function (b) {
@@ -186,6 +231,7 @@ document.addEventListener("DOMContentLoaded", function () {
               if (!res.ok) throw new Error("fail");
               b.handled = want;
               tr.classList.toggle("row-handled", want);
+              updateTrashUi();
             })
             .catch(function () {
               cb.checked = !want;
@@ -197,18 +243,19 @@ document.addEventListener("DOMContentLoaded", function () {
       var actionsTd = document.createElement("td");
       actionsTd.className = "admin-actions";
 
-      if (currentRole !== "admin") {
-        actionsTd.textContent = "—";
+      var inTrashView = filterStatus.value === "trashed";
+      if (currentRole !== "admin" || inTrashView) {
+        actionsTd.textContent = inTrashView ? "（在垃圾桶）" : "—";
       }
 
-      if (currentRole === "admin" && b.payment_status !== "paid") {
+      if (currentRole === "admin" && !inTrashView && b.payment_status !== "paid") {
         actionsTd.appendChild(
           makeActionBtn("對帳完成（標記已付款並寄確認信）", function () {
             updateStatus(b.id, "paid");
           })
         );
       }
-      if (currentRole === "admin" && b.payment_status === "paid" && b.payment_verified === false) {
+      if (currentRole === "admin" && !inTrashView && b.payment_status === "paid" && b.payment_verified === false) {
         actionsTd.appendChild(
           makeActionBtn("對帳完成，寄確認信", function () {
             if (confirm("確認這筆款項已入帳？按下去會寄「預約成功」email 給客人。")) {
@@ -217,7 +264,7 @@ document.addEventListener("DOMContentLoaded", function () {
           })
         );
       }
-      if (currentRole === "admin" && b.payment_status !== "cancelled") {
+      if (currentRole === "admin" && !inTrashView && b.payment_status !== "cancelled") {
         actionsTd.appendChild(
           makeActionBtn("取消訂單", function () {
             if (confirm("確定要取消這筆訂單嗎？取消後會釋出該日期的營位。")) {
@@ -281,20 +328,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     messages.forEach(function (m) {
       var tr = document.createElement("tr");
+      var replied = m.status === "replied";
+      if (replied) tr.classList.add("row-handled");
       var time = m.created_at ? new Date(m.created_at).toLocaleString("zh-TW") : "";
+      var badgeCls = m.status === "new" ? "pending" : "paid";
+      var badgeTxt = replied ? "已回覆" : m.status === "read" ? "已讀" : "新留言";
       tr.innerHTML =
         "<td>" + escapeHtml(time) + "</td>" +
-        "<td>" + escapeHtml(m.name) + "</td>" +
+        '<td><label class="handled-wrap"><input type="checkbox" class="handled-cb msg-cb"' +
+        (replied ? " checked" : "") + (currentRole !== "admin" ? " disabled" : "") +
+        ' aria-label="已回覆"> <span>' + escapeHtml(m.name) + "</span></label></td>" +
         "<td>" + escapeHtml(m.phone) + "</td>" +
         "<td>" + escapeHtml(m.message || "") +
         (m.reply ? '<div style="margin-top:6px;font-size:12px;opacity:.85;">營主回覆：' + escapeHtml(m.reply) + "</div>" : "") +
         (m.is_public === false ? '<div style="margin-top:6px;font-size:12px;color:#f2c766;">（已從公開留言板隱藏）</div>' : "") +
         "</td>" +
-        '<td><span class="status-badge status-' + (m.status === "read" ? "paid" : "pending") + '">' +
-        (m.status === "read" ? "已讀" : "新留言") +
-        "</span></td>";
+        '<td><span class="status-badge status-' + badgeCls + '">' + badgeTxt + "</span></td>";
 
-      var actionsTd = document.createElement("td");
       function patchMsg(body) {
         body.id = m.id;
         return fetch("/api/admin-messages", {
@@ -308,39 +358,57 @@ document.addEventListener("DOMContentLoaded", function () {
           })
           .catch(function () {
             alert("更新失敗，請重新整理再試一次");
+            return loadMessages();
           });
       }
+
+      var cb = tr.querySelector(".msg-cb");
+      if (cb) {
+        cb.addEventListener("change", function () {
+          patchMsg({ status: cb.checked ? "replied" : "read" });
+        });
+      }
+
+      var msgTd = tr.children[3];
+      var box = null;
+      function toggleReplyBox() {
+        if (box) { box.hidden = !box.hidden; if (!box.hidden) box.querySelector("textarea").focus(); return; }
+        box = document.createElement("div");
+        box.className = "reply-box";
+        box.innerHTML =
+          '<textarea maxlength="600" placeholder="輸入要回覆的內容（會公開顯示在網站的留言板上）"></textarea>' +
+          '<div class="reply-btns"></div>';
+        var ta = box.querySelector("textarea");
+        ta.value = m.reply || "";
+        var btns = box.querySelector(".reply-btns");
+        btns.appendChild(makeActionBtn("送出回覆（並標記已回覆）", function () {
+          var text = ta.value.trim();
+          if (!text) { alert("請先輸入回覆內容。"); return; }
+          patchMsg({ reply: text });
+        }));
+        if (m.reply) {
+          btns.appendChild(makeActionBtn("刪除回覆", function () {
+            if (confirm("確定刪除這則回覆？")) patchMsg({ reply: "", status: "read" });
+          }));
+        }
+        btns.appendChild(makeActionBtn("收起", function () { box.hidden = true; }));
+        msgTd.appendChild(box);
+        ta.focus();
+      }
+
+      var actionsTd = document.createElement("td");
       if (currentRole === "admin") {
-        actionsTd.appendChild(
-          makeActionBtn(m.reply ? "修改回覆" : "回覆", function () {
-            var text = window.prompt("請輸入要公開顯示在留言板上的回覆（留空＝刪除回覆）：", m.reply || "");
-            if (text === null) return;
-            patchMsg({ reply: text });
-          })
-        );
+        actionsTd.appendChild(makeActionBtn(m.reply ? "修改回覆" : "回覆", toggleReplyBox));
         actionsTd.appendChild(
           makeActionBtn(m.is_public === false ? "公開顯示" : "隱藏留言", function () {
             patchMsg({ is_public: m.is_public === false });
           })
         );
-      }
-      if (currentRole === "admin" && m.status !== "read") {
-        actionsTd.appendChild(
-          makeActionBtn("標記已讀", function () {
-            fetch("/api/admin-messages", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: m.id, status: "read" }),
-            })
-              .then(function (res) {
-                if (!res.ok) throw new Error("更新失敗");
-                return loadMessages();
-              })
-              .catch(function () {
-                alert("更新失敗，請重新整理再試一次");
-              });
-          })
-        );
+        if (m.status === "new") {
+          actionsTd.appendChild(makeActionBtn("標記已讀", function () { patchMsg({ status: "read" }); }));
+        }
+      } else {
+        actionsTd.textContent = "—";
       }
       tr.appendChild(actionsTd);
       messagesBody.appendChild(tr);

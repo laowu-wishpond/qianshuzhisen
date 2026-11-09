@@ -35,6 +35,7 @@ export default async function handler(req, res) {
     .from("bookings")
     .select("*")
     .gt("total_amount", 0)
+    .eq("trashed", false)
     .order("created_at", { ascending: true });
   const only = req.query.only;
   if (only === "verified") query = query.eq("payment_status", "paid").eq("payment_verified", true);

@@ -30,8 +30,13 @@ export default async function handler(req, res) {
       .order("created_at", { ascending: true });
 
     if (searchDigits) {
-      query = query.not("transfer_last5", "is", null).like("transfer_last5", "%" + searchDigits);
+      query = query.eq("trashed", false).not("transfer_last5", "is", null).like("transfer_last5", "%" + searchDigits);
+    } else if (status === "trashed") {
+      query = query.eq("trashed", true);
+      if (from) query = query.gte("booking_date", from);
+      if (to) query = query.lte("booking_date", to);
     } else {
+      query = query.eq("trashed", false);
       if (from) query = query.gte("booking_date", from);
       if (to) query = query.lte("booking_date", to);
       if (status === "unreported") query = query.eq("payment_status", "pending").is("transfer_last5", null).gt("total_amount", 0);
@@ -56,7 +61,39 @@ export default async function handler(req, res) {
     if (role !== "admin") {
       return res.status(403).json({ error: "唯讀帳號無法修改訂單" });
     }
-    const { id, payment_status, handled } = req.body || {};
+    const { id, payment_status, handled, ids, trash } = req.body || {};
+    // 批次：把打勾的訂單移到垃圾桶／從垃圾桶還原（不會真的刪除資料）
+    if (Array.isArray(ids) && typeof trash === "boolean") {
+      const list = ids.filter((x) => typeof x === "string").slice(0, 300);
+      if (!list.length) return res.status(400).json({ error: "沒有選取訂單" });
+      const { data: rows, error: selErr } = await supabase
+        .from("bookings")
+        .select("id,payment_status,payment_verified")
+        .in("id", list);
+      if (selErr) {
+        console.error("admin-bookings trash select error:", selErr);
+        return res.status(500).json({ error: "操作失敗" });
+      }
+      const okIds = [];
+      let skipped = 0;
+      (rows || []).forEach((r) => {
+        // 已付款且已對帳的不能直接丟垃圾桶（請先確認要取消）
+        if (trash && r.payment_status === "paid" && r.payment_verified) skipped += 1;
+        else okIds.push(r.id);
+      });
+      if (okIds.length) {
+        const now = new Date().toISOString();
+        const patch = trash
+          ? { trashed: true, trashed_at: now, payment_status: "cancelled", handled: false }
+          : { trashed: false, trashed_at: null, handled: false };
+        const { error: upErr } = await supabase.from("bookings").update(patch).in("id", okIds);
+        if (upErr) {
+          console.error("admin-bookings trash update error:", upErr);
+          return res.status(500).json({ error: "操作失敗" });
+        }
+      }
+      return res.status(200).json({ ok: true, moved: okIds.length, skipped });
+    }
     if (id && typeof handled === "boolean" && !payment_status) {
       const { error: hErr } = await supabase
         .from("bookings")

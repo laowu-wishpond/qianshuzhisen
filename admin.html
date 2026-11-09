@@ -14,6 +14,9 @@
 .handled-cb:checked::after{content:"✓";color:#fff;font-size:20px;line-height:22px;position:absolute;left:4px;top:0;}
 .handled-cb:disabled{opacity:.6;cursor:not-allowed;}
 tr.row-handled td{opacity:.55;}
+.reply-box{margin-top:8px;}
+.reply-box textarea{width:100%;min-height:70px;box-sizing:border-box;padding:8px;border-radius:6px;border:1px solid #888;font:inherit;}
+.reply-box .reply-btns{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;}
 </style>
 </head>
 <body class="admin-body">
@@ -52,6 +55,7 @@ tr.row-handled td{opacity:.55;}
           <option value="unverified">待對帳（客人已回報末碼，尚未確認入帳）</option>
           <option value="failed">刷卡失敗</option>
           <option value="cancelled">已取消</option>
+          <option value="trashed">🗑 垃圾桶</option>
         </select>
       </label>
       <label>排序
@@ -62,6 +66,11 @@ tr.row-handled td{opacity:.55;}
         </select>
       </label>
       <button id="refreshBtn" class="btn btn-outline" type="button">重新整理</button>
+    </div>
+    <div class="admin-filters" id="trashBar" style="margin-top:10px;display:none;">
+      <button id="trashBtn" class="btn btn-outline" type="button">🗑 把打勾的移到垃圾桶</button>
+      <button id="restoreBtn" class="btn btn-outline" type="button" style="display:none;">↩ 把打勾的從垃圾桶還原</button>
+      <span id="trashMsg" style="font-size:13px;opacity:.85;">先在姓名前面的方格打勾，再按按鈕。垃圾桶只是收起來，不會真的刪除資料。</span>
     </div>
     <div class="admin-filters" style="margin-top:10px;">
       <a class="btn btn-primary" href="/api/admin-export?only=verified&format=print" target="_blank" rel="noopener">🖨 列印已對帳訂單（給會計）</a>
@@ -124,6 +133,6 @@ tr.row-handled td{opacity:.55;}
   </section>
 </div>
 
-<script src="js/admin.js?v=20261109e"></script>
+<script src="js/admin.js?v=20261109f"></script>
 </body>
 </html>

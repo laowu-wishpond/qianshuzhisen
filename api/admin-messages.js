@@ -3,7 +3,7 @@
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { getRole, maskPhone } from "../lib/adminAuth.js";
 
-const ALLOWED_STATUS = ["new", "read"];
+const ALLOWED_STATUS = ["new", "read", "replied"];
 
 export default async function handler(req, res) {
   const role = getRole(req);
@@ -45,7 +45,8 @@ export default async function handler(req, res) {
       const text = String(reply || "").trim().slice(0, 600);
       patch.reply = text || null;
       patch.replied_at = text ? new Date().toISOString() : null;
-      if (text) patch.status = "read";
+      if (text) patch.status = "replied";
+      else if (status === undefined) patch.status = "read";
     }
     if (is_public !== undefined) patch.is_public = !!is_public;
     if (!Object.keys(patch).length) return res.status(400).json({ error: "沒有要更新的內容" });
