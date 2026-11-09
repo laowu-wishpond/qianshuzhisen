@@ -210,9 +210,20 @@ document.addEventListener("DOMContentLoaded", function () {
     bookings.forEach(function (b) {
       var tr = document.createElement("tr");
       // 新訂單：入住～退房＋營位；舊訂單（改成依營位計價之前建立的）只有單一日期，沒有營位
-      var dateText = b.check_in
-        ? b.check_in + " ～ " + b.check_out + "（" + (b.nights_count || "") + "晚）"
-        : b.booking_date;
+      var dateText;
+      if (b.check_in) {
+        var nn = Number(b.nights_count) || 1;
+        var startD = b.check_in;
+        if (b.early_arrival) {
+          var dd = new Date(b.check_in + "T00:00:00Z");
+          dd.setUTCDate(dd.getUTCDate() - 1);
+          startD = dd.toISOString().slice(0, 10);
+          nn += 1;
+        }
+        dateText = startD + " ～ " + b.check_out + "（" + (b.early_arrival ? (nn + 1) + "天" + nn + "夜，含夜衝" : nn + "晚") + "）";
+      } else {
+        dateText = b.booking_date;
+      }
       tr.innerHTML =
         "<td>" + escapeHtml(dateText) +
         '<div style="font-size:12px;opacity:.75;margin-top:4px;">下單：' +

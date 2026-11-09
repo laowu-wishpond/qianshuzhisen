@@ -1,6 +1,7 @@
 // POST /api/lookup-booking { code, phone }
 // 客人用「訂單編號（8 碼）＋訂購時留的電話」查詢預約／付款狀態。兩個都對才會回資料。
 import { getSupabaseAdmin } from "../lib/supabase.js";
+import { stayInfo } from "../lib/stay.js";
 
 const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
 
@@ -56,9 +57,10 @@ export default async function handler(req, res) {
     state,
     name: b.customer_name,
     site: b.site_id,
-    checkIn: b.check_in || b.booking_date,
+    checkIn: stayInfo(b).start,
     checkOut: b.check_out,
-    nights: b.nights_count,
+    nights: stayInfo(b).nights,
+    days: stayInfo(b).days,
     earlyArrival: !!b.early_arrival,
     total: Number(b.total_amount || 0),
     last5: b.transfer_last5 || null,

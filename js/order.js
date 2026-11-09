@@ -57,7 +57,7 @@
     resEl.appendChild(el("p", "margin:0 0 12px;", detail));
 
     var info = el("p", "margin:0;line-height:1.9;");
-    var dates = d.checkIn ? (d.checkOut ? d.checkIn + " ～ " + d.checkOut + (d.nights ? "（" + d.nights + t("晚", " nights") + "）" : "") : d.checkIn) : "";
+    var dates = d.checkIn ? (d.checkOut ? d.checkIn + " ～ " + d.checkOut + (d.nights ? "（" + (d.earlyArrival && d.days ? t(d.days + "天" + d.nights + "夜，含夜衝", d.days + " days / " + d.nights + " nights, incl. early arrival") : d.nights + t("晚", " nights")) + "）" : "") : d.checkIn) : "";
     info.appendChild(document.createTextNode(t("訂單編號：", "Order no.: ") + d.code));
     info.appendChild(document.createElement("br"));
     info.appendChild(document.createTextNode(t("姓名：", "Name: ") + d.name));

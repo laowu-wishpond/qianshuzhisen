@@ -3,6 +3,7 @@
 // 需要先登入後台。唯讀帳號匯出的電話會遮蔽。金額為 0 的（老闆保留／免費露營鎖營位用）不會匯出。
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { getRole, maskPhone } from "../lib/adminAuth.js";
+import { stayInfo } from "../lib/stay.js";
 
 const STATUS = { pending: "待確認", paid: "已付款", failed: "刷卡失敗", cancelled: "已取消" };
 const METHOD = { bank_transfer: "銀行匯款", ecpay: "線上刷卡", linepay: "LINE Pay" };
@@ -48,7 +49,7 @@ export default async function handler(req, res) {
   }
 
   const header = [
-    "下單時間", "訂單編號", "入住日", "退房日", "晚數", "營位", "夜衝", "姓名", "電話", "Email",
+    "下單時間", "訂單編號", "入住日(夜衝含前一晚)", "退房日", "晚數(含夜衝)", "營位", "夜衝", "姓名", "電話", "Email",
     "入住人數", "金額(NT$)", "付款方式", "付款狀態", "對帳狀態", "匯款末五碼", "回報末五碼時間", "預約成功信寄出時間", "備註",
   ];
   const rows = (data || []).map((b) => {
@@ -57,9 +58,9 @@ export default async function handler(req, res) {
     return [
       text(twTime(b.created_at)),
       text(String(b.id || "").slice(0, 8)),
-      text(b.check_in || b.booking_date || ""),
+      text(stayInfo(b).start),
       text(b.check_out || ""),
-      b.nights_count ?? "",
+      stayInfo(b).nights || "",
       text(b.site_id || ""),
       text(b.early_arrival ? "有" : ""),
       text(b.customer_name),
@@ -94,8 +95,8 @@ export default async function handler(req, res) {
         "<td><b>" + esc(b.customer_name) + "</b></td>" +
         "<td>" + esc(phone) + "</td>" +
         "<td>" + esc(b.site_id || "") + (b.early_arrival ? "<br>(夜衝)" : "") + "</td>" +
-        "<td>" + esc(b.check_in || b.booking_date || "") + (b.check_out ? "<br>→ " + esc(b.check_out) : "") + "</td>" +
-        "<td>" + esc(b.nights_count ?? "") + "</td>" +
+        "<td>" + esc(stayInfo(b).start) + (b.check_out ? "<br>→ " + esc(b.check_out) : "") + "</td>" +
+        "<td>" + esc(stayInfo(b).nights || "") + (b.early_arrival ? "<br>(含夜衝)" : "") + "</td>" +
         "<td class=r>" + Number(b.total_amount || 0).toLocaleString("en-US") + "</td>" +
         "<td>" + esc(hhmm(b.created_at)) + "</td>" +
         "<td>" + esc(hhmm(b.hold_expires_at)) + "</td>" +
@@ -107,8 +108,8 @@ export default async function handler(req, res) {
       return "<tr>" +
         "<td>" + (i + 1) + "</td>" +
         "<td>" + esc(twTime(b.created_at).slice(5, 16)) + "</td>" +
-        "<td>" + esc(b.check_in || b.booking_date || "") + (b.check_out ? "<br>→ " + esc(b.check_out) : "") + "</td>" +
-        "<td>" + esc(b.nights_count ?? "") + "</td>" +
+        "<td>" + esc(stayInfo(b).start) + (b.check_out ? "<br>→ " + esc(b.check_out) : "") + "</td>" +
+        "<td>" + esc(stayInfo(b).nights || "") + (b.early_arrival ? "<br>(含夜衝)" : "") + "</td>" +
         "<td>" + esc(b.site_id || "") + (b.early_arrival ? "<br>(夜衝)" : "") + "</td>" +
         "<td>" + esc(b.customer_name) + "</td>" +
         "<td>" + esc(phone) + "</td>" +
