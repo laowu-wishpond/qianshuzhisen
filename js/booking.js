@@ -850,6 +850,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (holdTimer) clearInterval(holdTimer);
 
     var expires = new Date(data.holdExpiresAt).getTime();
+    // 記住這筆訂單：即使客人重新整理或離開再回來，仍可回報末五碼，也可到「查詢訂單」頁查
+    try {
+      localStorage.setItem("tsf_pending_hold", JSON.stringify({ bookingId: data.bookingId, holdExpiresAt: data.holdExpiresAt }));
+      localStorage.setItem("tsf_last_order", String(data.bookingId).slice(0, 8));
+    } catch (e) { /* 無痕模式等情況，忽略 */ }
     var panel = document.createElement("div");
     panel.id = "holdPanel";
     panel.className = "notice";
@@ -873,10 +878,24 @@ document.addEventListener("DOMContentLoaded", function () {
     msg.style.cssText = "margin:10px 0 0;";
     row.appendChild(input);
     row.appendChild(btn);
+    var codeNote = document.createElement("p");
+    codeNote.style.cssText = "margin:10px 0 0;font-size:14px;";
+    var codeStrong = document.createElement("strong");
+    codeStrong.textContent = String(data.bookingId).slice(0, 8);
+    var orderLink = document.createElement("a");
+    orderLink.href = "order.html?c=" + String(data.bookingId).slice(0, 8);
+    orderLink.textContent = t("查詢訂單", "Check your booking");
+    codeNote.appendChild(document.createTextNode(t("您的訂單編號：", "Your order number: ")));
+    codeNote.appendChild(codeStrong);
+    codeNote.appendChild(document.createTextNode(t("（請截圖或記下來）。之後可到「", " (please screenshot or write it down). You can check your booking anytime on the “")));
+    codeNote.appendChild(orderLink);
+    codeNote.appendChild(document.createTextNode(t("」頁，輸入訂單編號和電話，查看有沒有訂位成功、付款成功。", "” page with your order number and phone.")));
     panel.appendChild(info);
     panel.appendChild(row);
     panel.appendChild(msg);
+    panel.appendChild(codeNote);
     resultEl.insertAdjacentElement("afterend", panel);
+    try { panel.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { /* ignore */ }
 
     function clock(ms) {
       return new Date(ms).toLocaleTimeString(isEnglish() ? "en-US" : "zh-TW", {
@@ -890,6 +909,7 @@ document.addEventListener("DOMContentLoaded", function () {
       var leftUnitEn = leftMin > 90 ? " h" : " min";
       if (expires <= Date.now()) {
         clearInterval(holdTimer);
+        try { localStorage.removeItem("tsf_pending_hold"); } catch (e) { /* ignore */ }
         info.textContent = t(
           "保留時間已到，營位已釋出。如果您已經匯款，請直接電話聯絡我們；也可以重新預約。",
           "The hold has expired and the site was released. If you've already paid, please call us — or book again."
@@ -927,6 +947,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(function () {
           clearInterval(holdTimer);
+          try { localStorage.removeItem("tsf_pending_hold"); } catch (e) { /* ignore */ }
           row.style.display = "none";
           info.textContent = t(
             "感謝您的預約！已收到您回報的末五碼 " + v + "，營位已為您保留。我們查帳以後，會主動寄 email 通知您預約成功（請留意信箱，也請看一下垃圾信件匣）。",
@@ -943,6 +964,20 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ---------- 啟動 ---------- */
+
+  // 重新整理或離開再回來：如果還有一筆保留中、尚未回報的訂單，把「回報末五碼」面板放回來
+  setTimeout(function () {
+    try {
+      var raw = localStorage.getItem("tsf_pending_hold");
+      if (!raw || document.getElementById("holdPanel")) return;
+      var saved = JSON.parse(raw);
+      if (saved && saved.bookingId && new Date(saved.holdExpiresAt).getTime() > Date.now()) {
+        showHoldPanel(saved);
+      } else {
+        localStorage.removeItem("tsf_pending_hold");
+      }
+    } catch (e) { /* ignore */ }
+  }, 800);
 
   Promise.all([
     import("/lib/pricing.js"),
