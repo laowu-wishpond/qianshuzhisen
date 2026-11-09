@@ -40,6 +40,7 @@
           <option value="">全部</option>
           <option value="pending">待確認</option>
           <option value="paid">已付款</option>
+          <option value="unreported">未付款（沒打後五碼）</option>
           <option value="unverified">待對帳（客人已回報末碼，尚未確認入帳）</option>
           <option value="failed">刷卡失敗</option>
           <option value="cancelled">已取消</option>
@@ -56,6 +57,7 @@
     </div>
     <div class="admin-filters" style="margin-top:10px;">
       <a class="btn btn-primary" href="/api/admin-export?only=verified&format=print" target="_blank" rel="noopener">🖨 列印已對帳訂單（給會計）</a>
+      <a class="btn btn-outline" href="/api/admin-export?only=unpaid&format=print" target="_blank" rel="noopener">🖨 列印未付款名單（附勾選格）</a>
       <a class="btn btn-outline" href="/api/admin-export?format=print" target="_blank" rel="noopener">🖨 列印全部訂單</a>
       <a class="btn btn-outline" href="/api/admin-export?only=verified" download>⬇ 下載 Excel（已對帳）</a>
       <a class="btn btn-outline" href="/api/admin-export" download>⬇ 下載 Excel（全部）</a>

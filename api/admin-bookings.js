@@ -34,7 +34,8 @@ export default async function handler(req, res) {
     } else {
       if (from) query = query.gte("booking_date", from);
       if (to) query = query.lte("booking_date", to);
-      if (status === "unverified") query = query.eq("payment_status", "paid").eq("payment_verified", false);
+      if (status === "unreported") query = query.eq("payment_status", "pending").is("transfer_last5", null).gt("total_amount", 0);
+      else if (status === "unverified") query = query.eq("payment_status", "paid").eq("payment_verified", false);
       else if (status && ALLOWED_STATUS.includes(status)) query = query.eq("payment_status", status);
     }
 

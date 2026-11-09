@@ -36,7 +36,9 @@ export default async function handler(req, res) {
     .select("*")
     .gt("total_amount", 0)
     .order("created_at", { ascending: true });
-  if (req.query.only === "verified") query = query.eq("payment_status", "paid").eq("payment_verified", true);
+  const only = req.query.only;
+  if (only === "verified") query = query.eq("payment_status", "paid").eq("payment_verified", true);
+  if (only === "unpaid") query = query.eq("payment_status", "pending").is("transfer_last5", null);
 
   const { data, error } = await query;
   if (error) {
@@ -80,8 +82,25 @@ export default async function handler(req, res) {
     const esc = (v) => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     const list = data || [];
     const sum = list.reduce((t, b) => t + (b.payment_status === "cancelled" ? 0 : Number(b.total_amount || 0)), 0);
-    const title = req.query.only === "verified" ? "已對帳訂單明細" : "全部訂單明細";
-    const trs = list.map((b, i) => {
+    const unpaid = only === "unpaid";
+    const title = unpaid ? "未付款名單（尚未回報後五碼）" : only === "verified" ? "已對帳訂單明細" : "全部訂單明細";
+    const hhmm = (iso) => (iso ? twTime(iso).slice(5, 16) : "");
+    const trs = unpaid ? list.map((b, i) => {
+      const phone = role === "admin" ? b.customer_phone : maskPhone(b.customer_phone);
+      return "<tr>" +
+        "<td class=box><span class=cb></span></td>" +
+        "<td>" + (i + 1) + "</td>" +
+        "<td><b>" + esc(b.customer_name) + "</b></td>" +
+        "<td>" + esc(phone) + "</td>" +
+        "<td>" + esc(b.site_id || "") + (b.early_arrival ? "<br>(夜衝)" : "") + "</td>" +
+        "<td>" + esc(b.check_in || b.booking_date || "") + (b.check_out ? "<br>→ " + esc(b.check_out) : "") + "</td>" +
+        "<td>" + esc(b.nights_count ?? "") + "</td>" +
+        "<td class=r>" + Number(b.total_amount || 0).toLocaleString("en-US") + "</td>" +
+        "<td>" + esc(hhmm(b.created_at)) + "</td>" +
+        "<td>" + esc(hhmm(b.hold_expires_at)) + "</td>" +
+        "<td class=note></td>" +
+        "</tr>";
+    }).join("") : list.map((b, i) => {
       const verified = b.payment_status === "paid" ? (b.payment_verified ? "已對帳" : "待對帳") : "";
       const phone = role === "admin" ? b.customer_phone : maskPhone(b.customer_phone);
       return "<tr>" +
@@ -114,15 +133,20 @@ tr { page-break-inside: avoid; }
 thead { display: table-header-group; }
 td.r { text-align:right; white-space:nowrap; }
 td.chk { width:34px; }
+td.box { width:56px; text-align:center; }
+.cb { display:inline-block; width:22px; height:22px; border:2px solid #222; background:#fff; border-radius:3px; }
+td.note { min-width:110px; }
 .total { margin-top:10px; font-size:14px; font-weight:bold; text-align:right; }
 @media print { .bar { display:none; } body { margin:0; } }
 </style></head><body>
 <div class="bar"><button onclick="window.print()">🖨 列印</button> <span>（也可在列印視窗選「另存為 PDF」）</span></div>
 <h1>水松千樹之森　${title}</h1>
-<div class="meta">列印日期：${today}　｜　共 ${list.length} 筆　｜　已排除金額為 0 的老闆保留／免費露營${req.query.only === "verified" ? "" : "，合計不含已取消"}</div>
-<table><thead><tr><th>#</th><th>下單時間</th><th>入住／退房</th><th>晚數</th><th>營位</th><th>姓名</th><th>電話</th><th>金額</th><th>狀態</th><th>末五碼</th><th>核</th></tr></thead>
+<div class="meta">列印日期：${today}　｜　共 ${list.length} 筆　｜　${unpaid ? "這些人已預約但還沒回報匯款後五碼，處理完請在前面方格打勾" : "已排除金額為 0 的老闆保留／免費露營" + (only === "verified" ? "" : "，合計不含已取消")}</div>
+<table><thead>${unpaid
+  ? "<tr><th>已處理</th><th>#</th><th>姓名</th><th>電話</th><th>營位</th><th>入住／退房</th><th>晚數</th><th>金額</th><th>下單時間</th><th>保留到</th><th>備註</th></tr>"
+  : "<tr><th>#</th><th>下單時間</th><th>入住／退房</th><th>晚數</th><th>營位</th><th>姓名</th><th>電話</th><th>金額</th><th>狀態</th><th>末五碼</th><th>核</th></tr>"}</thead>
 <tbody>${trs}</tbody></table>
-<div class="total">合計：NT$ ${sum.toLocaleString("en-US")}</div>
+<div class="total">${unpaid ? "未付款合計" : "合計"}：NT$ ${sum.toLocaleString("en-US")}</div>
 </body></html>`;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "no-store");
