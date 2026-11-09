@@ -34,13 +34,24 @@ export default async function handler(req, res) {
     if (role !== "admin") {
       return res.status(403).json({ error: "唯讀帳號無法修改留言" });
     }
-    const { id, status } = req.body || {};
-    if (!id || !status || !ALLOWED_STATUS.includes(status)) {
-      return res.status(400).json({ error: "缺少或不合法的參數" });
+    const { id, status, reply, is_public } = req.body || {};
+    if (!id) return res.status(400).json({ error: "缺少 id" });
+    const patch = {};
+    if (status !== undefined) {
+      if (!ALLOWED_STATUS.includes(status)) return res.status(400).json({ error: "不合法的狀態" });
+      patch.status = status;
     }
+    if (reply !== undefined) {
+      const text = String(reply || "").trim().slice(0, 600);
+      patch.reply = text || null;
+      patch.replied_at = text ? new Date().toISOString() : null;
+      if (text) patch.status = "read";
+    }
+    if (is_public !== undefined) patch.is_public = !!is_public;
+    if (!Object.keys(patch).length) return res.status(400).json({ error: "沒有要更新的內容" });
     const { error } = await supabase
       .from("contact_messages")
-      .update({ status })
+      .update(patch)
       .eq("id", id);
 
     if (error) {

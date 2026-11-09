@@ -490,6 +490,7 @@ document.addEventListener("DOMContentLoaded", function () {
             ? "Dear guest, we have received your message and will reply as soon as possible. Thank you for your patience."
             : "親愛的顧客您好，已經收到您的訊息，我們會盡快回復您，感謝您的耐心等候。";
           contactForm.reset();
+          if (window.loadMessageBoard) window.loadMessageBoard();
         })
         .catch(function (err) {
           contactResult.style.color = "#f29a9a";
@@ -502,6 +503,59 @@ document.addEventListener("DOMContentLoaded", function () {
           submitBtn.innerHTML = originalHTML;
         });
     });
+  }
+
+
+  // 公開留言板（contact.html）：顯示大家的留言、營主回覆；沒有回覆的留言顯示系統自動回覆
+  var boardEl = document.getElementById("messageBoardList");
+  if (boardEl) {
+    window.loadMessageBoard = function () {
+      fetch("/api/public-messages", { cache: "no-store" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var isEn = document.documentElement.lang === "en";
+          boardEl.innerHTML = "";
+          var list = (d && d.messages) || [];
+          if (!list.length) {
+            var p0 = document.createElement("p");
+            p0.style.opacity = ".7";
+            p0.textContent = isEn ? "No messages yet." : "目前還沒有留言。";
+            boardEl.appendChild(p0);
+            return;
+          }
+          var auto = (d.autoReply && (isEn ? d.autoReply.en : d.autoReply.zh)) || "";
+          list.forEach(function (m) {
+            var card = document.createElement("div");
+            card.style.cssText = "border-bottom:1px solid var(--border);padding:14px 0;";
+            var head = document.createElement("div");
+            head.style.cssText = "font-size:13px;opacity:.75;margin-bottom:4px;";
+            var t = m.created_at ? new Date(m.created_at).toLocaleString(isEn ? "en-US" : "zh-TW", { timeZone: "Asia/Taipei", hour12: false }) : "";
+            head.textContent = m.name + "　" + t;
+            var body = document.createElement("div");
+            body.style.cssText = "white-space:pre-wrap;word-break:break-word;";
+            body.textContent = m.message || (isEn ? "(no content)" : "（未填內容）");
+            card.appendChild(head);
+            card.appendChild(body);
+            var rep = document.createElement("div");
+            rep.style.cssText = "margin-top:8px;padding:8px 12px;border-left:3px solid var(--gold);background:rgba(255,255,255,.04);font-size:14px;white-space:pre-wrap;";
+            if (m.reply) {
+              rep.textContent = (isEn ? "Reply from the campground: " : "營主回覆：") + m.reply;
+            } else {
+              rep.style.opacity = ".8";
+              rep.textContent = (isEn ? "Auto-reply: " : "系統自動回覆：") + auto;
+            }
+            card.appendChild(rep);
+            boardEl.appendChild(card);
+          });
+        })
+        .catch(function () {
+          boardEl.innerHTML = "";
+          var p1 = document.createElement("p");
+          p1.textContent = document.documentElement.lang === "en" ? "Couldn't load messages." : "留言載入失敗，請重新整理。";
+          boardEl.appendChild(p1);
+        });
+    };
+    window.loadMessageBoard();
   }
 
   // 首頁開場動畫：由 CapCut 製作的森林動物動畫影片（約10秒）全螢幕播放，

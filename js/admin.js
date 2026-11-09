@@ -243,12 +243,44 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>" + escapeHtml(time) + "</td>" +
         "<td>" + escapeHtml(m.name) + "</td>" +
         "<td>" + escapeHtml(m.phone) + "</td>" +
-        "<td>" + escapeHtml(m.message || "") + "</td>" +
+        "<td>" + escapeHtml(m.message || "") +
+        (m.reply ? '<div style="margin-top:6px;font-size:12px;opacity:.85;">營主回覆：' + escapeHtml(m.reply) + "</div>" : "") +
+        (m.is_public === false ? '<div style="margin-top:6px;font-size:12px;color:#f2c766;">（已從公開留言板隱藏）</div>' : "") +
+        "</td>" +
         '<td><span class="status-badge status-' + (m.status === "read" ? "paid" : "pending") + '">' +
         (m.status === "read" ? "已讀" : "新留言") +
         "</span></td>";
 
       var actionsTd = document.createElement("td");
+      function patchMsg(body) {
+        body.id = m.id;
+        return fetch("/api/admin-messages", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error("更新失敗");
+            return loadMessages();
+          })
+          .catch(function () {
+            alert("更新失敗，請重新整理再試一次");
+          });
+      }
+      if (currentRole === "admin") {
+        actionsTd.appendChild(
+          makeActionBtn(m.reply ? "修改回覆" : "回覆", function () {
+            var text = window.prompt("請輸入要公開顯示在留言板上的回覆（留空＝刪除回覆）：", m.reply || "");
+            if (text === null) return;
+            patchMsg({ reply: text });
+          })
+        );
+        actionsTd.appendChild(
+          makeActionBtn(m.is_public === false ? "公開顯示" : "隱藏留言", function () {
+            patchMsg({ is_public: m.is_public === false });
+          })
+        );
+      }
       if (currentRole === "admin" && m.status !== "read") {
         actionsTd.appendChild(
           makeActionBtn("標記已讀", function () {

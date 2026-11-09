@@ -1,0 +1,46 @@
+// GET /api/public-messages → 公開留言板（給 contact.html 顯示）
+// 只回傳：姓名（遮蔽）、留言內容（去掉 email／電話）、時間、營主回覆。絕不回傳電話。
+// 營主可以在後台把某則留言設成「隱藏」(is_public = false)。
+import { getSupabaseAdmin } from "../lib/supabase.js";
+import { AUTO_REPLY_ZH, AUTO_REPLY_EN } from "../lib/email.js";
+
+function maskName(name) {
+  const s = String(name || "").trim();
+  if (!s) return "訪客";
+  const chars = Array.from(s);
+  if (chars.length === 1) return chars[0] + "○";
+  if (chars.length === 2) return chars[0] + "○";
+  return chars[0] + "○".repeat(chars.length - 2) + chars[chars.length - 1];
+}
+
+function cleanMessage(msg) {
+  let s = String(msg || "");
+  s = s.replace(/（客人 Email：[^）]*）/g, ""); // create-message 附加的 email
+  s = s.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "［已隱藏］"); // email
+  s = s.replace(/(\+?\d[\d\s-]{6,}\d)/g, "［已隱藏］"); // 電話等 7 碼以上數字
+  return s.trim().slice(0, 400);
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("contact_messages")
+    .select("name, message, created_at, reply, replied_at")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(60);
+  if (error) {
+    console.error("public-messages error:", error);
+    return res.status(500).json({ error: "載入留言失敗" });
+  }
+  const messages = (data || []).map((m) => ({
+    name: maskName(m.name),
+    message: cleanMessage(m.message),
+    created_at: m.created_at,
+    reply: m.reply ? String(m.reply).slice(0, 600) : null,
+    replied_at: m.replied_at || null,
+  }));
+  res.setHeader("Cache-Control", "public, s-maxage=10, stale-while-revalidate=30");
+  return res.status(200).json({ messages, autoReply: { zh: AUTO_REPLY_ZH, en: AUTO_REPLY_EN } });
+}
