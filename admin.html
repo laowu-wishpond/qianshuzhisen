@@ -40,8 +40,16 @@
           <option value="">全部</option>
           <option value="pending">待確認</option>
           <option value="paid">已付款</option>
+          <option value="unverified">待對帳（客人已回報末碼，尚未確認入帳）</option>
           <option value="failed">刷卡失敗</option>
           <option value="cancelled">已取消</option>
+        </select>
+      </label>
+      <label>排序
+        <select id="sortBy">
+          <option value="created_asc">依下單時間（先下單的在上面）</option>
+          <option value="created_desc">依下單時間（最新的在上面）</option>
+          <option value="checkin_asc">依入住日期（最近的在上面）</option>
         </select>
       </label>
       <button id="refreshBtn" class="btn btn-outline" type="button">重新整理</button>
@@ -99,6 +107,6 @@
   </section>
 </div>
 
-<script src="js/admin.js?v=20261109c"></script>
+<script src="js/admin.js?v=20261109d"></script>
 </body>
 </html>

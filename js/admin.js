@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var filterFrom = document.getElementById("filterFrom");
   var filterTo = document.getElementById("filterTo");
   var filterStatus = document.getElementById("filterStatus");
+  var sortBy = document.getElementById("sortBy");
   var last4Input = document.getElementById("last4Input");
   var last4Btn = document.getElementById("last4Btn");
   var last4Clear = document.getElementById("last4Clear");
@@ -114,7 +115,22 @@ document.addEventListener("DOMContentLoaded", function () {
     return note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "";
   }
 
+  function sortBookings(list) {
+    var mode = sortBy ? sortBy.value : "created_asc";
+    var arr = list.slice();
+    arr.sort(function (a, b) {
+      if (mode === "checkin_asc") {
+        var da = a.check_in || a.booking_date || "", db = b.check_in || b.booking_date || "";
+        return da < db ? -1 : da > db ? 1 : (a.created_at < b.created_at ? -1 : 1);
+      }
+      var ta = new Date(a.created_at).getTime(), tb = new Date(b.created_at).getTime();
+      return mode === "created_desc" ? tb - ta : ta - tb;
+    });
+    return arr;
+  }
+
   function renderBookings(bookings) {
+    bookings = sortBookings(bookings);
     bookingsBody.innerHTML = "";
     var paidTotal = 0, paidCount = 0, unverified = 0;
     bookings.forEach(function (b) {
@@ -139,7 +155,10 @@ document.addEventListener("DOMContentLoaded", function () {
         ? b.check_in + " ～ " + b.check_out + "（" + (b.nights_count || "") + "晚）"
         : b.booking_date;
       tr.innerHTML =
-        "<td>" + escapeHtml(dateText) + "</td>" +
+        "<td>" + escapeHtml(dateText) +
+        '<div style="font-size:12px;opacity:.75;margin-top:4px;">下單：' +
+        escapeHtml(new Date(b.created_at).toLocaleString("zh-TW", { timeZone: "Asia/Taipei", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })) +
+        "</div></td>" +
         "<td>" + escapeHtml(b.site_id || "—") + "</td>" +
         "<td>" + (b.early_arrival ? "有（前一晚）" : "—") + "</td>" +
         "<td>" + escapeHtml(b.customer_name) + "</td>" +
@@ -380,6 +399,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   refreshBtn.addEventListener("click", loadBookings);
   filterStatus.addEventListener("change", loadBookings);
+  if (sortBy) sortBy.addEventListener("change", loadBookings);
   filterFrom.addEventListener("change", loadBookings);
   filterTo.addEventListener("change", loadBookings);
 

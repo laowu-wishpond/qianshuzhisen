@@ -22,6 +22,10 @@ function cleanMessage(msg) {
   s = s.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, HIDE); // email
   s = s.replace(/[A-Za-z][12]\d{8}/g, HIDE); // 身分證字號
   s = s.replace(/(末|後|尾)\s*[四五4-5]?\s*碼?\s*[:：是為]?\s*\d{3,}/g, HIDE); // 「末五碼 12345」「後四碼1234」
+  // 匯款金額：$4000、NT$4,000、4000 元、匯款/轉帳/金額 後面的數字
+  s = s.replace(/(NT\$?|NTD|\$|＄)\s*\d[\d,]*/gi, HIDE);
+  s = s.replace(/\d[\d,]*\s*(元|塊|圓|NTD|ntd)/g, HIDE);
+  s = s.replace(/(匯款|匯了|轉帳|轉了|金額|款項|訂金|總額|共計|合計)\s*[:：是為]?\s*(NT\$?|\$)?\s*\d[\d,]*/g, (m, k) => k + HIDE);
   s = s.replace(/\d[\d\s-]{3,}\d/g, (m) => (m.replace(/\D/g, "").length >= 5 ? HIDE : m)); // 5 位以上數字（電話、帳號、末五碼）
   s = s.replace(/\d{5,}/g, HIDE);
   return s.trim().slice(0, 400);

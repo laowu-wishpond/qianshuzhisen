@@ -34,7 +34,8 @@ export default async function handler(req, res) {
     } else {
       if (from) query = query.gte("booking_date", from);
       if (to) query = query.lte("booking_date", to);
-      if (status && ALLOWED_STATUS.includes(status)) query = query.eq("payment_status", status);
+      if (status === "unverified") query = query.eq("payment_status", "paid").eq("payment_verified", false);
+      else if (status && ALLOWED_STATUS.includes(status)) query = query.eq("payment_status", status);
     }
 
     const { data, error } = await query;
