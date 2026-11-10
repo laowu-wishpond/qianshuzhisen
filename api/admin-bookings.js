@@ -23,15 +23,39 @@ export default async function handler(req, res) {
     if (searchDigits && !/^\d{4,5}$/.test(searchDigits)) {
       return res.status(400).json({ error: "請輸入 4 或 5 位數字" });
     }
+    // 末碼查詢：① 客人在「查詢訂單」頁回報的末五碼 ② 客人在「聯絡表單留言」裡寫的末碼（用留言的電話找出他的訂單）
+    if (searchDigits) {
+      const { data: byLast5, error: e1 } = await supabase
+        .from("bookings").select("*").eq("trashed", false)
+        .not("transfer_last5", "is", null).like("transfer_last5", "%" + searchDigits);
+      if (e1) { console.error("admin-bookings last4 error:", e1); return res.status(500).json({ error: "查詢訂單失敗" }); }
+      const { data: msgs } = await supabase
+        .from("contact_messages").select("phone,message").ilike("message", "%" + searchDigits + "%");
+      const snippetByPhone = new Map();
+      (msgs || []).forEach((m) => {
+        if (m.phone && !snippetByPhone.has(m.phone)) snippetByPhone.set(m.phone, String(m.message || "").replace(/\s+/g, " ").slice(0, 60));
+      });
+      let byMsg = [];
+      if (snippetByPhone.size) {
+        const { data: b2 } = await supabase
+          .from("bookings").select("*").eq("trashed", false).gt("total_amount", 0)
+          .in("customer_phone", [...snippetByPhone.keys()]);
+        byMsg = (b2 || []).map((b) => ({ ...b, via_message: snippetByPhone.get(b.customer_phone) }));
+      }
+      const seen = new Set((byLast5 || []).map((b) => b.id));
+      let merged = [...(byLast5 || []), ...byMsg.filter((b) => !seen.has(b.id))];
+      merged.sort((a, b) => String(a.check_in || a.booking_date || "").localeCompare(String(b.check_in || b.booking_date || "")));
+      if (role !== "admin") merged = merged.map((b) => ({ ...b, customer_phone: maskPhone(b.customer_phone) }));
+      return res.status(200).json({ bookings: merged, role });
+    }
+
     let query = supabase
       .from("bookings")
       .select("*")
       .order("booking_date", { ascending: true })
       .order("created_at", { ascending: true });
 
-    if (searchDigits) {
-      query = query.eq("trashed", false).not("transfer_last5", "is", null).like("transfer_last5", "%" + searchDigits);
-    } else if (status === "trashed") {
+    if (status === "trashed") {
       query = query.eq("trashed", true);
       if (from) query = query.gte("booking_date", from);
       if (to) query = query.lte("booking_date", to);

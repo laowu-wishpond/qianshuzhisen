@@ -99,6 +99,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
     var note = "";
+    var viaMsg = b.via_message
+      ? '<div style="font-size:12px;color:#f2c766;margin-top:4px;">📩 客人在「留言」裡提到這個末碼：「' + escapeHtml(b.via_message) + '…」請核對金額與姓名</div>'
+      : "";
     if (b.payment_status === "pending" && b.transfer_last5) {
       note = "客人已回報匯款，末五碼 " + b.transfer_last5 + "（請核對後標記已付款）";
     } else if (b.payment_status === "pending" && b.hold_expires_at) {
@@ -113,10 +116,10 @@ document.addEventListener("DOMContentLoaded", function () {
       var mail = b.confirmation_email_sent_at
         ? "預約成功信已寄出（" + hhmm(b.confirmation_email_sent_at) + "）"
         : (b.customer_email ? "預約成功信尚未寄出（可按右邊「補寄預約成功信」）" : "沒有留 Email，請用電話／LINE 通知");
-      return '<div style="font-size:13px;margin-top:6px;color:#9be59b;font-weight:700;">✓ 已對帳完成，不用再按</div>' +
+      return viaMsg + '<div style="font-size:13px;margin-top:6px;color:#9be59b;font-weight:700;">✓ 已對帳完成，不用再按</div>' +
         '<div style="font-size:12px;opacity:.9;margin-top:2px;">' + escapeHtml((b.transfer_last5 ? "末五碼 " + b.transfer_last5 + "　" : "") + mail) + "</div>";
     }
-    return note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "";
+    return viaMsg + (note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "");
   }
 
   // 營位編號排序用：A2 → ["A", 2]；沒有營位的（舊訂單）排最後
@@ -437,8 +440,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (activeLast4) {
           var n = (data.bookings || []).length;
           last4Msg.textContent = n
-            ? "匯款末碼 " + activeLast4 + " 共找到 " + n + " 筆（不受上方日期／狀態篩選影響）。請核對金額與姓名後，再標記已付款。"
-            : "找不到末碼 " + activeLast4 + " 的訂單。可能客人還沒回報匯款末五碼，或輸入有誤。";
+            ? "匯款末碼 " + activeLast4 + " 共找到 " + n + " 筆（不受上方日期／狀態篩選影響；包含客人在留言裡寫的末碼）。請核對金額與姓名。"
+            : "找不到末碼 " + activeLast4 + " 的訂單（回報頁和留言都找過了）。可能客人還沒回報，或輸入有誤。";
           last4Msg.style.color = n ? "#8fd68f" : "#f2c766";
         } else {
           last4Msg.textContent = "";
