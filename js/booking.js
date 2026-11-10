@@ -2,7 +2,7 @@
  依營位預約（林大哥規則）：
  - 客人先選「入住日 → 退房日」（可連住，連住不打折），再點地圖或清單選一個營位。
  - 價格是「每個營位／每晚」，整塊出租，不限帳數、不看人數；平日（週日～週四）與假日（週五、週六、國定假日）不同價。
- - 夜衝（前一晚 18:00～22:00 進場）可勾選，必須同時預訂隔日正式營位；夜衝價 = 夜衝那一晚當天價格的 5 折。
+ - 夜衝（前一晚 18:00～22:00 進場）可勾選，必須同時預訂隔日正式營位；夜衝價 = 夜衝那一晚當天價格的 5 折（不超過該營位公告夜衝價、最高 2,000）。
  - 價格資料與計價公式在 lib/sites.js、lib/holidays.js、lib/pricing.js，
    前端（這支）與後端（api/create-booking.js）共用同一份，金額不會對不上；改價格只要改 lib/sites.js。
  - 空位來自 /api/get-availability（Supabase booking_nights 表的真實資料）。
@@ -590,8 +590,8 @@ document.addEventListener("DOMContentLoaded", function () {
       var ePrice = P.earlyPrice(s, eDate);
       var eHoliday = P.dayTypeOf(eDate) === "holiday";
       note = t(
-        "夜衝（前一晚 18:00～22:00 進場）＋" + money(ePrice) + "，是前一晚" + (eHoliday ? "假日價" : "平日價") + "的 5 折；須同時預訂隔日正式營位，22:00 後請降低音量",
-        "Early arrival (arrive 18:00–22:00 the night before) +" + money(ePrice) + " — 50% off that night's " + (eHoliday ? "holiday" : "weekday") + " rate; must be combined with the next day's stay; quiet after 22:00"
+        "夜衝（前一晚 18:00～22:00 進場）＋" + money(ePrice) + "，約為前一晚" + (eHoliday ? "假日價" : "平日價") + "的 5 折（最高 2,000 元）；須同時預訂隔日正式營位，22:00 後請降低音量",
+        "Early arrival (arrive 18:00–22:00 the night before) +" + money(ePrice) + " — about 50% of that night's " + (eHoliday ? "holiday" : "weekday") + " rate (max NT$2,000); must be combined with the next day's stay; quiet after 22:00"
       );
     }
     earlyBox.disabled = !can;
@@ -610,7 +610,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else if (!checkIn || !checkOut) {
       html =
         '<div class="quote-title">' + s.id + t("　營位價格", " rates") + "</div>" +
-        t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" + t("夜衝 ", "Early ") + t("當晚價格 5 折", "50% off that night") +
+        t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" + t("夜衝 ", "Early ") + t("當晚價格約 5 折，最高 2,000", "about 50% of that night, max 2,000") +
         "<br>" + t("請在左邊選擇入住日與退房日。", "Select your check-in and check-out dates on the left.");
     } else {
       var free = siteFree(s.id);
@@ -631,7 +631,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "</span><span>" + money(n.price) + "</span></div>";
         });
         if (q.early) {
-          html += '<div class="quote-row"><span>' + dateLabel(q.early.date) + "　" + t("加訂前一晚夜衝（18:00～22:00 進場，當晚價格 5 折）", "Early arrival the night before (18:00–22:00, 50% off)") + "</span><span>" + money(q.early.price) + "</span></div>";
+          html += '<div class="quote-row"><span>' + dateLabel(q.early.date) + "　" + t("加訂前一晚夜衝（18:00～22:00 進場，當晚價格約 5 折，最高 2,000 元）", "Early arrival the night before (18:00–22:00, about 50% off, max NT$2,000)") + "</span><span>" + money(q.early.price) + "</span></div>";
         }
         if (checkOut > P.HOLIDAYS_COVERED_THROUGH) {
           var y = P.HOLIDAYS_COVERED_THROUGH.slice(0, 4);
