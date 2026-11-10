@@ -17,6 +17,11 @@ document.addEventListener("DOMContentLoaded", function () {
   var last4Clear = document.getElementById("last4Clear");
   var last4Msg = document.getElementById("last4Msg");
   var activeLast4 = "";
+  var activeQ = "";
+  var qInput = document.getElementById("qInput");
+  var qBtn = document.getElementById("qBtn");
+  var qClear = document.getElementById("qClear");
+  var qMsg = document.getElementById("qMsg");
   var messagesBody = document.getElementById("messagesBody");
   var messagesError = document.getElementById("messagesError");
   var roleBadge = document.getElementById("roleBadge");
@@ -306,7 +311,8 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>" + (b.early_arrival ? "有（前一晚）" : "—") + "</td>" +
         '<td><label class="handled-wrap"><input type="checkbox" class="handled-cb"' +
         (b.handled ? " checked" : "") + (currentRole !== "admin" ? " disabled" : "") +
-        ' aria-label="已處理"> <span>' + escapeHtml(b.customer_name) + "</span></label></td>" +
+        ' aria-label="已處理"> <span>' + escapeHtml(b.customer_name) + "</span></label>" +
+        '<div style="font-size:12px;opacity:.8;margin-top:3px;">訂單編號 <b style="user-select:all;letter-spacing:.5px;">' + escapeHtml(String(b.id || "").slice(0, 8)) + "</b>" + (b.trashed ? "（垃圾桶）" : "") + "</div></td>" +
         "<td>" + escapeHtml(b.customer_phone) + "</td>" +
         "<td>" + escapeHtml(b.people_per_tent) + "</td>" +
         "<td>NT$" + Number(b.total_amount || 0).toLocaleString() + "</td>" +
@@ -341,7 +347,7 @@ document.addEventListener("DOMContentLoaded", function () {
       var actionsTd = document.createElement("td");
       actionsTd.className = "admin-actions";
 
-      var inTrashView = filterStatus.value === "trashed";
+      var inTrashView = filterStatus.value === "trashed" || b.trashed === true;
       if (currentRole !== "admin" || inTrashView) {
         actionsTd.textContent = inTrashView ? "（在垃圾桶）" : "—";
       }
@@ -421,7 +427,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (filterFrom.value) params.set("from", filterFrom.value);
     if (filterTo.value) params.set("to", filterTo.value);
     if (filterStatus.value) params.set("status", filterStatus.value);
-    if (activeLast4) params.set("last4", activeLast4);
+    if (activeQ) params.set("q", activeQ);
+    else if (activeLast4) params.set("last4", activeLast4);
 
     return fetch("/api/admin-bookings?" + params.toString())
       .then(function (res) {
@@ -437,7 +444,14 @@ document.addEventListener("DOMContentLoaded", function () {
       .then(function (data) {
         setRole(data.role);
         renderBookings(data.bookings || []);
-        if (activeLast4) {
+        if (qMsg) {
+          if (activeQ) {
+            var qn = (data.bookings || []).length;
+            qMsg.textContent = qn ? "搜尋「" + activeQ + "」找到 " + qn + " 筆（不受上方日期／狀態篩選影響，垃圾桶裡的也會列出）。" : "找不到「" + activeQ + "」的訂單。";
+            qMsg.style.color = qn ? "#8fd68f" : "#f2c766";
+          } else qMsg.textContent = "";
+        }
+        if (activeLast4 && !activeQ) {
           var n = (data.bookings || []).length;
           last4Msg.textContent = n
             ? "匯款末碼 " + activeLast4 + " 共找到 " + n + " 筆（不受上方日期／狀態篩選影響；包含客人在留言裡寫的末碼）。請核對金額與姓名。"
@@ -622,6 +636,17 @@ document.addEventListener("DOMContentLoaded", function () {
     last4Clear.hidden = true;
     loadBookings();
   });
+
+  function runQ() {
+    var v = (qInput.value || "").trim();
+    if (!v) { qMsg.textContent = "請輸入訂單編號、姓名或電話"; qMsg.style.color = "#f29a9a"; return; }
+    activeQ = v;
+    qClear.hidden = false;
+    loadBookings();
+  }
+  if (qBtn) qBtn.addEventListener("click", runQ);
+  if (qInput) qInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); runQ(); } });
+  if (qClear) qClear.addEventListener("click", function () { activeQ = ""; qInput.value = ""; qClear.hidden = true; loadBookings(); });
 
   refreshBtn.addEventListener("click", loadBookings);
   filterStatus.addEventListener("change", loadBookings);

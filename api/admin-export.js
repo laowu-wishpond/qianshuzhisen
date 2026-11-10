@@ -94,6 +94,7 @@ export default async function handler(req, res) {
         "<td>" + (i + 1) + "</td>" +
         "<td><b>" + esc(b.customer_name) + "</b></td>" +
         "<td>" + esc(phone) + "</td>" +
+        "<td>" + esc(String(b.id || "").slice(0, 8)) + "</td>" +
         "<td>" + esc(b.site_id || "") + (b.early_arrival ? "<br>(夜衝)" : "") + "</td>" +
         "<td>" + esc(stayInfo(b).start) + (b.check_out ? "<br>→ " + esc(b.check_out) : "") + "</td>" +
         "<td>" + esc(stayInfo(b).nights || "") + (b.early_arrival ? "<br>(含夜衝)" : "") + "</td>" +
@@ -113,6 +114,7 @@ export default async function handler(req, res) {
         "<td>" + esc(b.site_id || "") + (b.early_arrival ? "<br>(夜衝)" : "") + "</td>" +
         "<td>" + esc(b.customer_name) + "</td>" +
         "<td>" + esc(phone) + "</td>" +
+        "<td>" + esc(String(b.id || "").slice(0, 8)) + "</td>" +
         "<td class=r>" + Number(b.total_amount || 0).toLocaleString("en-US") + "</td>" +
         "<td>" + esc(STATUS[b.payment_status] || b.payment_status) + (verified ? "<br>" + verified : "") + "</td>" +
         "<td>" + esc(b.transfer_last5 || "") + "</td>" +
@@ -145,8 +147,8 @@ td.note { min-width:110px; }
 <h1>水松千樹之森　${title}</h1>
 <div class="meta">列印日期：${today}　｜　共 ${list.length} 筆　｜　${unpaid ? "這些人已預約但還沒回報匯款後五碼，處理完請在前面方格打勾" : "已排除金額為 0 的老闆保留／免費露營" + (only === "verified" ? "" : "，合計不含已取消")}</div>
 <table><thead>${unpaid
-  ? "<tr><th>已處理</th><th>#</th><th>姓名</th><th>電話</th><th>營位</th><th>入住／退房</th><th>晚數</th><th>金額</th><th>下單時間</th><th>保留到</th><th>備註</th></tr>"
-  : "<tr><th>#</th><th>下單時間</th><th>入住／退房</th><th>晚數</th><th>營位</th><th>姓名</th><th>電話</th><th>金額</th><th>狀態</th><th>末五碼</th><th>核</th></tr>"}</thead>
+  ? "<tr><th>已處理</th><th>#</th><th>姓名</th><th>電話</th><th>訂單編號</th><th>營位</th><th>入住／退房</th><th>晚數</th><th>金額</th><th>下單時間</th><th>保留到</th><th>備註</th></tr>"
+  : "<tr><th>#</th><th>下單時間</th><th>入住／退房</th><th>晚數</th><th>營位</th><th>姓名</th><th>電話</th><th>訂單編號</th><th>金額</th><th>狀態</th><th>末五碼</th><th>核</th></tr>"}</thead>
 <tbody>${trs}</tbody></table>
 <div class="total">${unpaid ? "未付款合計" : "合計"}：NT$ ${sum.toLocaleString("en-US")}</div>
 </body></html>`;

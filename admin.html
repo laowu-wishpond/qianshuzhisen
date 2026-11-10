@@ -89,6 +89,14 @@ tr.row-cancelled td.admin-actions{opacity:1;}
       <span style="font-size:13px;opacity:.8;">列印版會開新分頁，排好 A4 橫式、附合計金額，按「列印」即可（也能存成 PDF）。</span>
     </div>
     <div class="admin-filters" style="margin-top:10px;">
+      <label>搜尋訂單（訂單編號／姓名／電話）
+        <input type="text" id="qInput" maxlength="40" placeholder="例如 7f708248、陳詩雲、0906108200" autocomplete="off">
+      </label>
+      <button id="qBtn" class="btn btn-outline" type="button">搜尋</button>
+      <button id="qClear" class="btn btn-outline" type="button" hidden>清除搜尋</button>
+    </div>
+    <p id="qMsg" style="font-size:14px;margin:6px 0 0;"></p>
+    <div class="admin-filters" style="margin-top:10px;">
       <label>匯款末四碼查詢
         <input type="text" id="last4Input" inputmode="numeric" maxlength="5" placeholder="輸入末 4 碼，例如 1234" autocomplete="off">
       </label>
@@ -141,6 +149,6 @@ tr.row-cancelled td.admin-actions{opacity:1;}
   </section>
 </div>
 
-<script src="js/admin.js?v=20261110a"></script>
+<script src="js/admin.js?v=20261110b"></script>
 </body>
 </html>

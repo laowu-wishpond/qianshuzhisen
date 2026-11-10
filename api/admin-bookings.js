@@ -23,6 +23,31 @@ export default async function handler(req, res) {
     if (searchDigits && !/^\d{4,5}$/.test(searchDigits)) {
       return res.status(400).json({ error: "請輸入 4 或 5 位數字" });
     }
+    // 搜尋：訂單編號（8 碼）／姓名／電話。不受日期、狀態篩選影響，垃圾桶裡的也找得到。
+    const qRaw = String(req.query.q || "").trim().slice(0, 40);
+    if (qRaw) {
+      const found = new Map();
+      const addRows = (rows) => (rows || []).forEach((b) => found.set(b.id, b));
+      if (/^[0-9a-f]{8}$/i.test(qRaw)) {
+        const c = qRaw.toLowerCase();
+        const { data: byId } = await supabase.from("bookings").select("*")
+          .gte("id", `${c}-0000-0000-0000-000000000000`).lte("id", `${c}-ffff-ffff-ffff-ffffffffffff`);
+        addRows(byId);
+      }
+      const safe = qRaw.replace(/[%,()*\\]/g, "");
+      if (safe) {
+        const digitsQ = safe.replace(/\D/g, "");
+        let orF = `customer_name.ilike.%${safe}%`;
+        if (digitsQ.length >= 3) orF += `,customer_phone.like.%${digitsQ}%`;
+        const { data: byText, error: qErr } = await supabase.from("bookings").select("*").or(orF).limit(100);
+        if (qErr) { console.error("admin-bookings search error:", qErr); return res.status(500).json({ error: "搜尋失敗" }); }
+        addRows(byText);
+      }
+      let list = [...found.values()].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+      if (role !== "admin") list = list.map((b) => ({ ...b, customer_phone: maskPhone(b.customer_phone) }));
+      return res.status(200).json({ bookings: list, role });
+    }
+
     // 末碼查詢：① 客人在「查詢訂單」頁回報的末五碼 ② 客人在「聯絡表單留言」裡寫的末碼（用留言的電話找出他的訂單）
     if (searchDigits) {
       const { data: byLast5, error: e1 } = await supabase
