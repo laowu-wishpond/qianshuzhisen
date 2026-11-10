@@ -104,6 +104,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
     var note = "";
+    var altMsg = b.active_alt
+      ? '<div style="font-size:13px;color:#ffb86b;font-weight:700;margin-top:4px;">⚠ 這位客人另有有效訂單：' + escapeHtml(b.active_alt) + "。對帳請看那一筆</div>"
+      : "";
     var viaMsg = b.via_message
       ? '<div style="font-size:12px;color:#f2c766;margin-top:4px;">📩 客人在「留言」裡提到這個末碼：「' + escapeHtml(b.via_message) + '…」請核對金額與姓名</div>'
       : "";
@@ -124,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return viaMsg + '<div style="font-size:13px;margin-top:6px;color:#9be59b;font-weight:700;">✓ 已對帳完成，不用再按</div>' +
         '<div style="font-size:12px;opacity:.9;margin-top:2px;">' + escapeHtml((b.transfer_last5 ? "末五碼 " + b.transfer_last5 + "　" : "") + mail) + "</div>";
     }
-    return viaMsg + (note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "");
+    return altMsg + viaMsg + (note ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">' + escapeHtml(note) + "</div>" : "");
   }
 
   // 營位編號排序用：A2 → ["A", 2]；沒有營位的（舊訂單）排最後

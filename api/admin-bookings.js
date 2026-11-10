@@ -99,6 +99,27 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "查詢訂單失敗" });
     }
     let bookings = data || [];
+    // 已取消的訂單：若同一位客人（同電話）另有「有效」訂單，附上提示，避免大哥看錯那一筆
+    const cancelledPhones = [...new Set(bookings.filter((b) => b.payment_status === "cancelled" && b.customer_phone).map((b) => b.customer_phone))];
+    if (cancelledPhones.length) {
+      const { data: alive } = await supabase
+        .from("bookings")
+        .select("id,customer_phone,site_id,check_in,payment_status,payment_verified")
+        .in("customer_phone", cancelledPhones)
+        .eq("trashed", false)
+        .neq("payment_status", "cancelled")
+        .gt("total_amount", 0);
+      const byPhone = new Map();
+      (alive || []).forEach((a) => {
+        const st = a.payment_status === "paid" ? (a.payment_verified ? "已對帳" : "已付款待對帳") : "待匯款";
+        const txt = String(a.id).slice(0, 8) + "（" + (a.site_id || "") + " " + (a.check_in || "") + "，" + st + "）";
+        if (!byPhone.has(a.customer_phone)) byPhone.set(a.customer_phone, []);
+        byPhone.get(a.customer_phone).push(txt);
+      });
+      bookings = bookings.map((b) =>
+        b.payment_status === "cancelled" && byPhone.has(b.customer_phone) ? { ...b, active_alt: byPhone.get(b.customer_phone).join("、") } : b
+      );
+    }
     // 唯讀角色看不到完整電話
     if (role !== "admin") {
       bookings = bookings.map((b) => ({ ...b, customer_phone: maskPhone(b.customer_phone) }));
