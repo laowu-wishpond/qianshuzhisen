@@ -46,6 +46,32 @@ tr.row-cancelled td.admin-actions{opacity:1;}
     </form>
   </section>
 
+  <section id="vacancyBox" class="admin-card" hidden>
+    <h2>📅 每日空位表</h2>
+    <div class="admin-filters">
+      <label>從
+        <input type="date" id="vacFrom">
+      </label>
+      <label>顯示
+        <select id="vacDays"><option value="14">14 天</option><option value="30" selected>30 天</option><option value="60">60 天</option></select>
+      </label>
+      <button id="vacPrev" class="btn btn-outline" type="button">‹ 前 7 天</button>
+      <button id="vacNext" class="btn btn-outline" type="button">後 7 天 ›</button>
+      <button id="vacToday" class="btn btn-outline" type="button">今天</button>
+      <button id="vacRefresh" class="btn btn-outline" type="button">重新整理</button>
+    </div>
+    <div class="zone-legend">
+      <span><span style="display:inline-block;width:18px;height:14px;border:1px solid #aaa;vertical-align:middle;"></span> 空位</span>
+      <span><span style="display:inline-block;width:18px;height:14px;background:#2e8b57;vertical-align:middle;"></span> 已對帳</span>
+      <span><span style="display:inline-block;width:18px;height:14px;background:#d9b13b;vertical-align:middle;"></span> 待對帳</span>
+      <span><span style="display:inline-block;width:18px;height:14px;background:#e07b39;vertical-align:middle;"></span> 待匯款（保留中）</span>
+      <span>淺黃底＝週五、週六</span>
+    </div>
+    <div id="vacInfo" style="min-height:48px;padding:10px 14px;border:1px solid rgba(255,255,255,.25);border-radius:10px;margin:6px 0 10px;font-size:15px;line-height:1.7;"></div>
+    <div id="vacGrid" style="overflow:auto;max-height:70vh;border:1px solid rgba(255,255,255,.2);border-radius:8px;"></div>
+    <p id="vacErr" class="admin-error"></p>
+  </section>
+
   <section id="dashboardSection" class="admin-card" hidden>
     <div class="admin-filters">
       <label>日期從
@@ -198,7 +224,8 @@ tr.row-cancelled td.admin-actions{opacity:1;}
   </section>
 </div>
 
-<script src="js/admin.js?v=20261111d"></script>
+<script src="js/admin.js?v=20261111e"></script>
 <script src="js/admin-reconcile.js?v=20261111a"></script>
+<script src="js/admin-vacancy.js?v=20261111a"></script>
 </body>
 </html>

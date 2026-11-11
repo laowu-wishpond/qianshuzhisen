@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function showDashboard() {
     loginSection.hidden = true;
     dashboardSection.hidden = false;
+    var vb = document.getElementById("vacancyBox"); if (vb) vb.hidden = false;
     messagesSection.hidden = false;
     logoutBtn.hidden = false;
   }
@@ -58,6 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function showLogin() {
     loginSection.hidden = false;
     dashboardSection.hidden = true;
+    var vb2 = document.getElementById("vacancyBox"); if (vb2) vb2.hidden = true;
     messagesSection.hidden = true;
     logoutBtn.hidden = true;
   }
@@ -806,6 +808,7 @@ document.addEventListener("DOMContentLoaded", function () {
         showDashboard();
         loadBookings();
         loadMessages();
+        if (window.tsfLoadVacancy) window.tsfLoadVacancy();
       })
       .catch(function () {
         loginError.textContent = "密碼錯誤，請再試一次";
@@ -851,7 +854,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (qInput) qInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); runQ(); } });
   if (qClear) qClear.addEventListener("click", function () { activeQ = ""; qInput.value = ""; qClear.hidden = true; loadBookings(); });
 
-  refreshBtn.addEventListener("click", loadBookings);
+  refreshBtn.addEventListener("click", function () { loadBookings(); if (window.tsfLoadVacancy) window.tsfLoadVacancy(); });
   filterStatus.addEventListener("change", loadBookings);
   try { var savedSort = localStorage.getItem("tsf_admin_sort"); if (savedSort && sortBy) sortBy.value = savedSort; } catch (e) { /* ignore */ }
   if (sortBy) sortBy.addEventListener("change", function () { try { localStorage.setItem("tsf_admin_sort", sortBy.value); } catch (e) { /* ignore */ } loadBookings(); });
@@ -870,6 +873,7 @@ document.addEventListener("DOMContentLoaded", function () {
         setRole(data.role);
         renderBookings(data.bookings || []);
         loadMessages();
+        if (window.tsfLoadVacancy) window.tsfLoadVacancy();
       });
     })
     .catch(function () {
