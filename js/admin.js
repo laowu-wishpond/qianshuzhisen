@@ -126,6 +126,17 @@ document.addEventListener("DOMContentLoaded", function () {
       note = new Date(b.hold_expires_at) > new Date()
         ? "保留到 " + hhmm(b.hold_expires_at) + "，尚未回報匯款"
         : "保留時間已過，等待系統釋出";
+    } else if (b.payment_status === "cancelled" && b.cancel_reason === "customer") {
+      var cancelAt = b.cancelled_at ? "（" + hhmm(b.cancelled_at) + "）" : "";
+      if (b.refund_status === "pending") {
+        return altMsg + '<div style="font-size:13px;margin-top:6px;color:#ffd36b;font-weight:700;">💰 客人自己取消' + cancelAt + '，待退款 NT$' + Number(b.refund_amount || 0).toLocaleString() + "</div>" +
+          '<div style="font-size:12px;opacity:.9;margin-top:2px;">請打電話向客人確認退款帳戶，匯款後按「標記已退款」</div>' +
+          (currentRole === "admin" ? '<button type="button" class="btn refund-done-btn" data-id="' + escapeHtml(b.id) + '" style="margin-top:6px;padding:4px 10px;font-size:13px;">標記已退款</button>' : "");
+      }
+      if (b.refund_status === "done") {
+        return '<div style="font-size:13px;margin-top:6px;color:#9be59b;font-weight:700;">✓ 已退款 NT$' + Number(b.refund_amount || 0).toLocaleString() + "</div>";
+      }
+      note = "客人自己取消" + cancelAt + (b.refund_amount === null || b.refund_amount === undefined ? "（未付款，不用退款）" : "（依規則不退款）");
     } else if (b.payment_status === "cancelled" && b.cancel_reason === "expired") {
       note = "逾時未匯款，系統自動釋出";
     } else if (b.payment_status === "paid" && b.payment_verified === false) {
@@ -292,6 +303,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function isNewTime(iso) { return iso && Date.now() - new Date(iso).getTime() < NEW_MS; }
   // 不用再處理的訂單：已對帳完成且預約成功信寄過（或客人沒留 email、請用電話通知的由大哥自己打勾「已處理」）、已取消、逾時釋出
   function isBookingDone(b) {
+    if (b.payment_status === "cancelled" && b.refund_status === "pending") return false; // 待退款：還沒處理完
     if (b.trashed || b.payment_status === "cancelled" || b.payment_status === "failed") return true;
     if (b.payment_status === "paid" && b.payment_verified !== false) return !!b.confirmation_email_sent_at || !b.customer_email; // 已對帳：成功信寄過，或客人沒留 email（早期靠電話通知）
     return false;
@@ -444,6 +456,20 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   }
+
+  // 「標記已退款」（事件委派，各表格共用）
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target && ev.target.closest ? ev.target.closest(".refund-done-btn") : null;
+    if (!btn) return;
+    if (!confirm("確認已經把退款匯給客人了嗎？按下後會標記為「已退款」。")) return;
+    btn.disabled = true;
+    fetch("/api/admin-bookings", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: btn.getAttribute("data-id"), refundDone: true })
+    }).then(function (r) { if (!r.ok) throw new Error("fail"); return r.json(); })
+      .then(function () { if (typeof loadBookings === "function") loadBookings(); else location.reload(); })
+      .catch(function () { btn.disabled = false; alert("沒有存成功，請重新整理再試一次"); });
+  });
 
   function buildRows(bookings, body) {
     var lastGroup = null;

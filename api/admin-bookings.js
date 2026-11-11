@@ -185,6 +185,19 @@ export default async function handler(req, res) {
     }
     const { id, payment_status, handled, ids, trash, resend, restore } = req.body || {};
     // ===== 購物車整筆訂單：groupId 帶整筆的 id，底下所有營位一起處理，只寄一封信 =====
+    // ===== 標記已退款（客人自己取消後，營主匯款完按這顆）=====
+    if (req.body?.refundDone === true && id) {
+      const { data: one } = await supabase.from("bookings").select("id, group_id").eq("id", id).maybeSingle();
+      if (!one) return res.status(404).json({ error: "找不到這筆訂單" });
+      let q = supabase.from("bookings").update({ refund_status: "done", refund_done_at: new Date().toISOString(), handled: true, handled_at: new Date().toISOString() }).eq("refund_status", "pending");
+      q = one.group_id ? q.eq("group_id", one.group_id) : q.eq("id", id);
+      const { error: rErr } = await q;
+      if (rErr) {
+        console.error("admin-bookings refundDone error:", rErr);
+        return res.status(500).json({ error: "更新失敗" });
+      }
+      return res.status(200).json({ ok: true });
+    }
     const groupId = req.body?.groupId;
     if (typeof groupId === "string" && groupId) {
       const { data: members, error: mErr } = await supabase.from("bookings").select("*").eq("group_id", groupId);

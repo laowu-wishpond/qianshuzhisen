@@ -132,8 +132,67 @@
           .catch(function (e) { b2.disabled = false; msg.style.color = "#f29a9a"; msg.textContent = e.message; });
       });
     }
+    if (d.state === "confirmed" || d.state === "awaiting_payment") addCancelBox(d);
+    else if (d.state === "reported") resEl.appendChild(el("p", "margin-top:14px;font-size:14px;opacity:.85;", t("如需取消，請直接電話聯絡我們（0939-235-168）。", "To cancel, please call us at 0939-235-168.")));
     resEl.hidden = false;
     try { resEl.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* ignore */ }
+  }
+
+  // ---------- 取消訂位／退款 ----------
+  function money(n) { return "NT$ " + Number(n || 0).toLocaleString(); }
+  function postCancel(confirm) {
+    return fetch("/api/cancel-booking", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: codeEl.value.trim(), phone: phoneEl.value.trim(), confirm: !!confirm })
+    }).then(function (r) { return r.json().then(function (x) { if (!r.ok) { var e = new Error(x.error || "failed"); e.manual = !!x.manual; throw e; } return x; }); });
+  }
+  function addCancelBox(d) {
+    var paid = d.state === "confirmed";
+    var box = el("div", "margin-top:20px;padding-top:16px;border-top:1px dashed rgba(255,255,255,.3);");
+    var btn0 = document.createElement("button");
+    btn0.type = "button"; btn0.className = "btn";
+    btn0.textContent = t("我要取消訂位", "Cancel this booking");
+    var out = el("div", "margin-top:12px;");
+    box.appendChild(btn0); box.appendChild(out);
+    if (paid) box.insertBefore(el("p", "margin:0 0 10px;font-size:14px;opacity:.85;line-height:1.7;",
+      t("取消與退款規則：入住前 14 天（含）以上退 100%、7～13 天退 60%、3～6 天退 40%、2 天內不退款；有退款時另扣退款手續費 NT$30。詳見「服務條款與退訂政策」。",
+        "Refund policy: 14+ days before check-in 100%, 7–13 days 60%, 3–6 days 40%, within 2 days no refund; NT$30 processing fee is deducted when a refund is made. See the Terms page.")), btn0);
+    btn0.addEventListener("click", function () {
+      btn0.disabled = true; out.innerHTML = "";
+      postCancel(false).then(function (x) {
+        out.appendChild(el("p", "margin:0 0 8px;font-weight:700;", x.totals.paid ? t("取消後的退款試算：", "Refund estimate if you cancel:") : t("這筆訂單尚未付款，取消不會產生費用。", "This booking is unpaid; cancelling costs nothing.")));
+        if (x.totals.paid) {
+          x.items.forEach(function (it) {
+            var r = el("div", "display:flex;justify-content:space-between;gap:10px;font-size:15px;");
+            r.appendChild(el("span", "", it.site + "　" + it.start + "（" + money(it.total) + "）"));
+            r.appendChild(el("span", "white-space:nowrap;", it.percent > 0 ? t("退 " + it.percent + "%", "refund " + it.percent + "%") : t("不退款", "no refund")));
+            out.appendChild(r);
+          });
+          if (x.totals.processingFee > 0) out.appendChild(el("div", "font-size:14px;opacity:.85;margin-top:4px;", t("退款手續費：-" + money(x.totals.processingFee), "Processing fee: -" + money(x.totals.processingFee))));
+          out.appendChild(el("div", "font-size:18px;font-weight:700;margin-top:6px;color:" + (x.totals.refund > 0 ? "#8fd68f" : "#f29a9a") + ";", t("預計退款：", "Estimated refund: ") + money(x.totals.refund)));
+        }
+        out.appendChild(el("p", "margin:10px 0;font-size:14px;opacity:.85;", t("按下「確定取消」後營位會立刻釋出，無法復原。", "Once you confirm, the site is released immediately and this cannot be undone.")));
+        var ok = document.createElement("button");
+        ok.type = "button"; ok.className = "btn btn-primary";
+        ok.textContent = t("確定取消", "Yes, cancel it");
+        var no = document.createElement("button");
+        no.type = "button"; no.className = "btn"; no.style.marginLeft = "8px";
+        no.textContent = t("先不要", "Keep my booking");
+        out.appendChild(ok); out.appendChild(no);
+        no.addEventListener("click", function () { out.innerHTML = ""; btn0.disabled = false; });
+        ok.addEventListener("click", function () {
+          ok.disabled = true; no.disabled = true;
+          postCancel(true).then(function (y) {
+            out.innerHTML = "";
+            out.appendChild(el("p", "margin:0;font-weight:700;color:#8fd68f;", t("✅ 已取消。", "✅ Cancelled.")));
+            if (y.totals.paid && y.totals.refund > 0) out.appendChild(el("p", "margin:6px 0 0;", t("應退款 " + money(y.totals.refund) + "。我們會與您聯繫確認退款帳戶，並以銀行匯款退回。", "Refund due: " + money(y.totals.refund) + ". We will contact you to confirm your bank account and send the refund by bank transfer.")));
+            else if (y.totals.paid) out.appendChild(el("p", "margin:6px 0 0;", t("依規定入住前 2 天內取消，恕無法退款。", "Cancellations within 2 days of check-in are not refundable.")));
+            setTimeout(function () { doLookup(); }, 2500);
+          }).catch(function (e) { out.innerHTML = ""; out.appendChild(el("p", "color:#f29a9a;margin:0;", e.message)); btn0.disabled = false; });
+        });
+      }).catch(function (e) { out.appendChild(el("p", "color:#f29a9a;margin:0;", e.message)); btn0.disabled = false; });
+    });
+    resEl.appendChild(box);
   }
 
   function doLookup() {
