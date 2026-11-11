@@ -50,7 +50,7 @@ export default async function handler(req, res) {
   const nowIso = new Date().toISOString();
   const { data: rows, error } = await supabase
     .from("bookings")
-    .select("id, customer_name, customer_phone, customer_email, site_id, check_in, check_out, nights_count, booking_date, early_arrival, total_amount, payment_status, trashed, hold_expires_at, hold_extensions, reminder_sent_at, final_reminder_sent_at")
+    .select("id, group_id, customer_name, customer_phone, customer_email, site_id, check_in, check_out, nights_count, booking_date, early_arrival, total_amount, payment_status, trashed, hold_expires_at, hold_extensions, reminder_sent_at, final_reminder_sent_at")
     .eq("payment_status", "pending")
     .eq("trashed", false)
     .gt("hold_expires_at", nowIso)
@@ -106,13 +106,20 @@ export default async function handler(req, res) {
   summary.sent = remindedOk.length;
 
   // 最後提醒：一筆一封
-  const finals = final.map((b) => ({ b, payload: finalReminderPayload(site, b) }));
+  // 購物車整筆訂單（同一個 group）合成一封
+  const finalGroups = new Map();
+  for (const b of final) {
+    const k = b.group_id || b.id;
+    if (!finalGroups.has(k)) finalGroups.set(k, []);
+    finalGroups.get(k).push(b);
+  }
+  const finals = [...finalGroups.values()].map((list) => ({ list, payload: finalReminderPayload(site, list.length === 1 ? list[0] : list) }));
   for (let i = 0; i < finals.length; i += 100) {
     const chunk = finals.slice(i, i + 100);
     const r = await postBatch(chunk.map((e) => e.payload));
     if (!r.ok) { summary.finalError = r.error; continue; }
-    await supabase.from("bookings").update({ final_reminder_sent_at: new Date().toISOString() }).in("id", chunk.map((e) => e.b.id));
-    summary.finalSent += chunk.length;
+    await supabase.from("bookings").update({ final_reminder_sent_at: new Date().toISOString() }).in("id", chunk.flatMap((e) => e.list.map((b) => b.id)));
+    summary.finalSent += chunk.reduce((n, e) => n + e.list.length, 0);
   }
 
   // 入住前提醒信：一筆一封

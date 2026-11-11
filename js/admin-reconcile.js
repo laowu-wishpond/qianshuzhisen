@@ -90,8 +90,8 @@
       head.appendChild(cb);
     }
     var info = el("div", "flex:1;min-width:200px;line-height:1.6;");
-    info.appendChild(el("strong", "", r.name + "　" + r.site + "　" + money(r.total)));
-    info.appendChild(el("div", "font-size:13px;opacity:.85;", "訂單編號 " + r.code + "　末五碼 " + r.last5 + "　" + (r.start || "") + " ～ " + (r.end || "") + "　電話 " + (r.phone || "")));
+    info.appendChild(el("strong", "", r.name + "　" + r.site + (r.group ? "（共 " + r.count + " 個營位，一次對帳）" : "") + "　" + money(r.total)));
+    info.appendChild(el("div", "font-size:13px;opacity:.85;", (r.group ? "🛒 整筆訂單編號 " : "訂單編號 ") + r.code + "　末五碼 " + r.last5 + "　" + (r.start || "") + " ～ " + (r.end || "") + "　電話 " + (r.phone || "")));
     if (r.note) info.appendChild(el("div", "font-size:14px;margin-top:2px;", r.note));
     if (r.line) info.appendChild(el("pre", "font-size:12px;margin:4px 0 0;white-space:pre-wrap;opacity:.8;background:rgba(128,128,128,.12);padding:4px 6px;border-radius:6px;", "明細：" + r.line));
     head.appendChild(info);

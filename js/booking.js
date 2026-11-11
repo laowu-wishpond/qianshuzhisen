@@ -715,6 +715,37 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   })();
 
+  // ---- 加入購物車（不保留營位，結帳送出才保留）----
+  var addCartBtn = document.getElementById("addToCartBtn");
+  var cartMsg = document.getElementById("cartAddMsg");
+  if (addCartBtn && cartMsg) {
+    addCartBtn.addEventListener("click", function () {
+      function say(color, zh, en, link) {
+        cartMsg.style.color = color;
+        cartMsg.textContent = isEnglish() ? en : zh;
+        if (link) {
+          cartMsg.appendChild(document.createTextNode(" "));
+          var a = document.createElement("a");
+          a.href = "cart.html";
+          a.textContent = isEnglish() ? "Go to cart →" : "前往購物車結帳 →";
+          cartMsg.appendChild(a);
+        }
+      }
+      if (!window.TSFCart) { say("#f29a9a", "購物車尚未載入，請重新整理頁面", "Cart hasn't loaded — please refresh."); return; }
+      if (!P) { say("#f29a9a", "預約功能尚未載入完成，請稍候或重新整理頁面", "The booking tool hasn't finished loading. Please wait or refresh."); return; }
+      if (!checkIn || !checkOut) { say("#f29a9a", "請先在上方日曆點選入住日與退房日", "Please select check-in and check-out dates first."); return; }
+      if (!siteId) { say("#f29a9a", "請先選擇營位（點地圖上的編號或從清單選擇）", "Please choose a campsite (tap the map or use the list)."); return; }
+      var n = parseInt(peopleInput.value, 10);
+      if (!(n >= 1) || n > 60) { say("#f29a9a", "請填入住人數（1～60 人）", "Please enter the number of guests (1–60)."); peopleInput.focus(); return; }
+      if (quoteBox.dataset.blocked) { say("#f29a9a", "所選營位在這些日期已被預訂，請改選其他營位或日期", "That campsite is booked for these dates. Please choose another site or dates."); return; }
+      var q = currentQuote();
+      var r = window.TSFCart.add({ siteId: siteId, checkIn: checkIn, checkOut: checkOut, earlyArrival: earlyBox.checked && !earlyBox.disabled, people: n, total: q && q.ok ? q.total : 0 });
+      if (!r.ok && r.error === "dup") { say("#f29a9a", "購物車裡已有同營位、日期重疊的項目，請先到購物車移除它，或改選其他日期", "Your cart already has this site on overlapping dates. Remove it from the cart or choose other dates."); return; }
+      if (!r.ok) { say("#f29a9a", "購物車最多 10 項，請先結帳這一批", "The cart holds up to 10 items. Please check out this batch first."); return; }
+      say("#8fd68f", "✅ 已加入購物車（目前 " + r.count + " 項）。可以繼續選下一個營位或日期，", "✅ Added to cart (" + r.count + " item" + (r.count > 1 ? "s" : "") + "). Keep picking more sites or dates, or", true);
+    });
+  }
+
   if (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();

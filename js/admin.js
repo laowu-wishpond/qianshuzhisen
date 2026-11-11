@@ -266,8 +266,86 @@ document.addEventListener("DOMContentLoaded", function () {
   if (trashBtn) trashBtn.addEventListener("click", function () { bulkTrash(true); });
   if (restoreBtn) restoreBtn.addEventListener("click", function () { bulkTrash(false); });
 
+  // 購物車整筆訂單：同一筆的營位排在一起，上面加一條整筆標題列
+  function clusterGroups(list) {
+    var seen = {}, out = [];
+    list.forEach(function (b) {
+      if (!b.group_id) { out.push(b); return; }
+      if (seen[b.group_id]) return;
+      seen[b.group_id] = true;
+      list.forEach(function (x) { if (x.group_id === b.group_id) out.push(x); });
+    });
+    return out;
+  }
+  function groupAction(groupId, body, okMsg) {
+    body.groupId = groupId;
+    return fetch("/api/admin-bookings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (res) { return res.json().catch(function () { return {}; }).then(function (r) { return { ok: res.ok, r: r }; }); })
+      .then(function (x) {
+        if (!x.ok) { alert(x.r.error || "操作失敗"); return; }
+        var m = { sent: "已寄出一封「預約成功」email（含所有營位）。", no_email: "這位客人沒有留 email，沒有寄信，請改用電話或 LINE 通知。", not_configured: "尚未設定寄信功能，這次沒有寄信。", send_failed: "寄信失敗，請稍後再按一次重寄。" };
+        alert((okMsg || "完成") + (x.r.email && m[x.r.email] ? m[x.r.email] : ""));
+        return loadBookings();
+      })
+      .catch(function () { alert("操作失敗，請重新整理再試一次"); });
+  }
+  function groupHeaderRow(b, members, inTrashView) {
+    var live = members.filter(function (x) { return x.payment_status !== "cancelled"; });
+    var pending = live.filter(function (x) { return x.payment_status === "pending"; }).length;
+    var unverified = live.filter(function (x) { return x.payment_status === "paid" && x.payment_verified === false; }).length;
+    var cancelled = members.length - live.length;
+    var state, cls;
+    if (!live.length) { state = "整筆已取消"; cls = "cancelled"; }
+    else if (pending) { state = "待匯款"; cls = "pending"; }
+    else if (unverified) { state = "已付款（待對帳）"; cls = "paid"; }
+    else { state = "已對帳完成"; cls = "paid"; }
+    var total = members.reduce(function (n, x) { return n + (x.payment_status === "cancelled" ? 0 : Number(x.total_amount || 0)); }, 0);
+    var tr = document.createElement("tr");
+    tr.className = "group-head";
+    var td = document.createElement("td");
+    td.colSpan = 10;
+    td.style.cssText = "background:rgba(232,194,106,.16);border-top:3px solid #e8c26a;padding:10px 12px;";
+    var line = document.createElement("div");
+    line.style.cssText = "display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;";
+    line.innerHTML =
+      "<b>🛒 整筆訂單 " + escapeHtml(b.group_code || String(b.group_id).slice(0, 8)) + "</b>" +
+      "<span>" + escapeHtml(b.customer_name) + "　" + escapeHtml(b.customer_phone) + "</span>" +
+      "<span>共 " + members.length + " 個營位" + (cancelled ? "（其中 " + cancelled + " 個已取消）" : "") + "</span>" +
+      "<b>合計 NT$" + total.toLocaleString() + "</b>" +
+      '<span class="status-badge status-' + cls + '">' + state + "</span>";
+    td.appendChild(line);
+    if (currentRole === "admin" && !inTrashView) {
+      var btns = document.createElement("div");
+      btns.style.cssText = "margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;";
+      var gid = b.group_id;
+      if (pending || unverified) {
+        btns.appendChild(makeActionBtn("整筆對帳完成，寄一封確認信", function () {
+          if (confirm("確認這整筆（" + live.length + " 個營位，合計 NT$" + total.toLocaleString() + "）款項都已入帳？\n按下去會把所有營位標記為已對帳，並只寄一封「預約成功」email 給客人。")) groupAction(gid, { payment_status: "paid" }, "已標記整筆對帳完成。");
+        }));
+      } else if (live.length) {
+        btns.appendChild(makeActionBtn("再寄一次預約成功信（整筆）", function () {
+          if (!b.customer_email) { alert("這位客人沒有留 email，請改用電話或 LINE 通知。"); return; }
+          if (confirm("要寄「預約成功」email（含所有營位）給 " + b.customer_email + " 嗎？")) groupAction(gid, { resend: true }, "");
+        }));
+      }
+      if (cancelled) {
+        btns.appendChild(makeActionBtn("恢復已取消的營位", function () {
+          if (confirm("要恢復這筆整筆訂單裡已取消的營位嗎？\n如果有營位那幾晚已被別人訂走，該營位就無法恢復。恢復時不會自動寄信。")) groupAction(gid, { restore: true }, "已恢復。");
+        }));
+      }
+      if (live.length) {
+        btns.appendChild(makeActionBtn("取消整筆訂單", function () {
+          if (confirm("確定要取消這整筆訂單（" + live.length + " 個營位）嗎？取消後會釋出所有營位。")) groupAction(gid, { payment_status: "cancelled" }, "已取消整筆訂單。");
+        }));
+      }
+      td.appendChild(btns);
+    }
+    tr.appendChild(td);
+    return tr;
+  }
+
   function renderBookings(bookings) {
-    bookings = sortBookings(bookings);
+    bookings = clusterGroups(sortBookings(bookings));
     shownBookings = bookings;
     updateTrashUi();
     bookingsBody.innerHTML = "";
@@ -288,8 +366,15 @@ document.addEventListener("DOMContentLoaded", function () {
       bookingsBody.innerHTML = '<tr><td colspan="10">目前沒有符合條件的訂單</td></tr>';
       return;
     }
+    var lastGroup = null;
     bookings.forEach(function (b) {
+      if (b.group_id && b.group_id !== lastGroup) {
+        var gm = bookings.filter(function (x) { return x.group_id === b.group_id; });
+        bookingsBody.appendChild(groupHeaderRow(b, gm, filterStatus.value === "trashed" || b.trashed === true));
+      }
+      lastGroup = b.group_id || null;
       var tr = document.createElement("tr");
+      if (b.group_id) tr.style.borderLeft = "4px solid #e8c26a";
       // 新訂單：入住～退房＋營位；舊訂單（改成依營位計價之前建立的）只有單一日期，沒有營位
       var dateText;
       if (b.check_in) {
@@ -315,7 +400,7 @@ document.addEventListener("DOMContentLoaded", function () {
         '<td><label class="handled-wrap"><input type="checkbox" class="handled-cb"' +
         (b.handled ? " checked" : "") + (currentRole !== "admin" ? " disabled" : "") +
         ' aria-label="已處理"> <span>' + escapeHtml(b.customer_name) + "</span></label>" +
-        '<div style="font-size:12px;opacity:.8;margin-top:3px;">訂單編號 <b style="user-select:all;letter-spacing:.5px;">' + escapeHtml(String(b.id || "").slice(0, 8)) + "</b>" + (b.trashed ? "（垃圾桶）" : "") + "</div></td>" +
+        '<div style="font-size:12px;opacity:.8;margin-top:3px;">' + (b.group_id ? '整筆訂單編號 <b style="user-select:all;letter-spacing:.5px;">' + escapeHtml(b.group_code || String(b.group_id).slice(0, 8)) + "</b>（本營位 " + escapeHtml(String(b.id || "").slice(0, 8)) + "）" : '訂單編號 <b style="user-select:all;letter-spacing:.5px;">' + escapeHtml(String(b.id || "").slice(0, 8)) + "</b>") + (b.trashed ? "（垃圾桶）" : "") + "</div></td>" +
         "<td>" + escapeHtml(b.customer_phone) + "</td>" +
         "<td>" + escapeHtml(b.people_per_tent) + "</td>" +
         "<td>NT$" + Number(b.total_amount || 0).toLocaleString() + "</td>" +
@@ -353,6 +438,13 @@ document.addEventListener("DOMContentLoaded", function () {
       var inTrashView = filterStatus.value === "trashed" || b.trashed === true;
       if (currentRole !== "admin" || inTrashView) {
         actionsTd.textContent = inTrashView ? "（在垃圾桶）" : "—";
+      }
+      if (b.group_id) {
+        if (b.payment_status === "cancelled" && !inTrashView) tr.classList.add("row-cancelled");
+        if (!inTrashView && currentRole === "admin") actionsTd.textContent = "（整筆訂單，請用上方整筆按鈕）";
+        tr.appendChild(actionsTd);
+        bookingsBody.appendChild(tr);
+        return;
       }
 
       if (currentRole === "admin" && !inTrashView && b.payment_status !== "paid") {

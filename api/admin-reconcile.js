@@ -6,11 +6,50 @@ import { getSupabaseAdmin } from "../lib/supabase.js";
 import { getRole } from "../lib/adminAuth.js";
 import { reconcile, STATUS } from "../lib/reconcile.js";
 import { stayInfo } from "../lib/stay.js";
-import { sendBookingConfirmed } from "../lib/email.js";
+import { sendBookingConfirmed, sendGroupConfirmed } from "../lib/email.js";
+import { loadNights } from "../lib/cart.js";
 
-const COLS = "id, customer_name, customer_phone, customer_email, site_id, check_in, check_out, nights_count, booking_date, early_arrival, total_amount, payment_status, payment_verified, transfer_last5, transfer_reported_at, trashed, hold_expires_at, confirmation_email_sent_at";
+const COLS = "id, group_id, customer_name, customer_phone, customer_email, site_id, check_in, check_out, nights_count, booking_date, early_arrival, total_amount, payment_status, payment_verified, transfer_last5, transfer_reported_at, trashed, hold_expires_at, confirmation_email_sent_at";
+
+// 購物車整筆訂單：客人只匯一次錢、只回報一次末五碼，所以對帳時把同一筆整筆訂單的營位合成「一個單位」，金額是合計
+function unitize(list) {
+  const out = [];
+  const groups = new Map();
+  for (const b of list) {
+    if (!b.group_id) { out.push(b); continue; }
+    if (!groups.has(b.group_id)) groups.set(b.group_id, []);
+    groups.get(b.group_id).push(b);
+  }
+  for (const [gid, members] of groups) {
+    out.push({
+      ...members[0],
+      id: gid,
+      __members: members,
+      site_id: members.map((m) => m.site_id).join("、"),
+      total_amount: members.reduce((sum, m) => sum + Number(m.total_amount || 0), 0),
+    });
+  }
+  return out;
+}
 
 function brief(b) {
+  if (b.__members) {
+    const stays = b.__members.map(stayInfo);
+    return {
+      id: b.id,
+      code: String(b.id).slice(0, 8),
+      group: true,
+      count: b.__members.length,
+      name: b.customer_name,
+      phone: b.customer_phone,
+      site: "整筆 " + b.__members.length + " 個營位：" + b.site_id,
+      start: stays.map((x) => x.start).sort()[0] || "",
+      end: stays.map((x) => x.end).sort().slice(-1)[0] || "",
+      early: stays.some((x) => x.early),
+      total: Number(b.total_amount || 0),
+      last5: b.transfer_last5 || "",
+    };
+  }
   const st = stayInfo(b);
   return {
     id: b.id,
@@ -40,7 +79,7 @@ async function loadPools(supabase) {
     .gt("hold_expires_at", new Date().toISOString())
     .is("transfer_last5", null)
     .limit(1000);
-  return { reported: reported || [], pending: pending || [] };
+  return { reported: unitize(reported || []), pending: unitize(pending || []) };
 }
 
 export default async function handler(req, res) {
@@ -81,6 +120,25 @@ export default async function handler(req, res) {
     let emailSent = 0, emailFail = 0, noEmail = 0;
     for (const id of ids) {
       if (!okSet.has(id)) { skipped.push(id); continue; }
+      const unit = byId.get(id);
+      if (unit && unit.__members) {
+        // 整筆訂單：底下所有營位一起對帳完成，只寄一封「預約成功」信（列出每個營位與每一晚金額）
+        const { data: upds, error: gErr } = await supabase
+          .from("bookings")
+          .update({ payment_verified: true })
+          .in("id", unit.__members.map((m) => m.id)).eq("payment_status", "paid").eq("payment_verified", false)
+          .select("*");
+        if (gErr || !upds || !upds.length) { skipped.push(id); continue; }
+        done.push(id);
+        if (upds.some((b) => !b.confirmation_email_sent_at)) {
+          const nights = await loadNights(supabase, upds.map((b) => b.id));
+          const r = await sendGroupConfirmed(upds, nights);
+          if (r.sent) { emailSent += 1; await supabase.from("bookings").update({ confirmation_email_sent_at: new Date().toISOString() }).in("id", upds.map((b) => b.id)); }
+          else if (r.reason === "no_email") noEmail += 1;
+          else emailFail += 1;
+        }
+        continue;
+      }
       const { data: upd, error } = await supabase
         .from("bookings")
         .update({ payment_verified: true })

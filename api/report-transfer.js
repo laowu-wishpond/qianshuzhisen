@@ -18,6 +18,27 @@ export default async function handler(req, res) {
   }
 
   const supabase = getSupabaseAdmin();
+
+  // 購物車整筆訂單：bookingId 帶整筆訂單的 id，一次把底下所有「等匯款」的營位都標成已回報
+  const { data: grp } = await supabase.from("booking_groups").select("id").eq("id", bookingId).maybeSingle();
+  if (grp) {
+    const { data: upd, error: gErr } = await supabase
+      .from("bookings")
+      .update({ transfer_last5: digits, transfer_reported_at: new Date().toISOString(), payment_status: "paid", payment_verified: false })
+      .eq("group_id", bookingId)
+      .eq("payment_status", "pending")
+      .eq("trashed", false)
+      .select("id");
+    if (gErr) {
+      console.error("report-transfer group error:", gErr);
+      return res.status(500).json({ error: "回報失敗，請稍後再試或直接電話聯絡我們" });
+    }
+    if (!upd || !upd.length) {
+      return res.status(409).json({ error: "這筆訂單的保留時間已過、營位已釋出（或已處理）。如果您已匯款，請直接電話聯絡我們。" });
+    }
+    return res.status(200).json({ ok: true, count: upd.length });
+  }
+
   const { data, error } = await supabase
     .from("bookings")
     .update({

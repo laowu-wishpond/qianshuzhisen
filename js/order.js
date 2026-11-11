@@ -56,16 +56,40 @@
     resEl.appendChild(el("h3", "color:" + color + ";margin:0 0 8px;", headline));
     resEl.appendChild(el("p", "margin:0 0 12px;", detail));
 
+    function nightLines(list) {
+      var box = el("div", "margin:4px 0 8px;font-size:15px;");
+      (list || []).forEach(function (n) {
+        var tag = n.kind === "early" ? t("夜衝", "Early arrival") : n.dayType === "holiday" ? t("假日", "Holiday") : t("平日", "Weekday");
+        var r = el("div", "display:flex;justify-content:space-between;gap:10px;opacity:.92;");
+        r.appendChild(el("span", "", n.date + "　" + tag));
+        r.appendChild(el("span", "", "NT$ " + Number(n.price || 0).toLocaleString()));
+        box.appendChild(r);
+      });
+      return box;
+    }
     var info = el("p", "margin:0;line-height:1.9;");
-    var dates = d.checkIn ? (d.checkOut ? d.checkIn + " ～ " + d.checkOut + (d.nights ? "（" + (d.earlyArrival && d.days ? t(d.days + "天" + d.nights + "夜，含夜衝", d.days + " days / " + d.nights + " nights, incl. early arrival") : d.nights + t("晚", " nights")) + "）" : "") : d.checkIn) : "";
-    info.appendChild(document.createTextNode(t("訂單編號：", "Order no.: ") + d.code));
+    info.appendChild(document.createTextNode((d.group ? t("整筆訂單編號：", "Order no. (whole order): ") : t("訂單編號：", "Order no.: ")) + d.code));
     info.appendChild(document.createElement("br"));
     info.appendChild(document.createTextNode(t("姓名：", "Name: ") + d.name));
     info.appendChild(document.createElement("br"));
-    if (d.site) { info.appendChild(document.createTextNode(t("營位：", "Site: ") + d.site + (d.earlyArrival ? t("（含夜衝）", " (early arrival)") : ""))); info.appendChild(document.createElement("br")); }
-    if (dates) { info.appendChild(document.createTextNode(t("日期：", "Dates: ") + dates)); info.appendChild(document.createElement("br")); }
-    info.appendChild(document.createTextNode(t("金額：NT$ ", "Amount: NT$ ") + d.total.toLocaleString()));
-    resEl.appendChild(info);
+    if (d.group) {
+      info.appendChild(document.createTextNode(t("共 " + d.itemCount + " 個營位，一次匯款合計：NT$ ", d.itemCount + " sites, one payment total: NT$ ") + d.total.toLocaleString()));
+      resEl.appendChild(info);
+      (d.items || []).forEach(function (it) {
+        var card = el("div", "border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:10px 14px;margin:12px 0 0;");
+        card.appendChild(el("div", "font-weight:700;", it.site + t(" 營位　", " site  ") + it.checkIn + " ～ " + it.checkOut + (it.earlyArrival ? t("（含夜衝）", " (incl. early arrival)") : "")));
+        card.appendChild(nightLines(it.nightsDetail));
+        card.appendChild(el("div", "text-align:right;font-weight:700;", t("小計 NT$ ", "Subtotal NT$ ") + Number(it.total || 0).toLocaleString()));
+        resEl.appendChild(card);
+      });
+    } else {
+      var dates = d.checkIn ? (d.checkOut ? d.checkIn + " ～ " + d.checkOut + (d.nights ? "（" + (d.earlyArrival && d.days ? t(d.days + "天" + d.nights + "夜，含夜衝", d.days + " days / " + d.nights + " nights, incl. early arrival") : d.nights + t("晚", " nights")) + "）" : "") : d.checkIn) : "";
+      if (d.site) { info.appendChild(document.createTextNode(t("營位：", "Site: ") + d.site + (d.earlyArrival ? t("（含夜衝）", " (early arrival)") : ""))); info.appendChild(document.createElement("br")); }
+      if (dates) { info.appendChild(document.createTextNode(t("日期：", "Dates: ") + dates)); info.appendChild(document.createElement("br")); }
+      info.appendChild(document.createTextNode(t("金額：NT$ ", "Amount: NT$ ") + d.total.toLocaleString()));
+      resEl.appendChild(info);
+      if (d.nightsDetail && d.nightsDetail.length) resEl.appendChild(nightLines(d.nightsDetail));
+    }
 
     if (d.state === "awaiting_payment") {
       var row = el("div", "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;");

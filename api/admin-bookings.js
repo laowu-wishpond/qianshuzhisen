@@ -3,9 +3,52 @@
 // 兩支都需要先登入（admin_session cookie 合法）才能用。
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { getRole, maskPhone } from "../lib/adminAuth.js";
-import { sendBookingConfirmed, emailConfigured } from "../lib/email.js";
+import { sendBookingConfirmed, sendGroupConfirmed, emailConfigured } from "../lib/email.js";
+import { loadNights } from "../lib/cart.js";
 
 const ALLOWED_STATUS = ["pending", "paid", "failed", "cancelled"];
+
+// 購物車整筆訂單：把每筆訂單附上整筆的編號、筆數、合計（列表上要以「一整筆」顯示）
+async function attachGroups(supabase, bookings) {
+  const gids = [...new Set(bookings.map((b) => b.group_id).filter(Boolean))];
+  if (!gids.length) return bookings;
+  const { data: gs } = await supabase.from("booking_groups").select("id,item_count,total_amount").in("id", gids);
+  const m = new Map((gs || []).map((g) => [g.id, g]));
+  return bookings.map((b) => {
+    const g = b.group_id && m.get(b.group_id);
+    return g ? { ...b, group_code: String(b.group_id).slice(0, 8), group_count: g.item_count, group_total: g.total_amount } : b;
+  });
+}
+
+// 恢復已取消的訂單（單筆與整筆共用）
+async function restoreBooking(supabase, id) {
+  const { data: bk, error: bkErr } = await supabase.from("bookings").select("*").eq("id", id).maybeSingle();
+  if (bkErr || !bk) return { ok: false, status: 404, error: "找不到這筆訂單" };
+  if (bk.payment_status !== "cancelled") return { ok: false, status: 400, error: "這筆不是已取消狀態" };
+  const { data: nights } = await supabase.from("booking_nights").select("site_id,night_date").eq("booking_id", id);
+  for (const n of nights || []) {
+    const { data: clash } = await supabase
+      .from("booking_nights").select("id")
+      .eq("site_id", n.site_id).eq("night_date", n.night_date).eq("is_active", true).neq("booking_id", id).limit(1);
+    if (clash && clash.length) return { ok: false, status: 409, error: "無法恢復：" + n.site_id + " 營位 " + n.night_date + " 那晚已被別人訂走了。" };
+  }
+  // 恢復成什麼狀態：已對帳過→已付款；客人回報過末五碼→已付款（待對帳）；其他→待匯款（重新保留 24 小時）
+  const patch = { trashed: false, trashed_at: null, cancel_reason: null, handled: false };
+  let state;
+  if (bk.payment_verified) { patch.payment_status = "paid"; state = "paid"; }
+  else if (bk.transfer_last5) { patch.payment_status = "paid"; patch.payment_verified = false; state = "reported"; }
+  else {
+    patch.payment_status = "pending";
+    patch.hold_expires_at = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+    state = "pending";
+  }
+  const { error: rErr } = await supabase.from("bookings").update(patch).eq("id", id);
+  if (rErr) {
+    console.error("admin-bookings restore error:", rErr);
+    return { ok: false, status: rErr.code === "23505" ? 409 : 500, error: rErr.code === "23505" ? "無法恢復：該營位日期已被別人訂走了。" : "恢復失敗" };
+  }
+  return { ok: true, state };
+}
 
 export default async function handler(req, res) {
   const role = getRole(req);
@@ -33,6 +76,12 @@ export default async function handler(req, res) {
         const { data: byId } = await supabase.from("bookings").select("*")
           .gte("id", `${c}-0000-0000-0000-000000000000`).lte("id", `${c}-ffff-ffff-ffff-ffffffffffff`);
         addRows(byId);
+        const { data: gs } = await supabase.from("booking_groups").select("id")
+          .gte("id", `${c}-0000-0000-0000-000000000000`).lte("id", `${c}-ffff-ffff-ffff-ffffffffffff`);
+        for (const g of gs || []) {
+          const { data: gb } = await supabase.from("bookings").select("*").eq("group_id", g.id);
+          addRows(gb);
+        }
       }
       const safe = qRaw.replace(/[%,()*\\]/g, "");
       if (safe) {
@@ -44,6 +93,7 @@ export default async function handler(req, res) {
         addRows(byText);
       }
       let list = [...found.values()].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+      list = await attachGroups(supabase, list);
       if (role !== "admin") list = list.map((b) => ({ ...b, customer_phone: maskPhone(b.customer_phone) }));
       return res.status(200).json({ bookings: list, role });
     }
@@ -70,6 +120,7 @@ export default async function handler(req, res) {
       const seen = new Set((byLast5 || []).map((b) => b.id));
       let merged = [...(byLast5 || []), ...byMsg.filter((b) => !seen.has(b.id))];
       merged.sort((a, b) => String(a.check_in || a.booking_date || "").localeCompare(String(b.check_in || b.booking_date || "")));
+      merged = await attachGroups(supabase, merged);
       if (role !== "admin") merged = merged.map((b) => ({ ...b, customer_phone: maskPhone(b.customer_phone) }));
       return res.status(200).json({ bookings: merged, role });
     }
@@ -120,6 +171,7 @@ export default async function handler(req, res) {
         b.payment_status === "cancelled" && byPhone.has(b.customer_phone) ? { ...b, active_alt: byPhone.get(b.customer_phone).join("、") } : b
       );
     }
+    bookings = await attachGroups(supabase, bookings);
     // 唯讀角色看不到完整電話
     if (role !== "admin") {
       bookings = bookings.map((b) => ({ ...b, customer_phone: maskPhone(b.customer_phone) }));
@@ -132,6 +184,50 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "唯讀帳號無法修改訂單" });
     }
     const { id, payment_status, handled, ids, trash, resend, restore } = req.body || {};
+    // ===== 購物車整筆訂單：groupId 帶整筆的 id，底下所有營位一起處理，只寄一封信 =====
+    const groupId = req.body?.groupId;
+    if (typeof groupId === "string" && groupId) {
+      const { data: members, error: mErr } = await supabase.from("bookings").select("*").eq("group_id", groupId);
+      if (mErr || !members || !members.length) return res.status(404).json({ error: "找不到這筆整筆訂單" });
+      const sendAll = async (rows) => {
+        const nights = await loadNights(supabase, rows.map((b) => b.id));
+        const r = await sendGroupConfirmed(rows, nights);
+        if (r.sent) await supabase.from("bookings").update({ confirmation_email_sent_at: new Date().toISOString() }).in("id", rows.map((b) => b.id));
+        return r.sent ? "sent" : r.reason;
+      };
+      if (resend === true) {
+        const live = members.filter((b) => b.payment_status === "paid");
+        if (!live.length) return res.status(400).json({ error: "這筆還不是已付款狀態，請先按「整筆對帳完成」" });
+        return res.status(200).json({ ok: true, email: await sendAll(live) });
+      }
+      if (restore === true) {
+        const cancelled = members.filter((b) => b.payment_status === "cancelled");
+        if (!cancelled.length) return res.status(400).json({ error: "這筆整筆訂單沒有已取消的營位" });
+        const results = [];
+        for (const b of cancelled) results.push({ id: b.id, site: b.site_id, ...(await restoreBooking(supabase, b.id)) });
+        const failed = results.filter((x) => !x.ok);
+        if (failed.length) {
+          return res.status(409).json({ error: failed.map((x) => x.site + "：" + x.error).join("；") + (results.length > failed.length ? "（其他營位已恢復）" : "") });
+        }
+        return res.status(200).json({ ok: true, count: results.length, state: results[0].state });
+      }
+      if (payment_status) {
+        if (!ALLOWED_STATUS.includes(payment_status)) return res.status(400).json({ error: "不合法的狀態值" });
+        const targets = members.filter((b) => b.payment_status !== "cancelled" || payment_status === "cancelled");
+        if (!targets.length) return res.status(400).json({ error: "這筆整筆訂單沒有可處理的營位" });
+        const patch = { payment_status };
+        if (payment_status === "paid") patch.payment_verified = true;
+        const { data: updated, error: uErr } = await supabase.from("bookings").update(patch).in("id", targets.map((b) => b.id)).select("*");
+        if (uErr || !updated) {
+          console.error("admin-bookings group PATCH error:", uErr);
+          return res.status(500).json({ error: "更新訂單狀態失敗" });
+        }
+        let email = null;
+        if (payment_status === "paid" && updated.some((b) => !b.confirmation_email_sent_at)) email = await sendAll(updated);
+        return res.status(200).json({ ok: true, email, emailConfigured: emailConfigured(), count: updated.length });
+      }
+      return res.status(400).json({ error: "缺少要執行的動作" });
+    }
     // 補寄「預約成功」信（已對帳完成、當時還沒辦法寄信的客人）
     if (id && resend === true) {
       const { data: bk, error: bkErr } = await supabase.from("bookings").select("*").eq("id", id).maybeSingle();
@@ -143,39 +239,9 @@ export default async function handler(req, res) {
     }
     // 恢復已取消的訂單（誤按取消、或客人又說要訂）。若營位日期已被別人訂走就不能恢復。
     if (id && restore === true) {
-      const { data: bk, error: bkErr } = await supabase.from("bookings").select("*").eq("id", id).maybeSingle();
-      if (bkErr || !bk) return res.status(404).json({ error: "找不到這筆訂單" });
-      if (bk.payment_status !== "cancelled") return res.status(400).json({ error: "這筆不是已取消狀態" });
-      const { data: nights } = await supabase.from("booking_nights").select("site_id,night_date").eq("booking_id", id);
-      for (const n of nights || []) {
-        const { data: clash } = await supabase
-          .from("booking_nights")
-          .select("id")
-          .eq("site_id", n.site_id)
-          .eq("night_date", n.night_date)
-          .eq("is_active", true)
-          .neq("booking_id", id)
-          .limit(1);
-        if (clash && clash.length) {
-          return res.status(409).json({ error: "無法恢復：" + n.site_id + " 營位 " + n.night_date + " 那晚已被別人訂走了。" });
-        }
-      }
-      // 恢復成什麼狀態：已對帳過→已付款；客人回報過末五碼→已付款（待對帳）；其他→待匯款（重新保留 24 小時）
-      const patch = { trashed: false, trashed_at: null, cancel_reason: null, handled: false };
-      let state;
-      if (bk.payment_verified) { patch.payment_status = "paid"; state = "paid"; }
-      else if (bk.transfer_last5) { patch.payment_status = "paid"; patch.payment_verified = false; state = "reported"; }
-      else {
-        patch.payment_status = "pending";
-        patch.hold_expires_at = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
-        state = "pending";
-      }
-      const { error: rErr } = await supabase.from("bookings").update(patch).eq("id", id);
-      if (rErr) {
-        console.error("admin-bookings restore error:", rErr);
-        return res.status(rErr.code === "23505" ? 409 : 500).json({ error: rErr.code === "23505" ? "無法恢復：該營位日期已被別人訂走了。" : "恢復失敗" });
-      }
-      return res.status(200).json({ ok: true, state });
+      const r = await restoreBooking(supabase, id);
+      if (!r.ok) return res.status(r.status).json({ error: r.error });
+      return res.status(200).json({ ok: true, state: r.state });
     }
     // 批次：把打勾的訂單移到垃圾桶／從垃圾桶還原（不會真的刪除資料）
     if (Array.isArray(ids) && typeof trash === "boolean") {
