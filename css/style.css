@@ -2283,3 +2283,19 @@ footer li a.footer-faq {
   letter-spacing: .04em;
 }
 footer li a.footer-faq:hover { color: #1a2e20; background: #ffd36b; }
+
+/* 首頁頂端：邀請先看常見問題 */
+a.faq-invite {
+  display: block;
+  text-align: center;
+  padding: 11px 16px;
+  background: #e8c26a;
+  color: #1a2e20;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: .03em;
+  text-decoration: none;
+}
+a.faq-invite:hover { background: #ffd36b; }
+@media (max-width: 600px) { a.faq-invite { font-size: 14px; padding: 10px 12px; } }
