@@ -167,6 +167,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   var shownBookings = [];
+  var clusteredMode = true; // 依下單時間排序時，整筆購物車訂單排在一起並有標題列；依營位排序時嚴格照營位順序
   var trashBar = document.getElementById("trashBar");
   var trashBtn = document.getElementById("trashBtn");
   var restoreBtn = document.getElementById("restoreBtn");
@@ -317,6 +318,39 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch(function () { alert("操作失敗，請重新整理再試一次"); });
   }
+  function groupButtons(b, members, inTrashView) {
+    if (currentRole !== "admin" || inTrashView) return null;
+    var live = members.filter(function (x) { return x.payment_status !== "cancelled"; });
+    var pending = live.filter(function (x) { return x.payment_status === "pending"; }).length;
+    var unverified = live.filter(function (x) { return x.payment_status === "paid" && x.payment_verified === false; }).length;
+    var cancelled = members.length - live.length;
+    var total = members.reduce(function (n, x) { return n + (x.payment_status === "cancelled" ? 0 : Number(x.total_amount || 0)); }, 0);
+      var btns = document.createElement("div");
+      btns.style.cssText = "margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;";
+      var gid = b.group_id;
+      if (pending || unverified) {
+        btns.appendChild(makeActionBtn("整筆對帳完成，寄一封確認信", function () {
+          if (confirm("確認這整筆（" + live.length + " 個營位，合計 NT$" + total.toLocaleString() + "）款項都已入帳？\n按下去會把所有營位標記為已對帳，並只寄一封「預約成功」email 給客人。")) groupAction(gid, { payment_status: "paid" }, "已標記整筆對帳完成。");
+        }));
+      } else if (live.length) {
+        btns.appendChild(makeActionBtn("再寄一次預約成功信（整筆）", function () {
+          if (!b.customer_email) { alert("這位客人沒有留 email，請改用電話或 LINE 通知。"); return; }
+          if (confirm("要寄「預約成功」email（含所有營位）給 " + b.customer_email + " 嗎？")) groupAction(gid, { resend: true }, "");
+        }));
+      }
+      if (cancelled) {
+        btns.appendChild(makeActionBtn("恢復已取消的營位", function () {
+          if (confirm("要恢復這筆整筆訂單裡已取消的營位嗎？\n如果有營位那幾晚已被別人訂走，該營位就無法恢復。恢復時不會自動寄信。")) groupAction(gid, { restore: true }, "已恢復。");
+        }));
+      }
+      if (live.length) {
+        btns.appendChild(makeActionBtn("取消整筆訂單", function () {
+          if (confirm("確定要取消這整筆訂單（" + live.length + " 個營位）嗎？取消後會釋出所有營位。")) groupAction(gid, { payment_status: "cancelled" }, "已取消整筆訂單。");
+        }));
+      }
+      return btns;
+  }
+
   function groupHeaderRow(b, members, inTrashView) {
     var live = members.filter(function (x) { return x.payment_status !== "cancelled"; });
     var pending = live.filter(function (x) { return x.payment_status === "pending"; }).length;
@@ -343,38 +377,16 @@ document.addEventListener("DOMContentLoaded", function () {
       "<b>合計 NT$" + total.toLocaleString() + "</b>" +
       '<span class="status-badge status-' + cls + '">' + state + "</span>";
     td.appendChild(line);
-    if (currentRole === "admin" && !inTrashView) {
-      var btns = document.createElement("div");
-      btns.style.cssText = "margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;";
-      var gid = b.group_id;
-      if (pending || unverified) {
-        btns.appendChild(makeActionBtn("整筆對帳完成，寄一封確認信", function () {
-          if (confirm("確認這整筆（" + live.length + " 個營位，合計 NT$" + total.toLocaleString() + "）款項都已入帳？\n按下去會把所有營位標記為已對帳，並只寄一封「預約成功」email 給客人。")) groupAction(gid, { payment_status: "paid" }, "已標記整筆對帳完成。");
-        }));
-      } else if (live.length) {
-        btns.appendChild(makeActionBtn("再寄一次預約成功信（整筆）", function () {
-          if (!b.customer_email) { alert("這位客人沒有留 email，請改用電話或 LINE 通知。"); return; }
-          if (confirm("要寄「預約成功」email（含所有營位）給 " + b.customer_email + " 嗎？")) groupAction(gid, { resend: true }, "");
-        }));
-      }
-      if (cancelled) {
-        btns.appendChild(makeActionBtn("恢復已取消的營位", function () {
-          if (confirm("要恢復這筆整筆訂單裡已取消的營位嗎？\n如果有營位那幾晚已被別人訂走，該營位就無法恢復。恢復時不會自動寄信。")) groupAction(gid, { restore: true }, "已恢復。");
-        }));
-      }
-      if (live.length) {
-        btns.appendChild(makeActionBtn("取消整筆訂單", function () {
-          if (confirm("確定要取消這整筆訂單（" + live.length + " 個營位）嗎？取消後會釋出所有營位。")) groupAction(gid, { payment_status: "cancelled" }, "已取消整筆訂單。");
-        }));
-      }
-      td.appendChild(btns);
-    }
+    var gb = groupButtons(b, members, inTrashView);
+    if (gb) td.appendChild(gb);
     tr.appendChild(td);
     return tr;
   }
 
   function renderBookings(bookings) {
-    bookings = clusterGroups(sortBookings(bookings));
+    var byTime = sortBy && /^created_/.test(sortBy.value);
+    bookings = byTime ? clusterGroups(sortBookings(bookings)) : sortBookings(bookings);
+    clusteredMode = byTime;
     shownBookings = bookings;
     updateTrashUi();
     bookingsBody.innerHTML = "";
@@ -434,7 +446,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function buildRows(bookings, body) {
     var lastGroup = null;
     bookings.forEach(function (b) {
-      if (b.group_id && b.group_id !== lastGroup) {
+      if (clusteredMode && b.group_id && b.group_id !== lastGroup) {
         var gm = bookings.filter(function (x) { return x.group_id === b.group_id; });
         body.appendChild(groupHeaderRow(b, gm, filterStatus.value === "trashed" || b.trashed === true));
       }
@@ -457,11 +469,11 @@ document.addEventListener("DOMContentLoaded", function () {
         dateText = b.booking_date;
       }
       tr.innerHTML =
+        "<td>" + sitePill(b.site_id) + "</td>" +
         "<td>" + (isNewTime(b.created_at) ? NEW_BADGE + " " : "") + escapeHtml(dateText) +
         '<div style="font-size:12px;opacity:.75;margin-top:4px;">下單：' +
         escapeHtml(new Date(b.created_at).toLocaleString("zh-TW", { timeZone: "Asia/Taipei", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })) +
         "</div></td>" +
-        "<td>" + sitePill(b.site_id) + "</td>" +
         "<td>" + (b.early_arrival ? "有（前一晚）" : "—") + "</td>" +
         '<td><label class="handled-wrap"><input type="checkbox" class="handled-cb"' +
         (b.handled ? " checked" : "") + (currentRole !== "admin" ? " disabled" : "") +
@@ -507,7 +519,18 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       if (b.group_id) {
         if (b.payment_status === "cancelled" && !inTrashView) tr.classList.add("row-cancelled");
-        if (!inTrashView && currentRole === "admin") actionsTd.textContent = "（整筆訂單，請用上方整筆按鈕）";
+        if (!inTrashView && currentRole === "admin") {
+          if (clusteredMode) actionsTd.textContent = "（整筆訂單，請用上方整筆按鈕）";
+          else {
+            var gm2 = bookings.filter(function (x) { return x.group_id === b.group_id; });
+            var chip = document.createElement("div");
+            chip.style.cssText = "font-size:12px;font-weight:700;margin-bottom:6px;color:#e8c26a;";
+            chip.textContent = "🛒 整筆訂單 " + (b.group_code || String(b.group_id).slice(0, 8)) + "（共 " + (b.group_count || gm2.length) + " 個營位，下面按鈕是整筆一起處理）";
+            actionsTd.appendChild(chip);
+            var gb2 = groupButtons(b, gm2, false);
+            if (gb2) actionsTd.appendChild(gb2);
+          }
+        }
         tr.appendChild(actionsTd);
         body.appendChild(tr);
         return;
@@ -830,7 +853,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   refreshBtn.addEventListener("click", loadBookings);
   filterStatus.addEventListener("change", loadBookings);
-  if (sortBy) sortBy.addEventListener("change", loadBookings);
+  try { var savedSort = localStorage.getItem("tsf_admin_sort"); if (savedSort && sortBy) sortBy.value = savedSort; } catch (e) { /* ignore */ }
+  if (sortBy) sortBy.addEventListener("change", function () { try { localStorage.setItem("tsf_admin_sort", sortBy.value); } catch (e) { /* ignore */ } loadBookings(); });
   filterFrom.addEventListener("change", loadBookings);
   filterTo.addEventListener("change", loadBookings);
 

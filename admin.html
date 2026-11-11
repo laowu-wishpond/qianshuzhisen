@@ -68,9 +68,9 @@ tr.row-cancelled td.admin-actions{opacity:1;}
       </label>
       <label>排序
         <select id="sortBy">
-          <option value="site_asc">依營位順序（A1、A2…B1…，同營位再依入住日）</option>
+          <option value="site_asc" selected>依營位順序（A1、A2…B1…，同營位再依入住日）</option>
           <option value="created_asc">依下單時間（先下單的在上面）</option>
-          <option value="created_desc" selected>依下單時間（最新的在上面）</option>
+          <option value="created_desc">依下單時間（最新的在上面）</option>
           <option value="checkin_asc">依入住日期（最近的在上面）</option>
         </select>
       </label>
@@ -139,8 +139,8 @@ tr.row-cancelled td.admin-actions{opacity:1;}
       <table class="admin-table" id="bookingsTable">
         <thead>
           <tr>
-            <th>入住～退房</th>
             <th>營位</th>
+            <th>入住～退房</th>
             <th>夜衝</th>
             <th>姓名</th>
             <th>電話</th>
@@ -158,7 +158,7 @@ tr.row-cancelled td.admin-actions{opacity:1;}
       <summary>✅ 已處理訂單（<span id="doneCount">0</span> 筆：已對帳並寄出成功信、已取消、逾時釋出）— 點開查看</summary>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>入住～退房</th><th>營位</th><th>夜衝</th><th>姓名</th><th>電話</th><th>人數</th><th>金額</th><th>付款方式</th><th>狀態</th><th>操作</th></tr></thead>
+          <thead><tr><th>營位</th><th>入住～退房</th><th>夜衝</th><th>姓名</th><th>電話</th><th>人數</th><th>金額</th><th>付款方式</th><th>狀態</th><th>操作</th></tr></thead>
           <tbody id="doneBody"></tbody>
         </table>
       </div>
@@ -198,7 +198,7 @@ tr.row-cancelled td.admin-actions{opacity:1;}
   </section>
 </div>
 
-<script src="js/admin.js?v=20261111b"></script>
+<script src="js/admin.js?v=20261111c"></script>
 <script src="js/admin-reconcile.js?v=20261111a"></script>
 </body>
 </html>
