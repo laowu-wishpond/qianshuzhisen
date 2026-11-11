@@ -79,6 +79,22 @@
       var msg = el("p", "margin:10px 0 0;");
       row.appendChild(inp); row.appendChild(b2);
       resEl.appendChild(row); resEl.appendChild(msg);
+      if (d.canExtend) {
+        var xrow = el("div", "margin-top:14px;");
+        var xb = document.createElement("button");
+        xb.type = "button"; xb.className = "btn";
+        xb.textContent = t("還需要一點時間？再給我 " + d.extendHours + " 小時", "Need more time? Give me " + d.extendHours + " more hours");
+        var xmsg = el("p", "margin:10px 0 0;");
+        xb.addEventListener("click", function () {
+          xb.disabled = true;
+          fetch("/api/extend-hold", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bookingId: d.bookingId }) })
+            .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || "failed"); return x; }); })
+            .then(function () { doLookup(); })
+            .catch(function (e) { xb.disabled = false; xmsg.style.color = "#f29a9a"; xmsg.textContent = e.message; });
+        });
+        xrow.appendChild(xb); xrow.appendChild(xmsg);
+        resEl.appendChild(xrow);
+      }
       b2.addEventListener("click", function () {
         var v = inp.value.trim();
         if (!/^\d{5}$/.test(v)) { msg.style.color = "#f29a9a"; msg.textContent = t("請填 5 位數字", "Please enter exactly 5 digits."); return; }

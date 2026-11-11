@@ -2,6 +2,7 @@
 // 客人用「訂單編號（8 碼）＋訂購時留的電話」查詢預約／付款狀態。兩個都對才會回資料。
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { stayInfo } from "../lib/stay.js";
+import { EXTEND_HOURS, MAX_EXTENSIONS } from "../lib/siteStatus.js";
 
 const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
 
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
 
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, customer_name, customer_phone, site_id, check_in, check_out, nights_count, booking_date, total_amount, payment_status, payment_verified, payment_method, transfer_last5, hold_expires_at, cancel_reason, early_arrival, trashed")
+    .select("id, customer_name, customer_phone, site_id, check_in, check_out, nights_count, booking_date, total_amount, payment_status, payment_verified, payment_method, transfer_last5, hold_expires_at, hold_extensions, cancel_reason, early_arrival, trashed")
     .gte("id", `${code}-0000-0000-0000-000000000000`)
     .lte("id", `${code}-ffff-ffff-ffff-ffffffffffff`)
     .limit(5);
@@ -65,5 +66,7 @@ export default async function handler(req, res) {
     total: Number(b.total_amount || 0),
     last5: b.transfer_last5 || null,
     holdExpiresAt: state === "awaiting_payment" ? b.hold_expires_at : null,
+    canExtend: state === "awaiting_payment" && (b.hold_extensions || 0) < MAX_EXTENSIONS,
+    extendHours: EXTEND_HOURS,
   });
 }
