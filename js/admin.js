@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // 不用再處理的訂單：已對帳完成且預約成功信寄過（或客人沒留 email、請用電話通知的由大哥自己打勾「已處理」）、已取消、逾時釋出
   function isBookingDone(b) {
     if (b.trashed || b.payment_status === "cancelled" || b.payment_status === "failed") return true;
-    if (b.payment_status === "paid" && b.payment_verified !== false) return !!b.confirmation_email_sent_at || (!b.customer_email && b.handled === true);
+    if (b.payment_status === "paid" && b.payment_verified !== false) return !!b.confirmation_email_sent_at || !b.customer_email; // 已對帳：成功信寄過，或客人沒留 email（早期靠電話通知）
     return false;
   }
 
