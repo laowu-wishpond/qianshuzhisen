@@ -963,6 +963,13 @@
           <span class="amount" id="totalOut">NT$0</span>
         </div>
 
+        <div style="margin-top:18px;padding:14px 16px;border:2px dashed #e8c26a;border-radius:12px;background:rgba(255,244,214,.08);">
+          <div style="font-weight:700;margin-bottom:6px;"><span class="lang-zh">🛒 想一次訂好幾個營位／好幾段日期？</span><span class="lang-en" hidden>🛒 Booking several sites or date ranges?</span></div>
+          <div style="font-size:15px;opacity:.92;margin-bottom:10px;"><span class="lang-zh">先「加入購物車」，再選下一個營位或日期，最後到購物車<b>一次結帳、一次匯款</b>。加入購物車不會先保留營位，結帳送出才會保留。</span><span class="lang-en" hidden>Tap “Add to cart”, then pick the next site or dates, and <b>check out and pay once</b> from the cart. Adding to the cart does not hold the site — it's held when you submit the order.</span></div>
+          <button type="button" id="addToCartBtn" class="btn btn-outline" style="width:100%;"><span class="lang-zh">＋ 加入購物車</span><span class="lang-en" hidden>＋ Add to cart</span></button>
+          <p id="cartAddMsg" style="margin:10px 0 0;font-weight:600;"></p>
+        </div>
+
         <form id="bookingForm" style="margin-top:24px;">
           <label for="name"><span class="lang-zh">姓名</span><span class="lang-en" hidden>Name</span></label>
           <input type="text" id="name" required>
@@ -989,7 +996,7 @@
           </label>
 
           <button type="submit" class="btn btn-primary" style="width:100%;margin-top:18px;">
-            <span class="lang-zh">送出預約申請</span><span class="lang-en" hidden>Submit booking request</span>
+            <span class="lang-zh">只訂這一個，直接送出預約申請</span><span class="lang-en" hidden>Book just this one — submit now</span>
           </button>
         </form>
 
@@ -1254,7 +1261,7 @@
 <script src="js/time-bar.js?v=20261111a"></script>
 <script src="js/cart.js?v=20261111a"></script>
 <script src="js/cart-bar.js?v=20261111a"></script>
-<script src="js/booking.js?v=20261109b"></script>
+<script src="js/booking.js?v=20261111a"></script>
 <script>
 // 「限定收藏」區塊的播放按鈕：直接播放點歌單裡的《歡迎回家》（07），沿用既有歌單邏輯
 (function () {
