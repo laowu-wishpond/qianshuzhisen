@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function earlyFree(id) {
     if (!checkIn) return false;
     var d = P.addDays(checkIn, -1);
-    return d >= today && occSet(d).indexOf(id) === -1;
+    return d >= today && d >= P.EARLIEST_STAY_DATE && occSet(d).indexOf(id) === -1;
   }
 
   /* ---------- 日曆 ---------- */
@@ -258,7 +258,7 @@ document.addEventListener("DOMContentLoaded", function () {
       var isFull = free <= 0;
       var level = isFull ? "full" : ratio < 0.5 ? "low" : "mid";
 
-      var disabled = iso < today;
+      var disabled = iso < today || iso < P.EARLIEST_STAY_DATE;
       if (checkIn && iso > checkIn) {
         // 這天會當成「退房日」：當天早上就離場，客滿也沒關係；但不能超過最長連住晚數
         if (iso > lastCheckoutAllowed) disabled = true;
@@ -580,6 +580,8 @@ document.addEventListener("DOMContentLoaded", function () {
       note = t("請先選擇營位", "Choose a campsite first");
     } else if (!checkIn) {
       note = t("請先選擇入住日", "Choose a check-in date first");
+    } else if (P.addDays(checkIn, -1) < P.EARLIEST_STAY_DATE) {
+      note = t("11/15 以前暫不開放，無法加訂夜衝", "Early arrival is not available before Nov 15");
     } else if (P.earlyBlockReason(P.addDays(checkIn, -1))) {
       note = t("過年期間不提供夜衝", "Early arrival is not offered during Lunar New Year");
     } else if (!earlyFree(s.id)) {

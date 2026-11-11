@@ -80,6 +80,22 @@ tr.row-cancelled td.admin-actions{opacity:1;}
       <button id="restoreBtn" class="btn btn-outline" type="button" style="display:none;">↩ 把打勾的從垃圾桶還原</button>
       <span id="trashMsg" style="font-size:13px;opacity:.85;">先在姓名前面的方格打勾，再按按鈕。垃圾桶只是收起來，不會真的刪除資料。</span>
     </div>
+    <details id="reconcilePanel" style="margin-top:14px;border:1px solid rgba(128,128,128,.4);border-radius:10px;padding:10px 14px;">
+      <summary style="cursor:pointer;font-weight:700;font-size:16px;">🧾 對帳輔助（上傳匯款截圖，自動比對、抓錯，一次對帳完成）</summary>
+      <p style="font-size:14px;margin:10px 0;">做法：① 把銀行 App 的「入帳明細」截圖（可以一次選很多張）→ 按「辨識截圖」；或直接把明細文字貼進下面的框框。② 看一下辨識出來的數字有沒有明顯認錯，可以直接改。③ 按「開始比對」。系統會拿「客人回報的末五碼＋應收金額」去明細裡找，<strong>只有兩個都對的才能一鍵對帳完成</strong>，其他的會告訴你哪裡不對。</p>
+      <div class="admin-filters">
+        <input type="file" id="rcFiles" accept="image/*" multiple>
+        <button id="rcOcr" class="btn btn-outline" type="button">辨識截圖</button>
+        <span id="rcOcrMsg" style="font-size:13px;opacity:.85;"></span>
+      </div>
+      <textarea id="rcText" rows="8" style="width:100%;margin-top:10px;font-size:13px;" placeholder="銀行明細的文字會出現在這裡（也可以自己貼上）。一行一筆交易最好。"></textarea>
+      <div class="admin-filters" style="margin-top:8px;">
+        <button id="rcMatch" class="btn btn-primary" type="button">開始比對</button>
+        <button id="rcClear" class="btn btn-outline" type="button">清空</button>
+        <span id="rcMsg" style="font-size:13px;opacity:.85;"></span>
+      </div>
+      <div id="rcOut"></div>
+    </details>
     <div class="admin-filters" style="margin-top:10px;">
       <a class="btn btn-primary" href="/api/admin-export?only=verified&format=print" target="_blank" rel="noopener">🖨 列印已對帳訂單（給會計）</a>
       <a class="btn btn-outline" href="/api/admin-export?only=unpaid&format=print" target="_blank" rel="noopener">🖨 列印未付款名單（附勾選格）</a>
@@ -150,5 +166,6 @@ tr.row-cancelled td.admin-actions{opacity:1;}
 </div>
 
 <script src="js/admin.js?v=20261110c"></script>
+<script src="js/admin-reconcile.js?v=20261111a"></script>
 </body>
 </html>
