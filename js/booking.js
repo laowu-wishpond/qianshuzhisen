@@ -128,7 +128,15 @@ document.addEventListener("DOMContentLoaded", function () {
   var previewId = null; // 點到「已被預訂」的營位時，只看照片、不選取
   // 營位備註（只顯示在營位資訊裡）。要加備註：在這裡新增一行即可。
   var SITE_NOTES = {
-    C1: { zh: "適合露營車停放", en: "Suitable for motorhomes / RVs" }
+    C1: { zh: "適合露營車停放", en: "Suitable for motorhomes / RVs" },
+    D4: { zh: "營位地面有斜坡度", en: "This site has a sloped ground" },
+    D5: { zh: "營位地面有斜坡度", en: "This site has a sloped ground" },
+    D6: { zh: "營位地面有斜坡度", en: "This site has a sloped ground" },
+    D7: { zh: "營位地面有斜坡度", en: "This site has a sloped ground" },
+    D8: { zh: "營位地面有斜坡度", en: "This site has a sloped ground" },
+    D9: { zh: "營位地面有斜坡度", en: "This site has a sloped ground" },
+    D10: { zh: "營位地面有斜坡度", en: "This site has a sloped ground" },
+    D11: { zh: "營位地面有斜坡度", en: "This site has a sloped ground" }
   };
   var today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
   var minYear = parseInt(today.slice(0, 4), 10);
