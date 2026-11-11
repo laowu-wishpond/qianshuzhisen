@@ -7,7 +7,8 @@
 // 加 ?dry=1 可以只看「會寄給誰」，不真的寄。
 import crypto from "node:crypto";
 import { getSupabaseAdmin } from "../lib/supabase.js";
-import { emailConfigured, postBatch } from "../lib/email.js";
+import { emailConfigured, postBatch, sendBookingConfirmed } from "../lib/email.js";
+import { sweepMessages } from "../lib/messageDesk.js";
 import { pickDue, reminderPayload, finalReminderPayload, ownerDigestPayload, getSettings, pickCheckin, checkinPayload } from "../lib/reminders.js";
 
 function safeEqual(a, b) {
@@ -24,6 +25,24 @@ export default async function handler(req, res) {
   const settings = await getSettings(supabase);
   const key = req.headers["x-cron-key"];
   if (!safeEqual(key, settings.cron_key)) return res.status(401).json({ error: "unauthorized" });
+
+  // 單次補寄「預約成功」信：POST /api/cron-reminders?resend=b15126f6,38756816（訂單編號前 8 碼，一次最多 10 筆）。
+  // 只會寄給「已付款、大哥已對帳、有 email、還沒寄過」的訂單，寄完會記錄，不會重複寄。
+  const resendCodes = String(req.query?.resend || "").split(",").map((c) => c.trim().toLowerCase()).filter((c) => /^[0-9a-f]{8}$/.test(c)).slice(0, 10);
+  if (resendCodes.length) {
+    if (req.method !== "POST") return res.status(405).json({ error: "補寄請用 POST" });
+    const { data: cands } = await supabase.from("bookings").select("*")
+      .eq("payment_status", "paid").eq("payment_verified", true).eq("trashed", false).is("confirmation_email_sent_at", null).limit(1000);
+    const results = [];
+    for (const code of resendCodes) {
+      const b = (cands || []).find((x) => String(x.id).slice(0, 8) === code);
+      if (!b) { results.push({ code, result: "skipped_not_eligible_or_already_sent" }); continue; }
+      const r = await sendBookingConfirmed(b);
+      if (r.sent) await supabase.from("bookings").update({ confirmation_email_sent_at: new Date().toISOString() }).eq("id", b.id);
+      results.push({ code, result: r.sent ? "sent" : r.reason });
+    }
+    return res.status(200).json({ resent: results });
+  }
 
   const dry = req.query?.dry === "1";
   await supabase.rpc("expire_stale_holds");
@@ -58,6 +77,10 @@ export default async function handler(req, res) {
   }
   summary.checkinDue = checkinDue.length;
   summary.checkinSent = 0;
+
+  // 留言處理台：補回覆（客人先留言、大哥後對帳）、補通知大哥、逾時提醒。出錯不影響上面的提醒信。
+  try { summary.messages = await sweepMessages(supabase, settings, { dry }); }
+  catch (e) { console.error("sweepMessages error:", e); summary.messages = { error: String(e.message || e) }; }
   if (dry || (!first.length && !final.length && !checkinDue.length)) return res.status(200).json(summary);
   if (!emailConfigured()) return res.status(200).json({ ...summary, error: "email not configured" });
 

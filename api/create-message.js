@@ -4,6 +4,8 @@
 
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { sendMessageAutoReply, AUTO_REPLY_ZH, AUTO_REPLY_EN } from "../lib/email.js";
+import { handleNewMessage } from "../lib/messageDesk.js";
+import { getSettings } from "../lib/reminders.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -23,20 +25,31 @@ export default async function handler(req, res) {
 
   const supabase = getSupabaseAdmin();
 
-  const { error } = await supabase.from("contact_messages").insert({
+  const { data: row, error } = await supabase.from("contact_messages").insert({
     name: String(name).trim(),
     phone: String(phone).trim(),
     // 資料表沒有 email 欄位：有填的話附在訊息最後，營主回覆時看得到
     message: (message ? String(message).trim() : "") + (cleanEmail ? "\n\n（客人 Email：" + cleanEmail + "）" : "") || null,
-  });
+  }).select().single();
 
   if (error) {
     console.error("create-message insert error:", error);
     return res.status(500).json({ error: "留言送出失敗，請稍後再試或直接致電營主" });
   }
 
-  // 自動回覆：有留 email 且寄信功能已設定時，順便寄一封（失敗不影響留言送出）
-  if (cleanEmail) await sendMessageAutoReply({ email: cleanEmail, name });
+  // 留言處理台：已匯款且對帳完成的客人 → 自動回「營位保留成功＋訂單編號」；需要大哥回答的 → 立刻 email 通知大哥。
+  // 任何一步失敗都不能影響留言送出。
+  let handled = null;
+  try {
+    const settings = await getSettings(supabase);
+    handled = await handleNewMessage(supabase, row, settings);
+  } catch (e) {
+    console.error("message desk error:", e);
+  }
 
-  return res.status(200).json({ ok: true, autoReply: { zh: AUTO_REPLY_ZH, en: AUTO_REPLY_EN } });
+  // 一般自動回覆：有留 email、而且沒有收到「保留成功」信時，才寄「已收到您的訊息」（失敗不影響留言送出）
+  if (cleanEmail && !(handled && handled.customerMailed)) await sendMessageAutoReply({ email: cleanEmail, name });
+
+  const auto = handled && handled.replied && handled.decision.reply ? handled.decision.reply : { zh: AUTO_REPLY_ZH, en: AUTO_REPLY_EN };
+  return res.status(200).json({ ok: true, autoReply: auto });
 }

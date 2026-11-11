@@ -31,6 +31,11 @@ function cleanMessage(msg) {
   return s.trim().slice(0, 400);
 }
 
+// 營主自己寫的回覆：不要把訂單編號（例如 98544c8e、33811790）、電話、日期裡的數字遮掉，只遮 email。
+function cleanReply(msg) {
+  return String(msg || "").replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "［已隱藏］").trim().slice(0, 600);
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
   const supabase = getSupabaseAdmin();
@@ -48,7 +53,7 @@ export default async function handler(req, res) {
     name: maskName(m.name),
     message: cleanMessage(m.message),
     created_at: m.created_at,
-    reply: m.reply ? cleanMessage(m.reply) : null,
+    reply: m.reply ? cleanReply(m.reply) : null,
     replied_at: m.replied_at || null,
   }));
   res.setHeader("Cache-Control", "public, s-maxage=10, stale-while-revalidate=30");
