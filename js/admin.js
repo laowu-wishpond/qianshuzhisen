@@ -26,6 +26,14 @@ document.addEventListener("DOMContentLoaded", function () {
   var messagesError = document.getElementById("messagesError");
   var roleBadge = document.getElementById("roleBadge");
   var paidSummary = document.getElementById("paidSummary");
+  var doneBox = document.getElementById("doneBox");
+  var doneBody = document.getElementById("doneBody");
+  var doneCount = document.getElementById("doneCount");
+  var todoSummary = document.getElementById("todoSummary");
+  var msgDoneBox = document.getElementById("msgDoneBox");
+  var msgDoneBody = document.getElementById("msgDoneBody");
+  var msgDoneCount = document.getElementById("msgDoneCount");
+  var msgTodoSummary = document.getElementById("msgTodoSummary");
   var currentRole = "admin"; // 由後端回傳；viewer = 唯讀
 
   function setRole(role) {
@@ -266,6 +274,26 @@ document.addEventListener("DOMContentLoaded", function () {
   if (trashBtn) trashBtn.addEventListener("click", function () { bulkTrash(true); });
   if (restoreBtn) restoreBtn.addEventListener("click", function () { bulkTrash(false); });
 
+  // ===== 營位系列顏色（A 琥珀、B 藍、C 綠、D 紫）、「新」記號、已處理判斷 =====
+  var ZONE_COLORS = { A: "#e8a33d", B: "#4aa3df", C: "#5cb85c", D: "#b073d9" };
+  function zoneColor(siteId) {
+    var z = String(siteId || "").trim().toUpperCase().charAt(0);
+    return ZONE_COLORS[z] || "#888";
+  }
+  function sitePill(siteId) {
+    if (!siteId) return "—";
+    return '<span class="site-pill" style="background:' + zoneColor(siteId) + ';">' + escapeHtml(siteId) + "</span>";
+  }
+  var NEW_BADGE = '<span class="new-badge">🆕 新</span>';
+  var NEW_MS = 24 * 3600 * 1000; // 24 小時內下的單／留的言算「新」
+  function isNewTime(iso) { return iso && Date.now() - new Date(iso).getTime() < NEW_MS; }
+  // 不用再處理的訂單：已對帳完成且預約成功信寄過（或客人沒留 email、請用電話通知的由大哥自己打勾「已處理」）、已取消、逾時釋出
+  function isBookingDone(b) {
+    if (b.trashed || b.payment_status === "cancelled" || b.payment_status === "failed") return true;
+    if (b.payment_status === "paid" && b.payment_verified !== false) return !!b.confirmation_email_sent_at || (!b.customer_email && b.handled === true);
+    return false;
+  }
+
   // 購物車整筆訂單：同一筆的營位排在一起，上面加一條整筆標題列
   function clusterGroups(list) {
     var seen = {}, out = [];
@@ -308,6 +336,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var line = document.createElement("div");
     line.style.cssText = "display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;";
     line.innerHTML =
+      (members.some(function (x) { return isNewTime(x.created_at); }) ? NEW_BADGE : "") +
       "<b>🛒 整筆訂單 " + escapeHtml(b.group_code || String(b.group_id).slice(0, 8)) + "</b>" +
       "<span>" + escapeHtml(b.customer_name) + "　" + escapeHtml(b.customer_phone) + "</span>" +
       "<span>共 " + members.length + " 個營位" + (cancelled ? "（其中 " + cancelled + " 個已取消）" : "") + "</span>" +
@@ -362,19 +391,56 @@ document.addEventListener("DOMContentLoaded", function () {
       "① 已對帳：" + vCount + " 筆，NT$" + vTotal.toLocaleString() + "\n" +
       "② 已付款（含未對帳）：" + (vCount + uCount) + " 筆，NT$" + (vTotal + uTotal).toLocaleString() +
       (uCount ? "（其中待對帳 " + uCount + " 筆，NT$" + uTotal.toLocaleString() + "）" : "");
+    var explicit = !!(filterStatus.value || activeQ || activeLast4);
+    var todo = bookings, done = [];
+    if (!explicit) {
+      // 預設只顯示「待處理」；整筆購物車訂單要全部處理完才算已處理
+      var groupDone = {};
+      bookings.forEach(function (x) {
+        if (x.group_id) groupDone[x.group_id] = (groupDone[x.group_id] !== false) && isBookingDone(x);
+      });
+      todo = []; done = [];
+      bookings.forEach(function (x) {
+        var d = x.group_id ? groupDone[x.group_id] : isBookingDone(x);
+        (d ? done : todo).push(x);
+      });
+    }
+    bookingsBody.innerHTML = "";
+    if (doneBody) doneBody.innerHTML = "";
     if (!bookings.length) {
       bookingsBody.innerHTML = '<tr><td colspan="10">目前沒有符合條件的訂單</td></tr>';
-      return;
+    } else if (!todo.length) {
+      bookingsBody.innerHTML = '<tr><td colspan="10" style="font-size:17px;padding:18px;">🎉 目前沒有待處理的訂單（已處理的在下面「已處理訂單」）</td></tr>';
+    } else {
+      buildRows(todo, bookingsBody);
     }
+    if (doneBox) {
+      doneBox.hidden = !done.length;
+      if (doneCount) doneCount.textContent = String(done.length);
+      if (done.length) buildRows(done, doneBody);
+    }
+    if (todoSummary) {
+      if (explicit) {
+        todoSummary.textContent = "";
+      } else {
+        var nNew = todo.filter(function (x) { return isNewTime(x.created_at); }).length;
+        var nRep = todo.filter(function (x) { return x.payment_status === "paid" && x.payment_verified === false; }).length;
+        var nPend = todo.filter(function (x) { return x.payment_status === "pending"; }).length;
+        todoSummary.textContent = "待處理 " + todo.length + " 筆：待對帳 " + nRep + "、待匯款 " + nPend + "、24 小時內新單 " + nNew + "。已處理的收在下面「已處理訂單」。";
+      }
+    }
+  }
+
+  function buildRows(bookings, body) {
     var lastGroup = null;
     bookings.forEach(function (b) {
       if (b.group_id && b.group_id !== lastGroup) {
         var gm = bookings.filter(function (x) { return x.group_id === b.group_id; });
-        bookingsBody.appendChild(groupHeaderRow(b, gm, filterStatus.value === "trashed" || b.trashed === true));
+        body.appendChild(groupHeaderRow(b, gm, filterStatus.value === "trashed" || b.trashed === true));
       }
       lastGroup = b.group_id || null;
       var tr = document.createElement("tr");
-      if (b.group_id) tr.style.borderLeft = "4px solid #e8c26a";
+      tr.style.borderLeft = "6px solid " + zoneColor(b.site_id);
       // 新訂單：入住～退房＋營位；舊訂單（改成依營位計價之前建立的）只有單一日期，沒有營位
       var dateText;
       if (b.check_in) {
@@ -391,11 +457,11 @@ document.addEventListener("DOMContentLoaded", function () {
         dateText = b.booking_date;
       }
       tr.innerHTML =
-        "<td>" + escapeHtml(dateText) +
+        "<td>" + (isNewTime(b.created_at) ? NEW_BADGE + " " : "") + escapeHtml(dateText) +
         '<div style="font-size:12px;opacity:.75;margin-top:4px;">下單：' +
         escapeHtml(new Date(b.created_at).toLocaleString("zh-TW", { timeZone: "Asia/Taipei", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })) +
         "</div></td>" +
-        "<td>" + escapeHtml(b.site_id || "—") + "</td>" +
+        "<td>" + sitePill(b.site_id) + "</td>" +
         "<td>" + (b.early_arrival ? "有（前一晚）" : "—") + "</td>" +
         '<td><label class="handled-wrap"><input type="checkbox" class="handled-cb"' +
         (b.handled ? " checked" : "") + (currentRole !== "admin" ? " disabled" : "") +
@@ -443,7 +509,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (b.payment_status === "cancelled" && !inTrashView) tr.classList.add("row-cancelled");
         if (!inTrashView && currentRole === "admin") actionsTd.textContent = "（整筆訂單，請用上方整筆按鈕）";
         tr.appendChild(actionsTd);
-        bookingsBody.appendChild(tr);
+        body.appendChild(tr);
         return;
       }
 
@@ -510,7 +576,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       tr.appendChild(actionsTd);
-      bookingsBody.appendChild(tr);
+      body.appendChild(tr);
     });
   }
 
@@ -565,19 +631,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function renderMessages(messages) {
     messagesBody.innerHTML = "";
+    if (msgDoneBody) msgDoneBody.innerHTML = "";
+    var todo = messages.filter(function (m) { return m.status !== "replied"; });
+    var done = messages.filter(function (m) { return m.status === "replied"; });
     if (!messages.length) {
       messagesBody.innerHTML = '<tr><td colspan="6">目前沒有留言</td></tr>';
-      return;
+    } else if (!todo.length) {
+      messagesBody.innerHTML = '<tr><td colspan="6" style="font-size:17px;padding:18px;">🎉 目前沒有待回覆的留言（回覆過的在下面「已回覆留言」）</td></tr>';
+    } else {
+      buildMsgRows(todo, messagesBody);
     }
+    if (msgDoneBox) {
+      msgDoneBox.hidden = !done.length;
+      if (msgDoneCount) msgDoneCount.textContent = String(done.length);
+      if (done.length) buildMsgRows(done, msgDoneBody);
+    }
+    if (msgTodoSummary) {
+      var nNew = todo.filter(function (m) { return m.status === "new"; }).length;
+      msgTodoSummary.textContent = "待回覆 " + todo.length + " 則（其中完全沒看過的 " + nNew + " 則）。回覆過的收在下面「已回覆留言」。";
+    }
+  }
+
+  function buildMsgRows(messages, body) {
     messages.forEach(function (m) {
       var tr = document.createElement("tr");
       var replied = m.status === "replied";
       if (replied) tr.classList.add("row-handled");
       var time = m.created_at ? new Date(m.created_at).toLocaleString("zh-TW") : "";
       var badgeCls = m.status === "new" ? "pending" : "paid";
-      var badgeTxt = replied ? "已回覆" : m.status === "read" ? "已讀" : "新留言";
+      var badgeTxt = replied ? (m.auto_replied ? "🤖 系統已自動回覆" : "已回覆") : m.status === "read" ? "已讀" : "新留言";
       tr.innerHTML =
-        "<td>" + escapeHtml(time) + "</td>" +
+        "<td>" + (m.status === "new" && isNewTime(m.created_at) ? NEW_BADGE + " " : "") + escapeHtml(time) + "</td>" +
         '<td><label class="handled-wrap"><input type="checkbox" class="handled-cb msg-cb"' +
         (replied ? " checked" : "") + (currentRole !== "admin" ? " disabled" : "") +
         ' aria-label="已回覆"> <span>' + escapeHtml(m.name) + "</span></label></td>" +
@@ -586,7 +670,8 @@ document.addEventListener("DOMContentLoaded", function () {
         (m.reply ? '<div style="margin-top:6px;font-size:12px;opacity:.85;">營主回覆：' + escapeHtml(m.reply) + "</div>" : "") +
         (m.is_public === false ? '<div style="margin-top:6px;font-size:12px;color:#f2c766;">（已從公開留言板隱藏）</div>' : "") +
         "</td>" +
-        '<td><span class="status-badge status-' + badgeCls + '">' + badgeTxt + "</span></td>";
+        '<td><span class="status-badge status-' + badgeCls + '">' + badgeTxt + "</span>" +
+        (!replied && m.owner_notified_at ? '<div style="font-size:12px;opacity:.85;margin-top:4px;">📧 已 email 通知大哥</div>' : "") + "</td>";
 
       function patchMsg(body) {
         body.id = m.id;
@@ -654,7 +739,7 @@ document.addEventListener("DOMContentLoaded", function () {
         actionsTd.textContent = "—";
       }
       tr.appendChild(actionsTd);
-      messagesBody.appendChild(tr);
+      body.appendChild(tr);
     });
   }
 
