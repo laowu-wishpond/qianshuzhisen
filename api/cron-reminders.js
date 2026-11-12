@@ -82,7 +82,7 @@ export default async function handler(req, res) {
   if (settings.checkin_enabled === "true") {
     const { data: paidRows } = await supabase
       .from("bookings")
-      .select("id, customer_name, customer_phone, customer_email, site_id, check_in, check_out, nights_count, booking_date, early_arrival, total_amount, payment_status, payment_verified, trashed, checkin_reminder_sent_at")
+      .select("id, group_id, customer_name, customer_phone, customer_email, site_id, check_in, check_out, nights_count, booking_date, early_arrival, total_amount, payment_status, payment_verified, trashed, checkin_reminder_sent_at")
       .eq("payment_status", "paid").eq("payment_verified", true).eq("trashed", false)
       .is("checkin_reminder_sent_at", null)
       .gte("check_out", new Date(Date.now() - 36 * 3600 * 1000).toISOString().slice(0, 10))
@@ -137,12 +137,20 @@ export default async function handler(req, res) {
   }
 
   // 入住前提醒信：一筆一封
-  const ci = checkinDue.map((b) => ({ b, payload: checkinPayload(settings.site_url || "https://www.tsforest.com.tw", b, settings) }));
+  // 購物車整筆訂單（同一個 group_id）合成一封，避免同一位客人收到好幾封
+  const ciUnits = [];
+  const ciGroups = new Map();
+  for (const b of checkinDue) {
+    if (!b.group_id) { ciUnits.push({ b, members: [b] }); continue; }
+    if (!ciGroups.has(b.group_id)) { const u = { b, members: [] }; ciGroups.set(b.group_id, u); ciUnits.push(u); }
+    ciGroups.get(b.group_id).members.push(b);
+  }
+  const ci = ciUnits.map((u) => ({ ids: u.members.map((m) => m.id), payload: checkinPayload(settings.site_url || "https://www.tsforest.com.tw", u.b, settings, u.members) }));
   for (let i = 0; i < ci.length; i += 100) {
     const chunk = ci.slice(i, i + 100);
     const r = await postBatch(chunk.map((e) => e.payload));
     if (!r.ok) { summary.checkinError = r.error; continue; }
-    await supabase.from("bookings").update({ checkin_reminder_sent_at: new Date().toISOString() }).in("id", chunk.map((e) => e.b.id));
+    await supabase.from("bookings").update({ checkin_reminder_sent_at: new Date().toISOString() }).in("id", chunk.flatMap((e) => e.ids));
     summary.checkinSent += chunk.length;
   }
 
