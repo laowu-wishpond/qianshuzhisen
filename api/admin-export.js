@@ -1,5 +1,6 @@
 // GET /api/admin-export            → 匯出全部訂單（CSV，Excel 可直接開啟）
 // GET /api/admin-export?only=verified → 只匯出已付款且已對帳的訂單（給會計用）
+// GET /api/admin-export?only=arrivals&date=2026-12-24&days=1&format=print → 列印「每日預計入客報表」（那天要進場的客人名單，days 可到 7）
 // 需要先登入後台。唯讀帳號匯出的電話會遮蔽。金額為 0 的（老闆保留／免費露營鎖營位用）不會匯出。
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { getRole, maskPhone } from "../lib/adminAuth.js";
@@ -26,10 +27,124 @@ function digits(v) {
   return text(s);
 }
 
+
+// ---------- 每日預計入客報表 ----------
+const ARR_PAY = { reported: "待對帳", verified: "已對帳", pending: "未匯款" };
+function isISODate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "")) && !isNaN(new Date(s + "T00:00:00Z")); }
+function addDaysISO(s, n) { const d = new Date(s + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+const WD = ["日", "一", "二", "三", "四", "五", "六"];
+
+async function arrivalsReport(req, res, role) {
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Taipei" });
+  let from = String(req.query.date || today);
+  if (!isISODate(from)) from = today;
+  let days = parseInt(req.query.days, 10);
+  if (!(days >= 1)) days = 1;
+  days = Math.min(days, 7);
+  const dates = Array.from({ length: days }, (_, i) => addDaysISO(from, i));
+  const last = dates[dates.length - 1];
+  // 夜衝的客人前一晚就進場（check_in 是隔天），所以多抓一天再用 stayInfo 判斷真正的進場日
+  const lo = from, hi = addDaysISO(last, 1);
+  const supabase = getSupabaseAdmin();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase.from("bookings").select("*")
+    .eq("trashed", false).in("payment_status", ["paid", "pending"])
+    .or(`and(check_in.gte.${lo},check_in.lte.${hi}),and(check_in.is.null,booking_date.gte.${lo},booking_date.lte.${hi})`)
+    .order("customer_name", { ascending: true }).limit(2000);
+  if (error) {
+    console.error("admin-export arrivals error:", error);
+    return res.status(500).send("查詢失敗，請稍後再試");
+  }
+  const esc = (v) => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const byDate = Object.fromEntries(dates.map((d) => [d, new Map()]));
+  for (const b of data || []) {
+    if (b.payment_status === "pending" && b.hold_expires_at && b.hold_expires_at <= nowIso) continue; // 逾時已釋出
+    const st = stayInfo(b);
+    if (!byDate[st.start]) continue;
+    const key = b.group_id || b.id;
+    const m = byDate[st.start];
+    if (!m.has(key)) m.set(key, { name: b.customer_name, phone: role === "admin" ? b.customer_phone : maskPhone(b.customer_phone), sites: [], end: st.end, nights: st.nights, people: 0, early: false, pay: [], notes: new Set() });
+    const u = m.get(key);
+    u.sites.push(b.site_id);
+    u.people += Number(b.people_per_tent || 0) * Number(b.tents_count || 1);
+    if (st.early) u.early = true;
+    if (st.end && st.end > u.end) u.end = st.end;
+    if (st.nights > u.nights) u.nights = st.nights;
+    u.pay.push(b.payment_status === "paid" ? (b.payment_verified ? "verified" : "reported") : "pending");
+    if (b.notes) u.notes.add(String(b.notes).replace(/\s+/g, " ").slice(0, 80));
+  }
+  const payText = (arr) => {
+    const set = new Set(arr);
+    if (set.size === 1) return ARR_PAY[arr[0]];
+    return "部分" + (set.has("pending") ? "未匯款" : "待對帳");
+  };
+  let totalGroups = 0, totalSites = 0, totalPeople = 0;
+  const sections = dates.map((d) => {
+    const list = [...byDate[d].values()].sort((a, b) => String(a.sites[0]).localeCompare(String(b.sites[0]), "zh-Hant", { numeric: true }));
+    const sites = list.reduce((t, u) => t + u.sites.length, 0);
+    const people = list.reduce((t, u) => t + u.people, 0);
+    totalGroups += list.length; totalSites += sites; totalPeople += people;
+    const wd = WD[new Date(d + "T00:00:00Z").getUTCDay()];
+    const rows = list.length ? list.map((u, i) => {
+      const pay = payText(u.pay);
+      return "<tr>" +
+        "<td class=box><span class=cb></span></td>" +
+        "<td>" + (i + 1) + "</td>" +
+        "<td><b>" + esc(u.name) + "</b></td>" +
+        "<td>" + esc(u.phone) + "</td>" +
+        "<td><b>" + esc(u.sites.sort((a, b) => String(a).localeCompare(String(b), "zh-Hant", { numeric: true })).join("、")) + "</b>" + (u.sites.length > 1 ? "<br>(共 " + u.sites.length + " 個營位)" : "") + "</td>" +
+        "<td>" + (u.early ? "<b>夜衝</b>" : "") + "</td>" +
+        "<td>" + esc(u.nights || "") + " 晚<br>退房 " + esc((u.end || "").slice(5)) + "</td>" +
+        "<td class=r>" + (u.people || "") + "</td>" +
+        "<td" + (pay !== "已對帳" ? " class=warn" : "") + ">" + esc(pay) + "</td>" +
+        "<td class=note>" + esc([...u.notes].join("；")) + "</td>" +
+        "</tr>";
+    }).join("") : "<tr><td colspan=10 style='text-align:center;color:#777;padding:14px'>這一天沒有預計入住的客人</td></tr>";
+    return `<h2>${esc(d)}（${wd}）　預計入住 ${list.length} 組、${sites} 個營位、約 ${people} 人</h2>
+<table><thead><tr><th>到場</th><th>#</th><th>姓名</th><th>電話</th><th>營位</th><th>夜衝</th><th>晚數／退房</th><th>人數</th><th>付款</th><th>備註</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }).join("");
+  const title = "每日預計入客報表";
+  const range = days === 1 ? from : from + " ～ " + last;
+  const html = `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>水松千樹之森_${title}_${esc(range)}</title>
+<style>
+@page { size: A4 portrait; margin: 10mm; }
+body { font-family: "Noto Sans TC","Microsoft JhengHei",sans-serif; color:#111; margin:16px; font-size:13px; }
+h1 { font-size:19px; margin:0 0 4px; }
+h2 { font-size:15px; margin:16px 0 6px; }
+.meta { margin-bottom:6px; color:#444; }
+.bar { margin-bottom:12px; }
+.bar button { font-size:15px; padding:8px 18px; cursor:pointer; }
+table { border-collapse:collapse; width:100%; }
+th, td { border:1px solid #888; padding:5px 6px; text-align:left; vertical-align:top; }
+th { background:#eee; }
+tr { page-break-inside: avoid; }
+thead { display: table-header-group; }
+td.r { text-align:right; white-space:nowrap; }
+td.box { width:44px; text-align:center; }
+td.warn { color:#a33; font-weight:bold; }
+.cb { display:inline-block; width:22px; height:22px; border:2px solid #222; background:#fff; border-radius:3px; vertical-align:middle; }
+td.note { min-width:90px; }
+.total { margin-top:12px; font-size:14px; font-weight:bold; text-align:right; }
+.sec { page-break-inside: avoid; }
+@media print { .bar { display:none; } body { margin:0; } h2 { page-break-after: avoid; } }
+</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印</button> <span>（也可在列印視窗選「另存為 PDF」）</span></div>
+<h1>水松千樹之森　${title}</h1>
+<div class="meta">日期：${esc(range)}　｜　列印日期：${today}　｜　含已匯款與保留中（尚未匯款）的訂單，已取消的不列入；夜衝客人算在前一晚進場那天；前面方格到場時打勾</div>
+${sections}
+<div class="total">合計：${totalGroups} 組、${totalSites} 個營位、約 ${totalPeople} 人</div>
+</body></html>`;
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(200).send(html);
+}
+
 export default async function handler(req, res) {
   const role = getRole(req);
   if (!role) return res.status(401).send("未登入或登入已逾期，請回後台重新登入");
   if (req.method !== "GET") return res.status(405).send("Method not allowed");
+  if (req.query.only === "arrivals") return arrivalsReport(req, res, role);
 
   const supabase = getSupabaseAdmin();
   let query = supabase

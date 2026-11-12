@@ -139,6 +139,14 @@ tr.row-cancelled td.admin-actions{opacity:1;}
       <div id="rcOut"></div>
     </details>
     <div class="admin-filters" style="margin-top:10px;">
+      <form action="/api/admin-export" method="get" target="_blank" style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 10px 6px 0;padding:6px 10px;border:1px solid rgba(128,128,128,.4);border-radius:10px;">
+        <input type="hidden" name="only" value="arrivals"><input type="hidden" name="format" value="print">
+        <strong>🖨 每日入客報表</strong>
+        <label>日期 <input type="date" name="date" id="arrDate" required></label>
+        <label>連續 <select name="days"><option value="1">1 天</option><option value="3">3 天</option><option value="7">7 天</option></select></label>
+        <button class="btn btn-primary" type="submit">列印</button>
+      </form>
+      <script>(function(){try{document.getElementById("arrDate").value=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Taipei"});}catch(e){}})();</script>
       <a class="btn btn-primary" href="/api/admin-export?only=verified&format=print" target="_blank" rel="noopener">🖨 列印已對帳訂單（給會計）</a>
       <a class="btn btn-outline" href="/api/admin-export?only=unpaid&format=print" target="_blank" rel="noopener">🖨 列印未付款名單（附勾選格）</a>
       <a class="btn btn-outline" href="/api/admin-export?format=print" target="_blank" rel="noopener">🖨 列印全部訂單</a>
