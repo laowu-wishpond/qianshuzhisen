@@ -11,7 +11,7 @@ import { emailConfigured, postBatch, sendBookingConfirmed } from "../lib/email.j
 import { sweepMessages } from "../lib/messageDesk.js";
 import { sendReconcileDigest } from "../lib/reconcileDigest.js";
 import { sendDailySummary } from "../lib/dailySummary.js";
-import { pickDue, reminderPayload, finalReminderPayload, ownerDigestPayload, getSettings, pickCheckin, checkinPayload } from "../lib/reminders.js";
+import { pickDue, reminderPayload, finalReminderPayload, ownerDigestPayload, getSettings, pickCheckin, checkinPayload, pickExpiredNotices, expiredPayload } from "../lib/reminders.js";
 
 function safeEqual(a, b) {
   const x = Buffer.from(String(a || ""));
@@ -92,10 +92,38 @@ export default async function handler(req, res) {
   summary.checkinDue = checkinDue.length;
   summary.checkinSent = 0;
 
+  // 保留到期通知信：營位因為沒匯款被釋出時，寄一封友善邀請信（預設關閉，expiry_notice_enabled = true 才會寄）
+  const expiredUnits = [];
+  if (settings.expiry_notice_enabled === "true") {
+    const { data: expRows } = await supabase
+      .from("bookings")
+      .select("id, group_id, created_at, customer_name, customer_email, site_id, check_in, check_out, nights_count, booking_date, early_arrival, hold_expires_at, expired_email_sent_at, trashed")
+      .eq("payment_status", "cancelled").eq("cancel_reason", "expired").eq("trashed", false)
+      .is("expired_email_sent_at", null).gt("total_amount", 0)
+      .gte("hold_expires_at", new Date(Date.now() - 72 * 3600 * 1000).toISOString())
+      .limit(500);
+    const emails = [...new Set((expRows || []).map((b) => String(b.customer_email || "").trim()).filter(Boolean))];
+    let later = [];
+    if (emails.length) {
+      const { data: lb } = await supabase.from("bookings").select("customer_email, created_at")
+        .in("customer_email", emails).in("payment_status", ["pending", "paid"]).eq("trashed", false).limit(2000);
+      later = lb || [];
+    }
+    const picked = pickExpiredNotices(expRows || [], later, new Date());
+    const eg = new Map();
+    for (const b of picked) {
+      const k = (b.group_id || b.id);
+      if (!eg.has(k)) { const u = { list: [] }; eg.set(k, u); expiredUnits.push(u); }
+      eg.get(k).list.push(b);
+    }
+  }
+  summary.expiredNoticeDue = expiredUnits.length;
+  summary.expiredNoticeSent = 0;
+
   // 留言處理台：補回覆（客人先留言、大哥後對帳）、補通知大哥、逾時提醒。出錯不影響上面的提醒信。
   try { summary.messages = await sweepMessages(supabase, settings, { dry }); }
   catch (e) { console.error("sweepMessages error:", e); summary.messages = { error: String(e.message || e) }; }
-  if (dry || (!first.length && !final.length && !checkinDue.length)) return res.status(200).json(summary);
+  if (dry || (!first.length && !final.length && !checkinDue.length && !expiredUnits.length)) return res.status(200).json(summary);
   if (!emailConfigured()) return res.status(200).json({ ...summary, error: "email not configured" });
 
   const site = settings.site_url || "https://www.tsforest.com.tw";
@@ -152,6 +180,16 @@ export default async function handler(req, res) {
     if (!r.ok) { summary.checkinError = r.error; continue; }
     await supabase.from("bookings").update({ checkin_reminder_sent_at: new Date().toISOString() }).in("id", chunk.flatMap((e) => e.ids));
     summary.checkinSent += chunk.length;
+  }
+
+  // 保留到期通知信：一位客人（一筆購物車）一封
+  const expSite = settings.site_url || "https://www.tsforest.com.tw";
+  for (let i = 0; i < expiredUnits.length; i += 100) {
+    const chunk = expiredUnits.slice(i, i + 100);
+    const r = await postBatch(chunk.map((u) => expiredPayload(expSite, u.list)));
+    if (!r.ok) { summary.expiredNoticeError = r.error; continue; }
+    await supabase.from("bookings").update({ expired_email_sent_at: new Date().toISOString() }).in("id", chunk.flatMap((u) => u.list.map((b) => b.id)));
+    summary.expiredNoticeSent += chunk.length;
   }
 
   // 通知大哥（只在有寄第一次提醒時寄，不重複騷擾）
