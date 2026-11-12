@@ -60,6 +60,16 @@ tr.row-cancelled td.admin-actions{opacity:1;}
       <button id="vacToday" class="btn btn-outline" type="button">今天</button>
       <button id="vacRefresh" class="btn btn-outline" type="button">重新整理</button>
     </div>
+    <div class="admin-filters" style="margin-top:6px;">
+      <strong>🔎 查某段日期還有哪些營位整段都空：</strong>
+      <label>入住
+        <input type="date" id="vacQIn">
+      </label>
+      <label>退房
+        <input type="date" id="vacQOut">
+      </label>
+      <button id="vacQGo" class="btn btn-primary" type="button">查詢空位</button>
+    </div>
     <div class="zone-legend">
       <span><span style="display:inline-block;width:18px;height:14px;border:1px solid #aaa;vertical-align:middle;"></span> 空位</span>
       <span><span style="display:inline-block;width:18px;height:14px;background:#2e8b57;vertical-align:middle;"></span> 已對帳</span>
@@ -226,6 +236,6 @@ tr.row-cancelled td.admin-actions{opacity:1;}
 
 <script src="js/admin.js?v=20261111f"></script>
 <script src="js/admin-reconcile.js?v=20261111a"></script>
-<script src="js/admin-vacancy.js?v=20261111a"></script>
+<script src="js/admin-vacancy.js?v=20261112a"></script>
 </body>
 </html>

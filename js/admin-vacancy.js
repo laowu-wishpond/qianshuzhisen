@@ -139,5 +139,40 @@
   fromEl.addEventListener("change", load);
   daysEl.addEventListener("change", load);
   document.getElementById("vacRefresh").addEventListener("click", load);
+  // 🔎 查某段日期（入住～退房）哪些營位「每一晚都空」。住 N 晚 = 入住日起算 N 個晚上，退房日那晚不算。
+  function queryRange() {
+    var inEl = document.getElementById("vacQIn"), outEl = document.getElementById("vacQOut");
+    var cin = inEl.value, cout = outEl.value;
+    errEl.textContent = "";
+    if (!cin || !cout) { errEl.textContent = "請先選入住日和退房日"; return; }
+    var n = Math.round((new Date(cout + "T00:00:00Z") - new Date(cin + "T00:00:00Z")) / 86400000);
+    if (!(n >= 1)) { errEl.textContent = "退房日要比入住日晚至少一天"; return; }
+    if (n > 60) { errEl.textContent = "一次最多查 60 晚"; return; }
+    infoEl.textContent = "查詢中…";
+    fetch("/api/admin-vacancy?from=" + encodeURIComponent(cin) + "&days=" + n, { cache: "no-store" })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "查詢失敗"); return d; }); })
+      .then(function (d) {
+        var nights = [];
+        for (var i = 0; i < n; i++) nights.push(addDays(cin, i));
+        var free = d.sites.filter(function (s) {
+          return nights.every(function (nt) { return !(d.cells[s.id] && d.cells[s.id][nt]); });
+        });
+        infoEl.innerHTML = "";
+        infoEl.appendChild(el("div", "font-size:17px;font-weight:700;margin-bottom:6px;", md(cin) + "（" + DOW[dow(cin)] + "）入住 ～ " + md(cout) + "（" + DOW[dow(cout)] + "）退房，共 " + n + " 晚　整段都空的營位：" + free.length + " / " + d.sites.length + " 個"));
+        if (!free.length) { infoEl.appendChild(el("div", "", "這段期間沒有任何營位是整段都空的（可能每個營位都至少有一晚被訂走）。")); return; }
+        var zones = {};
+        free.forEach(function (s) { (zones[s.zone] = zones[s.zone] || []).push(s); });
+        Object.keys(zones).sort().forEach(function (z) {
+          var line = el("div", "display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:3px 0;");
+          line.appendChild(el("span", "font-weight:700;min-width:48px;", z + " 區 " + zones[z].length));
+          zones[z].forEach(function (s) { line.appendChild(pill(s.id, s.zone)); });
+          infoEl.appendChild(line);
+        });
+      })
+      .catch(function (e) { infoEl.textContent = ""; errEl.textContent = e.message; });
+  }
+  document.getElementById("vacQGo").addEventListener("click", queryRange);
+  document.getElementById("vacQOut").addEventListener("change", function () { if (document.getElementById("vacQIn").value) queryRange(); });
+
   window.tsfLoadVacancy = load;
 })();
