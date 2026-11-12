@@ -174,5 +174,44 @@
   document.getElementById("vacQGo").addEventListener("click", queryRange);
   document.getElementById("vacQOut").addEventListener("change", function () { if (document.getElementById("vacQIn").value) queryRange(); });
 
+  // 🖨 列印「營位預約總表」：每一個營位、每一天是誰訂的，客人到了第一線人員查表就能帶位。
+  // 用目前畫面載入的日期範圍（從哪天開始、顯示幾天）；每 14 天一頁（A4 橫式）。
+  function escH(v) { return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function printChart() {
+    if (!data) { errEl.textContent = "請先等空位表載入完成"; return; }
+    var ds = dates(), PER = 14, pages = [];
+    for (var i = 0; i < ds.length; i += PER) pages.push(ds.slice(i, i + PER));
+    var STY = { confirmed: "background:#cfe8d5;", reported: "background:#f7e7a6;", pending: "background:#f6cfae;" };
+    var html = pages.map(function (pg) {
+      var head = "<tr><th class=s>營位</th>" + pg.map(function (d) {
+        var w = dow(d);
+        return "<th" + (w === 5 || w === 6 ? " class=we" : "") + ">" + md(d) + "<br>" + DOW[w] + "</th>";
+      }).join("") + "</tr>";
+      var lastZone = null;
+      var body = data.sites.map(function (s) {
+        var top = s.zone !== lastZone ? " class=zt" : "";
+        lastZone = s.zone;
+        return "<tr" + top + "><td class=s>" + escH(s.id) + "</td>" + pg.map(function (d) {
+          var c = data.cells[s.id] && data.cells[s.id][d];
+          if (!c) return "<td class=" + ((dow(d) === 5 || dow(d) === 6) ? "we" : "e") + "></td>";
+          return "<td style=\"" + STY[c.s] + "\">" + (c.e ? "<b>夜衝</b><br>" : "") + escH(c.n) + (c.s === "pending" ? "<br><i>未匯款</i>" : "") + "</td>";
+        }).join("") + "</tr>";
+      }).join("");
+      return "<div class=pg><h2>營位預約總表　" + md(pg[0]) + " ～ " + md(pg[pg.length - 1]) + "</h2><table><thead>" + head + "</thead><tbody>" + body + "</tbody></table></div>";
+    }).join("");
+    var doc = "<!doctype html><html lang=\"zh-Hant\"><head><meta charset=\"utf-8\"><title>水松千樹之森_營位預約總表_" + md(ds[0]) + "</title><style>" +
+      "@page{size:A4 landscape;margin:8mm}body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;color:#111;margin:12px;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+      "h2{font-size:15px;margin:0 0 6px}.bar{margin-bottom:10px}.bar button{font-size:15px;padding:8px 18px;cursor:pointer}" +
+      "table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{border:1px solid #888;padding:2px 3px;text-align:center;vertical-align:middle;height:22px;overflow:hidden;word-break:break-all;line-height:1.2}" +
+      "th{background:#eee}th.s,td.s{width:46px;font-weight:700;background:#eee}th.we,td.we{background:#fff6dc}tr.zt td,tr.zt th{border-top:3px solid #333}i{font-style:normal;color:#a33;font-size:10px}" +
+      ".pg{page-break-after:always}.pg:last-child{page-break-after:auto}.note{margin:6px 0 0;color:#444;font-size:11px}@media print{.bar{display:none}body{margin:0}}" +
+      "</style></head><body><div class=\"bar\"><button onclick=\"window.print()\">🖨 列印</button> <span>（也可選「另存為 PDF」）</span></div>" + html +
+      "<p class=note>綠＝已對帳　黃＝客人已回報匯款、待對帳　橘＝尚未匯款（保留中）　空白＝空位　淺黃欄＝週五、週六　列印日期：" + todayTW() + "</p></body></html>";
+    var w = window.open("", "_blank");
+    if (!w) { errEl.textContent = "瀏覽器擋住了新視窗，請允許彈出視窗後再按一次"; return; }
+    w.document.open(); w.document.write(doc); w.document.close();
+  }
+  document.getElementById("vacPrint").addEventListener("click", printChart);
+
   window.tsfLoadVacancy = load;
 })();
