@@ -10,6 +10,7 @@ import { getSupabaseAdmin } from "../lib/supabase.js";
 import { emailConfigured, postBatch, sendBookingConfirmed } from "../lib/email.js";
 import { sweepMessages } from "../lib/messageDesk.js";
 import { sendReconcileDigest } from "../lib/reconcileDigest.js";
+import { sendDailySummary } from "../lib/dailySummary.js";
 import { pickDue, reminderPayload, finalReminderPayload, ownerDigestPayload, getSettings, pickCheckin, checkinPayload } from "../lib/reminders.js";
 
 function safeEqual(a, b) {
@@ -49,6 +50,12 @@ export default async function handler(req, res) {
   if (req.query?.digest === "reconcile") {
     if (req.method !== "POST") return res.status(405).json({ error: "請用 POST" });
     return res.status(200).json(await sendReconcileDigest({ dry: req.query?.dry === "1" }));
+  }
+
+  // 每日總整理 email：POST /api/cron-reminders?digest=daily（加 &dry=1 只看內容、不寄信）
+  if (req.query?.digest === "daily") {
+    if (req.method !== "POST") return res.status(405).json({ error: "請用 POST" });
+    return res.status(200).json(await sendDailySummary({ dry: req.query?.dry === "1" }));
   }
 
   const dry = req.query?.dry === "1";
