@@ -133,7 +133,34 @@
       });
     }
     if (d.state === "confirmed" || d.state === "awaiting_payment") addCancelBox(d);
-    else if (d.state === "reported") resEl.appendChild(el("p", "margin-top:14px;font-size:14px;opacity:.85;", t("如需取消，請直接電話聯絡我們（0939-235-168）。", "To cancel, please call us at 0939-235-168.")));
+    else if (d.state === "reported") {
+      // 末五碼打錯了：對帳完成之前，客人可以自己更正
+      var frow = el("div", "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;");
+      var fl = el("span", "font-size:14px;", t("末五碼填錯了？在這裡更正：", "Typed the wrong digits? Correct them here:"));
+      var finp = document.createElement("input");
+      finp.type = "text"; finp.inputMode = "numeric"; finp.maxLength = 5; finp.pattern = "[0-9]*";
+      finp.placeholder = t("正確的末五碼", "Correct last 5 digits");
+      finp.style.cssText = "max-width:180px;";
+      var fb = document.createElement("button");
+      fb.type = "button"; fb.className = "btn";
+      fb.textContent = t("更正末五碼", "Correct digits");
+      var fmsg = el("p", "margin:8px 0 0;");
+      frow.appendChild(fl); frow.appendChild(finp); frow.appendChild(fb);
+      resEl.appendChild(frow); resEl.appendChild(fmsg);
+      fb.addEventListener("click", function () {
+        var v = finp.value.trim();
+        if (!/^\d{5}$/.test(v)) { fmsg.style.color = "#f29a9a"; fmsg.textContent = t("請填 5 位數字", "Please enter exactly 5 digits."); return; }
+        fb.disabled = true;
+        fetch("/api/report-transfer", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId: d.bookingId, last5: v, correct: true })
+        })
+          .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || "failed"); return x; }); })
+          .then(function () { doLookup(); })
+          .catch(function (e) { fb.disabled = false; fmsg.style.color = "#f29a9a"; fmsg.textContent = e.message; });
+      });
+      resEl.appendChild(el("p", "margin-top:14px;font-size:14px;opacity:.85;", t("如需取消，請直接電話聯絡我們（0939-235-168）。", "To cancel, please call us at 0939-235-168.")));
+    }
     resEl.hidden = false;
     try { resEl.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* ignore */ }
   }
