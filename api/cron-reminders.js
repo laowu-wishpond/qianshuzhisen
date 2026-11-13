@@ -8,7 +8,7 @@
 import crypto from "node:crypto";
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { emailConfigured, postBatch, sendBookingConfirmed } from "../lib/email.js";
-import { sweepMessages } from "../lib/messageDesk.js";
+import { sweepMessages, customerReplyPayload, extractEmail } from "../lib/messageDesk.js";
 import { sendReconcileDigest } from "../lib/reconcileDigest.js";
 import { sendDailySummary } from "../lib/dailySummary.js";
 import { pickDue, reminderPayload, finalReminderPayload, ownerDigestPayload, getSettings, pickCheckin, checkinPayload, pickExpiredNotices, expiredPayload } from "../lib/reminders.js";
@@ -27,6 +27,27 @@ export default async function handler(req, res) {
   const settings = await getSettings(supabase);
   const key = req.headers["x-cron-key"];
   if (!safeEqual(key, settings.cron_key)) return res.status(401).json({ error: "unauthorized" });
+
+  // 單次回覆客人留言（營主的回答由我代為整理後送出）：POST /api/cron-reminders?reply=send，body { id, reply }
+  // 會把回覆寫進留言（顯示在網站留言區），並用客人留的 email 寄一封「回覆您的留言」。只能回覆「還沒回覆」或「已有系統自動回覆」的留言。
+  if (req.query?.reply === "send") {
+    if (req.method !== "POST") return res.status(405).json({ error: "請用 POST" });
+    const id = String(req.body?.id || "");
+    const text = String(req.body?.reply || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !text || text.length > 800) return res.status(400).json({ error: "id 或回覆內容不正確" });
+    const { data: msg } = await supabase.from("contact_messages").select("id, name, message, reply, auto_replied").eq("id", id).maybeSingle();
+    if (!msg) return res.status(404).json({ error: "找不到這則留言" });
+    if (msg.reply && !msg.auto_replied) return res.status(409).json({ error: "這則留言已經有人工回覆，不覆蓋" });
+    const full = msg.reply && msg.auto_replied ? msg.reply + "\n\n" + text : text; // 已有系統自動回覆時，接在後面
+    await supabase.from("contact_messages").update({ reply: full, replied_at: new Date().toISOString(), status: "replied" }).eq("id", id);
+    const email = extractEmail(msg.message);
+    let sent = false;
+    if (email && emailConfigured()) {
+      const r = await postBatch([customerReplyPayload(email, msg.name, text, "faq")]);
+      sent = !!r.ok;
+    }
+    return res.status(200).json({ replied: true, emailed: sent, hasEmail: !!email });
+  }
 
   // 單次補寄「預約成功」信：POST /api/cron-reminders?resend=b15126f6,38756816（訂單編號前 8 碼，一次最多 10 筆）。
   // 只會寄給「已付款、大哥已對帳、有 email、還沒寄過」的訂單，寄完會記錄，不會重複寄。
