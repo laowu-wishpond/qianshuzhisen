@@ -2299,3 +2299,16 @@ a.faq-invite {
 }
 a.faq-invite:hover { background: #ffd36b; }
 @media (max-width: 600px) { a.faq-invite { font-size: 14px; padding: 10px 12px; } }
+
+/* 卡片內左右滑動的雙照片 */
+.card-slider { position: relative; }
+.card-slider-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.card-slider-track::-webkit-scrollbar { display: none; }
+.card .card-slider-track img { flex: 0 0 100%; width: 100%; height: 200px; object-fit: cover; scroll-snap-align: center; }
+.card-slider-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.55); background: rgba(10,20,14,.55); color: #fff; font-size: 22px; line-height: 1; cursor: pointer; padding: 0 0 3px; }
+.card-slider-btn:hover { background: rgba(10,20,14,.8); }
+.card-slider-btn.prev { left: 8px; }
+.card-slider-btn.next { right: 8px; }
+.card-slider-dots { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
+.card-slider-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.5); }
+.card-slider-dot.on { background: #ffd36b; }

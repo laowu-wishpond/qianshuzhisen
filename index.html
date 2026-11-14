@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="image" href="images/ecology-pond.jpg" fetchpriority="high">
 <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Dancing+Script:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20261111b">
+<link rel="stylesheet" href="css/style.css?v=20261114a">
 </head>
 <body>
 
@@ -563,7 +563,15 @@
         </div>
       </div>
       <div class="card reveal">
-        <img src="images/restroom-exterior-1.jpg" alt="公共衛浴外觀，木紋外牆搭配木製拉門" loading="lazy">
+        <div class="card-slider">
+          <div class="card-slider-track" onscroll="var i=Math.round(this.scrollLeft/this.clientWidth);this.parentNode.querySelectorAll('.card-slider-dot').forEach(function(d,k){d.classList.toggle('on',k===i)})">
+            <img src="images/restroom-exterior-1.jpg" alt="公共衛浴外觀，木紋外牆搭配木製拉門" loading="lazy">
+            <img src="images/restroom-exterior-2.jpg" alt="公共衛浴入口，拉門內可見洗手檯" loading="lazy">
+          </div>
+          <button type="button" class="card-slider-btn prev" aria-label="上一張" onclick="var t=this.parentNode.querySelector('.card-slider-track');t.scrollBy({left:-t.clientWidth,behavior:'smooth'})">&#8249;</button>
+          <button type="button" class="card-slider-btn next" aria-label="下一張" onclick="var t=this.parentNode.querySelector('.card-slider-track');t.scrollBy({left:t.clientWidth,behavior:'smooth'})">&#8250;</button>
+          <div class="card-slider-dots" aria-hidden="true"><span class="card-slider-dot on"></span><span class="card-slider-dot"></span></div>
+        </div>
         <div class="card-body">
           <h3><span class="lang-zh">公共衛浴</span><span class="lang-en" hidden>Shared bathroom</span></h3>
           <p>
