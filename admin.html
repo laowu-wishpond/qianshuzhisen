@@ -71,6 +71,29 @@ tr.row-cancelled td.admin-actions{opacity:1;}
       </label>
       <button id="vacQGo" class="btn btn-primary" type="button">查詢空位</button>
     </div>
+    <details id="blockBox" style="margin:12px 0;padding:10px 12px;border:1px solid rgba(128,128,128,.35);border-radius:8px;">
+      <summary style="cursor:pointer;font-weight:700;">🏕 團客包場／封鎖營位（整個營區或部分區域，不開放客人預約）</summary>
+      <p style="margin:8px 0 4px;opacity:.85;font-size:14px;">建立後，預約頁那幾天會顯示額滿，上面的空位表也會看到。不會寄任何信給任何人。退房日那天不算（例如 3/28 入住、3/29 退房＝只鎖 3/28 那一晚）。已經有客人訂的營位不能包，要先處理那筆訂單。</p>
+      <div class="admin-filters" style="margin-top:8px;">
+        <label>包場名稱 <input type="text" id="blkName" maxlength="30" placeholder="例如：○○公司團客"></label>
+        <label>入住 <input type="date" id="blkIn"></label>
+        <label>退房 <input type="date" id="blkOut"></label>
+      </div>
+      <div class="admin-filters" style="margin-top:6px;">
+        <strong>鎖哪些營位：</strong>
+        <label><input type="checkbox" class="blkZone" value="A" checked> A 松風區（10）</label>
+        <label><input type="checkbox" class="blkZone" value="B" checked> B 松影區（5）</label>
+        <label><input type="checkbox" class="blkZone" value="C" checked> C 松韻區（9）</label>
+        <label><input type="checkbox" class="blkZone" value="D" checked> D 松嵐區（11）</label>
+      </div>
+      <div class="admin-filters" style="margin-top:6px;">
+        <label>備註（選填） <input type="text" id="blkNote" maxlength="200" placeholder="例如：金額另外跟客人結算" style="min-width:260px;"></label>
+        <button id="blkCreate" class="btn btn-primary" type="button">建立包場</button>
+      </div>
+      <p id="blkMsg" style="margin:6px 0 0;font-weight:600;"></p>
+      <h4 style="margin:12px 0 4px;">目前的包場</h4>
+      <div id="blkList"><p style="opacity:.8;">（展開後載入）</p></div>
+    </details>
     <div class="zone-legend">
       <span><span style="display:inline-block;width:18px;height:14px;border:1px solid #aaa;vertical-align:middle;"></span> 空位</span>
       <span><span style="display:inline-block;width:18px;height:14px;background:#2e8b57;vertical-align:middle;"></span> 已對帳</span>
@@ -246,5 +269,6 @@ tr.row-cancelled td.admin-actions{opacity:1;}
 <script src="js/admin.js?v=20261111f"></script>
 <script src="js/admin-reconcile.js?v=20261111a"></script>
 <script src="js/admin-vacancy.js?v=20261112b"></script>
+<script src="js/admin-block.js?v=20261115a"></script>
 </body>
 </html>

@@ -1,10 +1,14 @@
 // GET   /api/admin-bookings?from=YYYY-MM-DD&to=YYYY-MM-DD&status=pending  → 查訂單列表
 // PATCH /api/admin-bookings  { id, payment_status }                       → 更新單筆訂單狀態
+// GET   /api/admin-bookings?blocks=1                                      → 列出目前「包場／封鎖營位」
+// POST  /api/admin-bookings  { action:"block-create", name, checkIn, checkOut, sites[], note } → 建立包場
+// POST  /api/admin-bookings  { action:"block-remove", group_id }          → 解除包場
 // 兩支都需要先登入（admin_session cookie 合法）才能用。
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { getRole, maskPhone } from "../lib/adminAuth.js";
 import { sendBookingConfirmed, sendGroupConfirmed, emailConfigured } from "../lib/email.js";
 import { loadNights } from "../lib/cart.js";
+import { SITES, isValidISODate, addDays, dayTypeOf } from "../lib/pricing.js";
 
 const ALLOWED_STATUS = ["pending", "paid", "failed", "cancelled"];
 
@@ -50,6 +54,118 @@ async function restoreBooking(supabase, id) {
   return { ok: true, state };
 }
 
+
+// ===== 包場／封鎖營位 =====
+// 做法：幫每個營位建一筆「已付款、已對帳」的 0 元訂單（名稱以「包場 」開頭）並佔住每一晚，
+// 預約頁就會顯示額滿。不寄任何 Email（沒有 Email、也標成已寄過），不算入每日待處理。
+const BLOCK_PHONE = "0939235168";
+const BLOCK_PREFIX = "包場 ";
+const BLOCK_MAX_NIGHTS = 30;
+const todayTW = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
+
+async function listBlocks(supabase) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("id, group_id, customer_name, check_in, check_out, site_id, notes")
+    .like("customer_name", BLOCK_PREFIX + "%")
+    .eq("trashed", false)
+    .neq("payment_status", "cancelled")
+    .gte("check_out", todayTW())
+    .order("check_in", { ascending: true })
+    .limit(2000);
+  if (error) { console.error("admin-bookings blocks list error:", error); return { ok: false, status: 500, error: "讀取包場失敗" }; }
+  const map = new Map();
+  for (const b of data || []) {
+    const key = b.group_id || b.id;
+    if (!map.has(key)) map.set(key, { group_id: b.group_id || null, id: b.id, name: String(b.customer_name).slice(BLOCK_PREFIX.length), check_in: b.check_in, check_out: b.check_out, sites: [] });
+    map.get(key).sites.push(b.site_id);
+  }
+  return { ok: true, blocks: [...map.values()] };
+}
+
+async function createBlock(supabase, body) {
+  const name = String(body.name || "").trim().slice(0, 30);
+  if (!name) return { ok: false, status: 400, error: "請填包場名稱（例如：○○公司團客）" };
+  const checkIn = body.checkIn, checkOut = body.checkOut;
+  if (!isValidISODate(checkIn) || !isValidISODate(checkOut)) return { ok: false, status: 400, error: "請選入住日與退房日" };
+  if (checkOut <= checkIn) return { ok: false, status: 400, error: "退房日要比入住日晚（例如 3/28 入住、3/29 退房＝鎖 3/28 那一晚）" };
+  const dates = [];
+  for (let d = checkIn; d < checkOut; d = addDays(d, 1)) dates.push(d);
+  if (dates.length > BLOCK_MAX_NIGHTS) return { ok: false, status: 400, error: "一次最多鎖 " + BLOCK_MAX_NIGHTS + " 晚" };
+  const valid = new Set(SITES.map((x) => x.id));
+  const sites = [...new Set((Array.isArray(body.sites) ? body.sites : []).map(String))].filter((x) => valid.has(x));
+  if (!sites.length) return { ok: false, status: 400, error: "請至少選一個營位區域" };
+  const note = String(body.note || "").trim().slice(0, 200);
+
+  await supabase.rpc("expire_stale_holds");
+  // 已經被別人訂走的就不能包（不會蓋掉客人的訂單）
+  const { data: clash, error: cErr } = await supabase
+    .from("booking_nights").select("booking_id, site_id, night_date")
+    .eq("is_active", true).in("site_id", sites).gte("night_date", checkIn).lt("night_date", checkOut).limit(500);
+  if (cErr) { console.error("admin-bookings block clash error:", cErr); return { ok: false, status: 500, error: "檢查營位失敗" }; }
+  if (clash && clash.length) {
+    const ids = [...new Set(clash.map((c) => c.booking_id))];
+    const { data: bs } = await supabase.from("bookings").select("id, customer_name").in("id", ids.slice(0, 200));
+    const nm = new Map((bs || []).map((b) => [b.id, b.customer_name]));
+    const sample = clash.slice(0, 8).map((c) => c.site_id + " " + Number(c.night_date.slice(5, 7)) + "/" + Number(c.night_date.slice(8, 10)) + "（" + (nm.get(c.booking_id) || "?") + "）").join("、");
+    return { ok: false, status: 409, error: "這段日期有 " + clash.length + " 個營位晚數已經被訂走，無法包場：" + sample + (clash.length > 8 ? " …" : "") + "。請先處理那幾筆訂單，或調整日期／範圍。" };
+  }
+
+  const now = new Date().toISOString();
+  const { data: group, error: gErr } = await supabase.from("booking_groups")
+    .insert({ customer_name: BLOCK_PREFIX + name, customer_phone: BLOCK_PHONE, customer_email: null, item_count: sites.length, total_amount: 0 })
+    .select().single();
+  if (gErr || !group) { console.error("admin-bookings block group error:", gErr); return { ok: false, status: 500, error: "建立包場失敗" }; }
+  const rollback = async (bookingIds) => {
+    if (bookingIds.length) {
+      await supabase.from("booking_nights").delete().in("booking_id", bookingIds);
+      await supabase.from("bookings").delete().in("id", bookingIds);
+    }
+    await supabase.from("booking_groups").delete().eq("id", group.id);
+  };
+  const text = BLOCK_PREFIX + name + "（" + checkIn + "～" + checkOut + "，共 " + sites.length + " 個營位；由後台建立" + (note ? "；備註：" + note : "") + "；金額另外結算）";
+  const rows = sites.map((siteId) => ({
+    customer_name: BLOCK_PREFIX + name, customer_phone: BLOCK_PHONE, customer_email: null,
+    booking_date: checkIn, tents_count: 1, people_per_tent: 1, per_tent_price: null, total_amount: 0,
+    payment_method: "bank_transfer", payment_status: "paid", payment_verified: true,
+    notes: text, site_id: siteId, check_in: checkIn, check_out: checkOut, nights_count: dates.length,
+    handled: true, handled_at: now, confirmation_email_sent_at: now, received_email_sent_at: now,
+    group_id: group.id,
+  }));
+  const { data: bks, error: bErr } = await supabase.from("bookings").insert(rows).select("id, site_id");
+  if (bErr || !bks || bks.length !== rows.length) {
+    console.error("admin-bookings block bookings error:", bErr);
+    await rollback(bks ? bks.map((b) => b.id) : []);
+    return { ok: false, status: 500, error: "建立包場失敗" };
+  }
+  const nightRows = [];
+  for (const b of bks) for (const d of dates) nightRows.push({ booking_id: b.id, site_id: b.site_id, night_date: d, kind: "regular", day_type: dayTypeOf(d), price: 0 });
+  const { error: nErr } = await supabase.from("booking_nights").insert(nightRows);
+  if (nErr) {
+    await rollback(bks.map((b) => b.id));
+    if (nErr.code === "23505") return { ok: false, status: 409, error: "剛剛有客人訂走了其中一個營位，包場沒有成立，請重新整理後再試一次。" };
+    console.error("admin-bookings block nights error:", nErr);
+    return { ok: false, status: 500, error: "建立包場失敗" };
+  }
+  return { ok: true, group_id: group.id, sites: sites.length, nights: dates.length };
+}
+
+async function removeBlock(supabase, body) {
+  const gid = String(body.group_id || "");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gid)) return { ok: false, status: 400, error: "缺少包場編號" };
+  const { data: rows, error } = await supabase.from("bookings").select("id, customer_name").eq("group_id", gid);
+  if (error) return { ok: false, status: 500, error: "讀取包場失敗" };
+  if (!rows || !rows.length) return { ok: false, status: 404, error: "找不到這個包場（可能已經解除了）" };
+  // 保險：只刪名稱以「包場 」開頭的，絕不碰客人的訂單
+  if (rows.some((r) => !String(r.customer_name).startsWith(BLOCK_PREFIX))) return { ok: false, status: 400, error: "這不是包場，不能用這裡解除" };
+  const ids = rows.map((r) => r.id);
+  await supabase.from("booking_nights").delete().in("booking_id", ids);
+  const { error: dErr } = await supabase.from("bookings").delete().in("id", ids);
+  if (dErr) { console.error("admin-bookings block remove error:", dErr); return { ok: false, status: 500, error: "解除包場失敗" }; }
+  await supabase.from("booking_groups").delete().eq("id", gid);
+  return { ok: true, removed: ids.length };
+}
+
 export default async function handler(req, res) {
   const role = getRole(req);
   if (!role) {
@@ -57,6 +173,23 @@ export default async function handler(req, res) {
   }
 
   const supabase = getSupabaseAdmin();
+
+  if (req.method === "GET" && req.query.blocks) {
+    const r = await listBlocks(supabase);
+    return r.ok ? res.status(200).json({ blocks: r.blocks }) : res.status(r.status).json({ error: r.error });
+  }
+
+  if (req.method === "POST") {
+    if (role !== "admin") return res.status(403).json({ error: "唯讀帳號無法設定包場" });
+    const body = req.body || {};
+    let r;
+    if (body.action === "block-create") r = await createBlock(supabase, body);
+    else if (body.action === "block-remove") r = await removeBlock(supabase, body);
+    else return res.status(400).json({ error: "未知的動作" });
+    if (!r.ok) return res.status(r.status).json({ error: r.error });
+    const { ok, ...rest } = r;
+    return res.status(200).json({ ok: true, ...rest });
+  }
 
   if (req.method === "GET") {
     await supabase.rpc("expire_stale_holds");
