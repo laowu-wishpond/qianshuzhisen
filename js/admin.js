@@ -106,6 +106,43 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
+  // ---- 日期顯示（讓入住日一眼看得懂，不會和「取消時間」「下單時間」搞混）----
+  var DOW_ZH = ["日", "一", "二", "三", "四", "五", "六"];
+  function todayTW() { return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" }); }
+  // "2027-02-19" → "2027 年 2/19（五）"；withYear=false → "2/19（五）"
+  function niceDay(iso, withYear) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ""))) return String(iso || "");
+    var d = new Date(iso + "T00:00:00Z");
+    return (withYear ? iso.slice(0, 4) + " 年 " : "") + Number(iso.slice(5, 7)) + "/" + Number(iso.slice(8, 10)) + "（" + DOW_ZH[d.getUTCDay()] + "）";
+  }
+  // 第一晚是哪一天（有夜衝＝入住日的前一晚）
+  function firstDay(b) {
+    if (!b.check_in) return b.booking_date || "";
+    if (!b.early_arrival) return b.check_in;
+    var dd = new Date(b.check_in + "T00:00:00Z");
+    dd.setUTCDate(dd.getUTCDate() - 1);
+    return dd.toISOString().slice(0, 10);
+  }
+  function daysFromToday(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ""))) return null;
+    return Math.round((Date.parse(iso + "T00:00:00Z") - Date.parse(todayTW() + "T00:00:00Z")) / 86400000);
+  }
+  // 客人是在「入住前幾天」取消的（和退款規則同一個算法：第一晚入園時間，一般 14:00、夜衝 18:00）
+  function cancelDaysBefore(b) {
+    var day = firstDay(b);
+    if (!b.cancelled_at || !/^\d{4}-\d{2}-\d{2}$/.test(String(day))) return null;
+    var startMs = Date.parse(day + "T" + (b.early_arrival ? "18" : "14") + ":00:00+08:00");
+    var diff = (startMs - new Date(b.cancelled_at).getTime()) / 86400000;
+    return isFinite(diff) ? diff : null;
+  }
+  function cancelDaysText(b) {
+    var d = cancelDaysBefore(b);
+    if (d === null) return "";
+    if (d < 0) return "入住時間已過才取消";
+    if (d < 1) return "入住前不到 1 天取消";
+    return "入住前 " + Math.floor(d) + " 天取消";
+  }
+
   // 保留單的補充說明：已回報匯款（末五碼）／保留到幾點／逾時自動釋出
   function holdNote(b) {
     function hhmm(iso) {
@@ -129,14 +166,19 @@ document.addEventListener("DOMContentLoaded", function () {
     } else if (b.payment_status === "cancelled" && b.cancel_reason === "customer") {
       var cancelAt = b.cancelled_at ? "（" + hhmm(b.cancelled_at) + "）" : "";
       if (b.refund_status === "pending") {
-        return altMsg + '<div style="font-size:13px;margin-top:6px;color:#ffd36b;font-weight:700;">💰 客人自己取消' + cancelAt + '，待退款 NT$' + Number(b.refund_amount || 0).toLocaleString() + "</div>" +
+        var rTotal = Number(b.total_amount || 0), rBack = Number(b.refund_amount || 0), rKeep = rTotal - rBack;
+        var why = [cancelDaysText(b), "入住日 " + niceDay(firstDay(b), true)].filter(Boolean).join("，");
+        var calc = "訂單金額 NT$" + rTotal.toLocaleString() + (rKeep > 0 ? "，扣 NT$" + rKeep.toLocaleString() + (rKeep <= 30 ? "（手續費）" : "（依退款規則＋手續費）") : "，全額退" + (b.group_id ? "（整筆訂單手續費只扣一次）" : "")) + " → 退 NT$" + rBack.toLocaleString();
+        return altMsg + '<div style="font-size:13px;margin-top:6px;color:#ffd36b;font-weight:700;">💰 客人自己取消' + cancelAt + '，待退款 NT$' + rBack.toLocaleString() + "</div>" +
+          '<div style="font-size:12px;margin-top:2px;color:#ffe9b0;">' + escapeHtml(why) + "<br>" + escapeHtml(calc) + "</div>" +
           '<div style="font-size:12px;opacity:.9;margin-top:2px;">請打電話向客人確認退款帳戶，匯款後按「標記已退款」</div>' +
           (currentRole === "admin" ? '<button type="button" class="btn refund-done-btn" data-id="' + escapeHtml(b.id) + '" style="margin-top:6px;padding:4px 10px;font-size:13px;">標記已退款</button>' : "");
       }
       if (b.refund_status === "done") {
-        return '<div style="font-size:13px;margin-top:6px;color:#9be59b;font-weight:700;">✓ 已退款 NT$' + Number(b.refund_amount || 0).toLocaleString() + "</div>";
+        return '<div style="font-size:13px;margin-top:6px;color:#9be59b;font-weight:700;">✓ 已退款 NT$' + Number(b.refund_amount || 0).toLocaleString() + "</div>" +
+          (cancelDaysText(b) ? '<div style="font-size:12px;opacity:.85;margin-top:2px;">' + escapeHtml(cancelDaysText(b)) + "</div>" : "");
       }
-      note = "客人自己取消" + cancelAt + (b.refund_amount === null || b.refund_amount === undefined ? "（未付款，不用退款）" : "（依規則不退款）");
+      note = "客人自己取消" + cancelAt + (b.refund_amount === null || b.refund_amount === undefined ? "（未付款，不用退款）" : "（" + (cancelDaysText(b) ? cancelDaysText(b) + "，" : "") + "依規則不退款）");
     } else if (b.payment_status === "cancelled" && b.cancel_reason === "expired") {
       note = "逾時未匯款，系統自動釋出";
     } else if (b.payment_status === "paid" && b.payment_verified === false) {
@@ -492,17 +534,21 @@ document.addEventListener("DOMContentLoaded", function () {
           startD = dd.toISOString().slice(0, 10);
           nn += 1;
         }
-        dateText = startD + " ～ " + b.check_out + "（" + (b.early_arrival ? (nn + 1) + "天" + nn + "夜，含夜衝" : nn + "晚") + "）";
+        dateText = niceDay(startD, true) + " ～ " + niceDay(b.check_out, b.check_out.slice(0, 4) !== startD.slice(0, 4)) + "（" + (b.early_arrival ? (nn + 1) + "天" + nn + "夜，含夜衝" : nn + "晚") + "）";
       } else {
-        dateText = b.booking_date;
+        dateText = niceDay(b.booking_date, true);
       }
+      // 距離入住還有幾天（今天／明天特別標出來，隔很久的也一眼看得出來）
+      var leftN = daysFromToday(b.check_in ? firstDay(b) : b.booking_date);
+      var leftText = leftN === null || leftN < 0 ? "" : leftN === 0 ? "今天入住" : leftN === 1 ? "明天入住" : "距離入住還有 " + leftN + " 天";
+      var leftHtml = leftText ? '<div style="font-size:12px;margin-top:3px;font-weight:700;color:' + (leftN <= 1 ? "#ffb86b" : "#bfe3c5") + ';">' + leftText + "</div>" : "";
       tr.innerHTML =
         "<td>" + sitePill(b.site_id) + "</td>" +
-        "<td>" + (isNewTime(b.created_at) ? NEW_BADGE + " " : "") + escapeHtml(dateText) +
+        "<td>" + (isNewTime(b.created_at) ? NEW_BADGE + " " : "") + '<strong>' + escapeHtml(dateText) + "</strong>" + leftHtml +
         '<div style="font-size:12px;opacity:.75;margin-top:4px;">下單：' +
         escapeHtml(new Date(b.created_at).toLocaleString("zh-TW", { timeZone: "Asia/Taipei", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })) +
         "</div></td>" +
-        "<td>" + (b.early_arrival ? "有（前一晚）" : "—") + "</td>" +
+        "<td>" + (b.early_arrival ? "有（" + escapeHtml(niceDay(firstDay(b), false)) + " 晚上進場）" : "—") + "</td>" +
         '<td><label class="handled-wrap"><input type="checkbox" class="handled-cb"' +
         (b.handled ? " checked" : "") + (currentRole !== "admin" ? " disabled" : "") +
         ' aria-label="已處理"> <span>' + escapeHtml(b.customer_name) + "</span></label>" +
