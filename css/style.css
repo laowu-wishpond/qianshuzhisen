@@ -2317,3 +2317,11 @@ a.faq-invite:hover { background: #ffd36b; }
 .card-slider-dots { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
 .card-slider-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.5); }
 .card-slider-dot.on { background: #ffd36b; }
+
+/* 聯絡我們：LINE 官方帳號卡片 */
+.line-card { margin: 18px 0 22px; max-width: 420px; }
+.line-card img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border); }
+.line-card-text { margin: 10px 0; font-size: 15px; line-height: 1.7; color: var(--ink-soft); }
+.line-card-text strong { color: var(--ink); }
+a.line-btn { background: #06c755; color: #fff; font-weight: 800; border: 0; }
+a.line-btn:hover { background: #05a847; color: #fff; }
