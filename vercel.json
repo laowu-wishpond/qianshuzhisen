@@ -1,3 +1,41 @@
 {
-  "redirects": []
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "qianshuzhisen.com"
+        }
+      ],
+      "destination": "https://www.tsforest.com.tw/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.qianshuzhisen.com"
+        }
+      ],
+      "destination": "https://www.tsforest.com.tw/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/index-1.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/about-1.html",
+      "destination": "/about.html",
+      "permanent": true
+    },
+    {
+      "source": "/booking-1.html",
+      "destination": "/booking.html",
+      "permanent": true
+    }
+  ]
 }

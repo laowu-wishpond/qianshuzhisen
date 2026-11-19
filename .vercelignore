@@ -1,0 +1,16 @@
+# 不需要公開在網站上的檔案（備份頁、壓縮檔、開發文件）
+LATEST_code_only.zip
+zi160erO
+ziaS5W3y
+index-1.html
+about-1.html
+booking-1.html
+css/style-1.css
+js/booking-1.js
+js/cart-page-1.js
+editor.js
+editor.css
+README*.md
+supabase
+gitignore
+.env.example
