@@ -1,6 +1,28 @@
 {
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "qianshuzhisen.com"
+        }
+      ],
+      "destination": "https://www.tsforest.com.tw/",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.qianshuzhisen.com"
+        }
+      ],
+      "destination": "https://www.tsforest.com.tw/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [
         {
