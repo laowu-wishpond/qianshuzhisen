@@ -78,6 +78,16 @@ async function arrivalsReport(req, res, role) {
     if (set.size === 1) return ARR_PAY[arr[0]];
     return "部分" + (set.has("pending") ? "未匯款" : "待對帳");
   };
+  // 當晚實際有客人的營位（和預約日曆同一份資料）：今天新進場的＋前一天就已經在營區續住的
+  const occByDate = Object.fromEntries(dates.map((d) => [d, new Set()]));
+  {
+    await supabase.rpc("expire_stale_holds"); // 先釋出逾時的保留，數字才會和預約日曆一致
+    const { data: occ } = await supabase.from("booking_nights").select("site_id, night_date")
+      .eq("is_active", true).gte("night_date", from).lte("night_date", last).limit(5000);
+    for (const n of occ || []) if (occByDate[n.night_date]) occByDate[n.night_date].add(n.site_id);
+  }
+  const TOTAL_SITES = 35;
+  const sortSites = (arr) => arr.sort((x, y) => String(x).localeCompare(String(y), "zh-Hant", { numeric: true }));
   let totalGroups = 0, totalSites = 0, totalPeople = 0;
   const sections = dates.map((d) => {
     const list = [...byDate[d].values()].sort((a, b) => String(a.sites[0]).localeCompare(String(b.sites[0]), "zh-Hant", { numeric: true }));
@@ -100,7 +110,13 @@ async function arrivalsReport(req, res, role) {
         "<td class=note>" + esc([...u.notes].join("；")) + "</td>" +
         "</tr>";
     }).join("") : "<tr><td colspan=10 style='text-align:center;color:#777;padding:14px'>這一天沒有預計入住的客人</td></tr>";
-    return `<h2>${esc(d)}（${wd}）　預計入住 ${list.length} 組、${sites} 個營位、約 ${people} 人</h2>
+    const arriving = new Set(list.flatMap((u) => u.sites));
+    const staying = sortSites([...occByDate[d]].filter((x) => !arriving.has(x)));
+    const occupied = occByDate[d].size;
+    const occLine = `<div class="occ">當晚營區共 <b>${occupied}</b> 個營位有客人（今天新進場 ${occupied - staying.length} 個＋前一天已進場續住 ${staying.length} 個），空位 <b>${Math.max(0, TOTAL_SITES - occupied)}</b> 個。` +
+      (staying.length ? `<br>續住的營位（前一天已進場，不在下面的名單裡）：${esc(staying.join("、"))}` : "") + `</div>`;
+    return `<h2>${esc(d)}（${wd}）　今天新進場 ${list.length} 組、${sites} 個營位、約 ${people} 人</h2>
+${occLine}
 <table><thead><tr><th>到場</th><th>#</th><th>姓名</th><th>電話</th><th>營位</th><th>夜衝</th><th>晚數／退房</th><th>人數</th><th>付款</th><th>備註</th></tr></thead><tbody>${rows}</tbody></table>`;
   }).join("");
   const title = "每日預計入客報表";
@@ -126,14 +142,15 @@ td.warn { color:#a33; font-weight:bold; }
 .cb { display:inline-block; width:22px; height:22px; border:2px solid #222; background:#fff; border-radius:3px; vertical-align:middle; }
 td.note { min-width:90px; }
 .total { margin-top:12px; font-size:14px; font-weight:bold; text-align:right; }
+.occ { margin:0 0 8px; padding:6px 10px; border:1px solid #888; background:#f6f6f6; font-size:13px; line-height:1.6; }
 .sec { page-break-inside: avoid; }
 @media print { .bar { display:none; } body { margin:0; } h2 { page-break-after: avoid; } }
 </style></head><body>
 <div class="bar"><button onclick="window.print()">🖨 列印</button> <span>（也可在列印視窗選「另存為 PDF」）</span></div>
 <h1>水松千樹之森　${title}</h1>
-<div class="meta">日期：${esc(range)}　｜　列印日期：${today}　｜　含已匯款與保留中（尚未匯款）的訂單，已取消的不列入；夜衝客人算在前一晚進場那天；前面方格到場時打勾</div>
+<div class="meta">日期：${esc(range)}　｜　列印日期：${today}　｜　含已匯款與保留中（尚未匯款）的訂單，已取消的不列入；這張表只列「當天新進場」的客人（夜衝算在前一晚進場那天）；前一天已進場續住的不重複列出；前面方格到場時打勾</div>
 ${sections}
-<div class="total">合計：${totalGroups} 組、${totalSites} 個營位、約 ${totalPeople} 人</div>
+<div class="total">新進場合計：${totalGroups} 組、${totalSites} 個營位、約 ${totalPeople} 人</div>
 </body></html>`;
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
