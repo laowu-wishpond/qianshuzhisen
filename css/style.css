@@ -2325,3 +2325,9 @@ a.faq-invite:hover { background: #ffd36b; }
 .line-card-text strong { color: var(--ink); }
 a.line-btn { background: #06c755; color: #fff; font-weight: 800; border: 0; }
 a.line-btn:hover { background: #05a847; color: #fff; }
+
+/* 首頁：環境設施改善進度公告 */
+.improve-figure { margin: 18px auto 26px; max-width: 760px; }
+.improve-figure .eco-clip { aspect-ratio: auto; background: transparent; border: 1px solid var(--border); }
+.improve-figure .eco-clip img { height: auto; object-fit: contain; }
+.improve-figure .eco-clip:hover img { transform: none; }
