@@ -3,12 +3,13 @@
 // 規則與數字見 lib/refundPolicy.js（數字存在 automation_settings，可由大哥調整）。
 //   ・尚未付款：免費取消，營位釋出。
 //   ・已付款且已對帳：依「入住前幾天」計算退款，後台出現「待退款」，由營主聯絡客人退款。
-//   ・已回報匯款但還在查帳／規則啟用前下的訂單：請客人電話聯絡（人工處理）。
+//   ・已回報匯款但還在查帳：請客人電話聯絡（人工處理）。
+//   ・規則啟用前下的訂單：也可以自己取消，依「預約當時」的規定計算（見 lib/refundPolicy.js 的 LEGACY_TIERS）。
 import { getSupabaseAdmin } from "../lib/supabase.js";
 import { stayInfo } from "../lib/stay.js";
 import { bookingState, codeOf } from "../lib/cart.js";
 import { getSettings } from "../lib/reminders.js";
-import { readPolicy, policyApplies, calcRefund } from "../lib/refundPolicy.js";
+import { readPolicy, policyFor, calcRefund } from "../lib/refundPolicy.js";
 import { emailConfigured, postBatch, customerCancelPayload, ownerCancelPayload } from "../lib/email.js";
 
 const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
@@ -60,19 +61,20 @@ export default async function handler(req, res) {
 
   const settings = await getSettings(supabase);
   const policy = readPolicy(settings);
-  if (allPaid && alive.some((m) => !policyApplies(m, policy))) {
-    return res.status(409).json({ manual: true, error: "這筆訂單的取消與退款，請直接電話聯絡我們（0939-235-168），我們會依訂位當時的規定幫您處理。" });
-  }
+  // 每筆訂單用它「預約當時」適用的規則：規則啟用後下單＝現行規則；之前下單＝當時的舊規則
+  const policies = alive.map((m) => policyFor(m, policy));
+  const legacy = allPaid && policies.some((p) => p.legacy);
+  const feeRule = allPaid ? Math.min(...policies.map((p) => p.processingFee)) : 0;
 
   // 試算
   const now = Date.now();
-  const items = alive.map((m) => {
+  const items = alive.map((m, i) => {
     const st = stayInfo(m);
-    const c = allPaid ? calcRefund(m, policy, now) : { total: Number(m.total_amount || 0), percent: 0, gross: 0, processingFee: 0, refund: 0, hoursLeft: 999 };
+    const c = allPaid ? calcRefund(m, policies[i], now) : { total: Number(m.total_amount || 0), percent: 0, gross: 0, processingFee: 0, refund: 0, hoursLeft: 999 };
     return { id: m.id, code: codeOf(m.id), site: m.site_id, start: st.start, end: m.check_out, total: Number(m.total_amount || 0), percent: c.percent, gross: c.gross, paid: allPaid };
   });
   const grossAll = items.reduce((s, x) => s + x.gross, 0);
-  const processingFee = grossAll > 0 ? Math.min(policy.processingFee, grossAll) : 0;
+  const processingFee = grossAll > 0 ? Math.min(feeRule, grossAll) : 0;
   let feeLeft = processingFee;
   items.forEach((it) => {
     const cut = Math.min(feeLeft, it.gross);
@@ -84,7 +86,7 @@ export default async function handler(req, res) {
   const view = items.map(({ code, site, start, end, total, percent, refund, paid }) => ({ code, site, start, end, total, percent, refund, paid }));
 
   if (!confirm) {
-    return res.status(200).json({ ok: true, preview: true, items: view, totals, tiers: policy.tiers, processingFeeRule: policy.processingFee });
+    return res.status(200).json({ ok: true, preview: true, items: view, totals, legacy, tiers: legacy ? policies.find((p) => p.legacy).tiers : policy.tiers, processingFeeRule: feeRule });
   }
 
   // 正式取消：每筆都要在「還沒被改過」的狀態才更新，避免重複按
@@ -121,5 +123,5 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error("cancel-booking mail error:", e);
   }
-  return res.status(200).json({ ok: true, cancelled: true, items: view, totals, mailed });
+  return res.status(200).json({ ok: true, cancelled: true, items: view, totals, legacy, mailed });
 }

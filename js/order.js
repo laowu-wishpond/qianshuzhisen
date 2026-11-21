@@ -182,13 +182,14 @@
     var out = el("div", "margin-top:12px;");
     box.appendChild(btn0); box.appendChild(out);
     if (paid) box.insertBefore(el("p", "margin:0 0 10px;font-size:14px;opacity:.85;line-height:1.7;",
-      t("取消與退款規則：入住前 14 天（含）以上退 100%、7～13 天退 60%、3～6 天退 40%、2 天內不退款；有退款時另扣退款手續費 NT$30。詳見「服務條款與退訂政策」。",
-        "Refund policy: 14+ days before check-in 100%, 7–13 days 60%, 3–6 days 40%, within 2 days no refund; NT$30 processing fee is deducted when a refund is made. See the Terms page.")), btn0);
+      t("取消與退款規則：入住前 14 天（含）以上退 100%、7～13 天退 60%、3～6 天退 40%、2 天內不退款；有退款時另扣退款手續費 NT$30。2026/11/11 以前送出的訂單，依預約當時的規定（入住 7 天前全額退、3～6 天前退 50%、48 小時內不退）。按下面的按鈕會先試算，確認後才會取消。詳見「服務條款與退訂政策」。",
+        "Refund policy: 14+ days before check-in 100%, 7–13 days 60%, 3–6 days 40%, within 2 days no refund; NT$30 processing fee is deducted when a refund is made. Bookings submitted before 11 Nov 2026 follow the policy at the time of booking (7+ days: full refund; 3–6 days: 50%; within 48 hours: no refund). The button below shows an estimate first. See the Terms page.")), btn0);
     btn0.addEventListener("click", function () {
       btn0.disabled = true; out.innerHTML = "";
       postCancel(false).then(function (x) {
         out.appendChild(el("p", "margin:0 0 8px;font-weight:700;", x.totals.paid ? t("取消後的退款試算：", "Refund estimate if you cancel:") : t("這筆訂單尚未付款，取消不會產生費用。", "This booking is unpaid; cancelling costs nothing.")));
         if (x.totals.paid) {
+          if (x.legacy) out.appendChild(el("p", "margin:0 0 8px;font-size:14px;opacity:.9;", t("這筆訂單是 2026/11/11 以前預約的，依預約當時的規定計算。", "This booking was made before 11 Nov 2026, so the policy at the time of booking applies.")));
           x.items.forEach(function (it) {
             var r = el("div", "display:flex;justify-content:space-between;gap:10px;font-size:15px;");
             r.appendChild(el("span", "", it.site + "　" + it.start + "（" + money(it.total) + "）"));
@@ -213,7 +214,7 @@
             out.innerHTML = "";
             out.appendChild(el("p", "margin:0;font-weight:700;color:#8fd68f;", t("✅ 已取消。", "✅ Cancelled.")));
             if (y.totals.paid && y.totals.refund > 0) out.appendChild(el("p", "margin:6px 0 0;", t("應退款 " + money(y.totals.refund) + "。我們會與您聯繫確認退款帳戶，並以銀行匯款退回。", "Refund due: " + money(y.totals.refund) + ". We will contact you to confirm your bank account and send the refund by bank transfer.")));
-            else if (y.totals.paid) out.appendChild(el("p", "margin:6px 0 0;", t("依規定入住前 2 天內取消，恕無法退款。", "Cancellations within 2 days of check-in are not refundable.")));
+            else if (y.totals.paid) out.appendChild(el("p", "margin:6px 0 0;", t("依取消規則，已超過可退款期限，恕無法退款。", "Under the cancellation policy, this booking is past the refundable period.")));
             setTimeout(function () { doLookup(); }, 2500);
           }).catch(function (e) { out.innerHTML = ""; out.appendChild(el("p", "color:#f29a9a;margin:0;", e.message)); btn0.disabled = false; });
         });
