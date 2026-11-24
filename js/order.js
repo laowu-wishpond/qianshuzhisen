@@ -51,7 +51,7 @@
     } else {
       headline = t("這筆訂單已取消", "This booking was cancelled");
       color = "#f29a9a";
-      detail = t("如有疑問，請電話聯絡我們（0939-235-168）。", "Questions? Call us at 0939-235-168.");
+      detail = t("如果這筆訂單有退款，請加入官方 LINE（@ts62126665）提供退款帳戶資料（訂位姓名、訂位日期、銀行名稱與代碼、分行、帳號、戶名）。其他疑問請電話聯絡我們（0939-235-168）。", "If a refund is due, please add our official LINE (@ts62126665) and send your bank details (booking name and date, bank name and code, branch, account number, account holder). Other questions: 0939-235-168.");
     }
     resEl.appendChild(el("h3", "color:" + color + ";margin:0 0 8px;", headline));
     resEl.appendChild(el("p", "margin:0 0 12px;", detail));
@@ -173,6 +173,21 @@
       body: JSON.stringify({ code: codeEl.value.trim(), phone: phoneEl.value.trim(), confirm: !!confirm })
     }).then(function (r) { return r.json().then(function (x) { if (!r.ok) { var e = new Error(x.error || "failed"); e.manual = !!x.manual; throw e; } return x; }); });
   }
+  // 有退款時：請客人加官方 LINE 提供退款帳戶（2026-11-24 林大哥要求，免得營主一個一個打電話）
+  var LINE_URL = "https://line.me/R/ti/p/%40ts62126665";
+  function refundHowTo() {
+    var box = el("div", "margin:10px 0 0;padding:12px 14px;border:1px solid rgba(255,211,107,.6);border-radius:10px;line-height:1.8;");
+    box.appendChild(el("p", "margin:0 0 6px;font-weight:700;color:#ffd36b;", t("請加入官方 LINE，提供退款帳戶資料", "Please add our official LINE and send your refund details")));
+    box.appendChild(el("p", "margin:0 0 8px;font-size:15px;", t("加入後請傳以下資料給我們，收到後才能幫您匯款退回：", "After adding us, please send the following so we can transfer your refund:")));
+    var pre = el("div", "margin:0 0 10px;padding:8px 12px;background:rgba(255,255,255,.08);border-radius:8px;font-size:15px;white-space:pre-line;",
+      t("訂位姓名：\n訂位日期：\n銀行名稱：\n銀行代碼：\n分行名稱：\n匯款帳號：\n戶名：", "Booking name:\nBooking date:\nBank name:\nBank code:\nBranch:\nAccount number:\nAccount holder:"));
+    box.appendChild(pre);
+    var a = document.createElement("a");
+    a.href = LINE_URL; a.target = "_blank"; a.rel = "noopener"; a.className = "btn btn-primary";
+    a.textContent = t("加入官方 LINE（@ts62126665）", "Add official LINE (@ts62126665)");
+    box.appendChild(a);
+    return box;
+  }
   function addCancelBox(d) {
     var paid = d.state === "confirmed";
     var box = el("div", "margin-top:20px;padding-top:16px;border-top:1px dashed rgba(255,255,255,.3);");
@@ -198,6 +213,7 @@
           });
           if (x.totals.processingFee > 0) out.appendChild(el("div", "font-size:14px;opacity:.85;margin-top:4px;", t("退款手續費：-" + money(x.totals.processingFee), "Processing fee: -" + money(x.totals.processingFee))));
           out.appendChild(el("div", "font-size:18px;font-weight:700;margin-top:6px;color:" + (x.totals.refund > 0 ? "#8fd68f" : "#f29a9a") + ";", t("預計退款：", "Estimated refund: ") + money(x.totals.refund)));
+          if (x.totals.refund > 0) out.appendChild(el("div", "font-size:14px;opacity:.9;margin-top:4px;", t("取消後請加入官方 LINE（@ts62126665）提供退款帳戶，我們收到後匯款退回。", "After cancelling, please add our official LINE (@ts62126665) and send your bank details for the refund.")));
         }
         out.appendChild(el("p", "margin:10px 0;font-size:14px;opacity:.85;", t("按下「確定取消」後營位會立刻釋出，無法復原。", "Once you confirm, the site is released immediately and this cannot be undone.")));
         var ok = document.createElement("button");
@@ -213,8 +229,19 @@
           postCancel(true).then(function (y) {
             out.innerHTML = "";
             out.appendChild(el("p", "margin:0;font-weight:700;color:#8fd68f;", t("✅ 已取消。", "✅ Cancelled.")));
-            if (y.totals.paid && y.totals.refund > 0) out.appendChild(el("p", "margin:6px 0 0;", t("應退款 " + money(y.totals.refund) + "。我們會與您聯繫確認退款帳戶，並以銀行匯款退回。", "Refund due: " + money(y.totals.refund) + ". We will contact you to confirm your bank account and send the refund by bank transfer.")));
-            else if (y.totals.paid) out.appendChild(el("p", "margin:6px 0 0;", t("依取消規則，已超過可退款期限，恕無法退款。", "Under the cancellation policy, this booking is past the refundable period.")));
+            if (y.totals.paid && y.totals.refund > 0) {
+              out.appendChild(el("p", "margin:6px 0 0;", t("應退款 " + money(y.totals.refund) + "，會以銀行匯款退回。", "Refund due: " + money(y.totals.refund) + ", sent by bank transfer.")));
+              out.appendChild(refundHowTo());
+              // 重新整理訂單狀態（標題變成「已取消」），再把退款說明留在畫面上，不會兩秒後消失
+              var due = y.totals.refund;
+              doLookup().then(function () {
+                if (resEl.hidden) return;
+                resEl.appendChild(el("p", "margin:14px 0 0;font-weight:700;color:#8fd68f;", t("✅ 已取消。應退款 " + money(due) + "，會以銀行匯款退回。", "✅ Cancelled. Refund due: " + money(due) + ", sent by bank transfer.")));
+                resEl.appendChild(refundHowTo());
+              });
+              return;
+            }
+            if (y.totals.paid) out.appendChild(el("p", "margin:6px 0 0;", t("依取消規則，已超過可退款期限，恕無法退款。", "Under the cancellation policy, this booking is past the refundable period.")));
             setTimeout(function () { doLookup(); }, 2500);
           }).catch(function (e) { out.innerHTML = ""; out.appendChild(el("p", "color:#f29a9a;margin:0;", e.message)); btn0.disabled = false; });
         });
