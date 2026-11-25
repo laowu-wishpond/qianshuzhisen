@@ -125,6 +125,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var P = null; // lib/pricing.js（動態載入，前後端共用）
   var PHOTOS = {}; // lib/sitePhotos.js：各營位實景照片張數
+  var VIDEOS = [], SIGNS = []; // lib/siteVideos.js：有範圍影片／營位牌照片的營位
+  var VIDEO_VER = "20261125a";
   var previewId = null; // 點到「已被預訂」的營位時，只看照片、不選取
   // 營位備註（只顯示在營位資訊裡）。要加備註：在這裡新增一行即可。
   var SITE_NOTES = {
@@ -491,8 +493,12 @@ document.addEventListener("DOMContentLoaded", function () {
     var s = previewId ? P.getSite(previewId) : siteObj();
     if (!s) {
       siteInfoEl.innerHTML = "";
+      siteInfoEl.removeAttribute("data-key");
       return;
     }
+    var infoKey = s.id + "|" + (previewId ? 1 : 0) + "|" + (isEnglish() ? "en" : "zh");
+    if (siteInfoEl.getAttribute("data-key") === infoKey && siteInfoEl.firstChild) return;
+    siteInfoEl.setAttribute("data-key", infoKey);
     var zoneName = isEnglish() ? P.ZONES[s.zone].en : s.zone + " 區 " + P.ZONES[s.zone].zh;
     siteInfoEl.innerHTML =
       "<strong>" + s.id + "</strong>　" + zoneName + "　" + s.length + "×" + s.width + t(" 公尺", " m") + "<br>" +
@@ -545,6 +551,56 @@ document.addEventListener("DOMContentLoaded", function () {
       wrap.textContent = t("實景照片陸續更新中", "Site photos coming soon");
     }
     siteInfoEl.appendChild(wrap);
+    var vb = videoBlock(s.id);
+    if (vb) siteInfoEl.appendChild(vb);
+  }
+
+  // 營位範圍影片＋現場營位牌照片（2026-11-25）
+  function videoBlock(id) {
+    var hasV = VIDEOS.indexOf(id) !== -1, hasS = SIGNS.indexOf(id) !== -1;
+    if (!hasV && !hasS) return null;
+    var box = document.createElement("div");
+    box.className = "site-video";
+    var h = document.createElement("div");
+    h.className = "site-video-title";
+    h.textContent = hasV ? t("▶ " + id + " 營位範圍影片", "▶ " + id + " site video") : t(id + " 現場營位牌", id + " site sign");
+    box.appendChild(h);
+    var row = document.createElement("div");
+    row.className = "site-video-row";
+    if (hasV) {
+      var v = document.createElement("video");
+      v.controls = true;
+      v.preload = "none";
+      v.setAttribute("playsinline", "");
+      v.poster = "videos/sites/" + id + ".jpg?v=" + VIDEO_VER;
+      v.src = "videos/sites/" + id + ".mp4?v=" + VIDEO_VER;
+      v.setAttribute("aria-label", id + t(" 營位範圍影片", " site video"));
+      row.appendChild(v);
+    }
+    if (hasS) {
+      var signUrl = "images/site-signs/" + id + ".jpg?v=" + VIDEO_VER;
+      var sb = document.createElement("button");
+      sb.type = "button";
+      sb.className = "site-sign";
+      var si = document.createElement("img");
+      si.src = signUrl;
+      si.loading = "lazy";
+      si.alt = id + t(" 現場營位牌", " site sign");
+      var sc = document.createElement("span");
+      sc.textContent = t("營位牌（點擊放大）", "Site sign (tap to enlarge)");
+      sb.appendChild(si);
+      sb.appendChild(sc);
+      sb.addEventListener("click", function () { openPhoto([signUrl], 0, id); });
+      row.appendChild(sb);
+    }
+    box.appendChild(row);
+    if (hasV) {
+      var note = document.createElement("p");
+      note.className = "site-video-note";
+      note.textContent = t("影片中地上的黑色護草墊標出營位的範圍，每片約 90×180 公分，可以用來對照大小。", "The black ground mats in the video mark the edges of the site. Each mat is about 90 × 180 cm, for scale.");
+      box.appendChild(note);
+    }
+    return box;
   }
 
   /* ---------- 明細與價格 ---------- */
@@ -1022,11 +1078,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   Promise.all([
     import("/lib/pricing.js"),
-    import("/lib/sitePhotos.js").catch(function () { return { SITE_PHOTOS: {} }; })
+    import("/lib/sitePhotos.js").catch(function () { return { SITE_PHOTOS: {} }; }),
+    import("/lib/siteVideos.js").catch(function () { return { SITE_VIDEOS: [], SITE_SIGNS: [] }; })
   ])
     .then(function (mods) {
       P = mods[0];
       PHOTOS = (mods[1] && mods[1].SITE_PHOTOS) || {};
+      VIDEOS = (mods[2] && mods[2].SITE_VIDEOS) || [];
+      SIGNS = (mods[2] && mods[2].SITE_SIGNS) || [];
       buildPins();
       chooseSite(null);
       return loadMonthData(year, month);

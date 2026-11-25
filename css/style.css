@@ -2331,3 +2331,14 @@ a.line-btn:hover { background: #05a847; color: #fff; }
 .improve-figure .eco-clip { aspect-ratio: auto; background: transparent; border: 1px solid var(--border); }
 .improve-figure .eco-clip img { height: auto; object-fit: contain; }
 .improve-figure .eco-clip:hover img { transform: none; }
+
+/* ---------- 營位範圍影片＋現場營位牌（2026-11-25） ---------- */
+.site-video { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-strong, rgba(128,128,128,.4)); }
+.site-video-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--gold-strong, var(--gold)); }
+.site-video-row { display: flex; gap: 12px; align-items: flex-start; }
+.site-video video { width: 62%; max-width: 270px; aspect-ratio: 9 / 16; background: #000; border-radius: 8px; display: block; }
+.site-sign { flex: 1; min-width: 0; max-width: 200px; padding: 0; border: 0; background: none; cursor: pointer; text-align: center; font: inherit; color: inherit; }
+.site-sign img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; display: block; }
+.site-sign span { display: block; margin-top: 4px; font-size: 11px; color: var(--gray); }
+.site-sign:focus-visible { outline: 2px solid var(--gold-strong, var(--gold)); outline-offset: 2px; }
+.site-video-note { margin: 8px 0 0; font-size: 12px; color: var(--gray); line-height: 1.6; }
