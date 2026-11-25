@@ -505,9 +505,11 @@ document.addEventListener("DOMContentLoaded", function () {
       t("平日 ", "Weekday ") + money(s.weekday) + "　" + t("假日 ", "Holiday ") + money(s.holiday) + "　" +
       t("夜衝 ", "Early arrival ") + t("平日 " + money(P.earlyPrice(s, "2026-11-10")) + "／假日 " + money(P.earlyPrice(s, "2026-11-13")), "weekday " + money(P.earlyPrice(s, "2026-11-10")) + " / holiday " + money(P.earlyPrice(s, "2026-11-13"))) +
       (SITE_NOTES[s.id] ? '<br><span class="site-note">' + t(SITE_NOTES[s.id].zh, SITE_NOTES[s.id].en) + "</span>" : "") +
-      (previewId ? '<br><span class="site-info-note">' + t("此營位在您選的日期已被預訂，僅供查看照片。", "This site is booked for your dates; photos are for viewing only.") + "</span>" : "");
+      (previewId ? '<br><span class="site-info-note">' + t("此營位在您選的日期已被預訂，僅供查看營位實景。", "This site is booked for your dates; shown for viewing only.") + "</span>" : "");
 
-    var urls = photoUrls(s.id);
+    // 2026-11-25 林大哥：有範圍影片的營位只放影片，不再放原本的照片（還沒有影片的營位先保留照片）
+    var hasVideo = VIDEOS.indexOf(s.id) !== -1;
+    var urls = hasVideo ? [] : photoUrls(s.id);
     var wrap = document.createElement("div");
     if (urls.length) {
       wrap.className = "site-photos";
@@ -550,7 +552,7 @@ document.addEventListener("DOMContentLoaded", function () {
       wrap.className = "site-photo-none";
       wrap.textContent = t("實景照片陸續更新中", "Site photos coming soon");
     }
-    siteInfoEl.appendChild(wrap);
+    if (!hasVideo) siteInfoEl.appendChild(wrap);
     var vb = videoBlock(s.id);
     if (vb) siteInfoEl.appendChild(vb);
   }
