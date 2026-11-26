@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var P = null; // lib/pricing.js（動態載入，前後端共用）
   var PHOTOS = {}; // lib/sitePhotos.js：各營位實景照片張數
   var VIDEOS = [], SIGNS = []; // lib/siteVideos.js：有範圍影片／營位牌照片的營位
-  var VIDEO_VER = "20261125a";
+  var VIDEO_VER = "20261126a";
   var previewId = null; // 點到「已被預訂」的營位時，只看照片、不選取
   // 營位備註（只顯示在營位資訊裡）。要加備註：在這裡新增一行即可。
   var SITE_NOTES = {
